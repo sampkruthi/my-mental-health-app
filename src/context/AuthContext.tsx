@@ -1,28 +1,30 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useQueryClient } from "@tanstack/react-query";
 
 const TOKEN_KEY = "jwt";
 
 type AuthContextType = {
   token: string | null;
-  loading: boolean;          // loading while restoring or signing in/out
+  loading: boolean;
   error: string | null;
   setToken: (t: string | null) => Promise<void>;
-  signIn: (username: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string, tokenFromServer?: string) => Promise<void>;
   signOut: () => Promise<void>;
-  restoreComplete: boolean;  // true after initial restore attempt
+  restoreComplete: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const queryClient = useQueryClient();
   const [token, setTokenState] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [restoreComplete, setRestoreComplete] = useState(false);
 
-  // On mount: restore token from AsyncStorage
+  // Restore token on mount
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -70,24 +72,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Example signIn — replace fetch with your API
-  const signIn = useCallback(async (username: string, password: string) => {
+  // Sign in — accepts token returned from API / MSW
+  const signIn = useCallback(async (email: string, password: string, tokenFromServer?: string) => {
     try {
       setLoading(true);
+      const finalToken = tokenFromServer ?? `fake-token-${Date.now()}`;
+      await AsyncStorage.setItem(TOKEN_KEY, finalToken);
+      setTokenState(finalToken);
       setError(null);
-
-      // EXAMPLE: simulate network call or call your API
-      // const resp = await fetch('https://api.example.com/auth/login', { method: 'POST', body: JSON.stringify({ username, password })});
-      // const json = await resp.json();
-      // const tokenFromServer = json.token;
-
-      // For now, simulate a small delay and return fake token:
-      await new Promise((r) => setTimeout(r, 600)); // simulate latency
-      const tokenFromServer = `fake-token-${Date.now()}`;
-
-      await AsyncStorage.setItem(TOKEN_KEY, tokenFromServer);
-      setTokenState(tokenFromServer);
-      console.log("AuthProvider: signIn success");
+      // Invalidate queries after login
+      queryClient.invalidateQueries();
+      console.log("AuthProvider: signed in");
     } catch (e: any) {
       console.error("AuthProvider: signIn failed", e);
       setError(String(e));
@@ -95,14 +90,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [queryClient]);
 
+  // Sign out
   const signOut = useCallback(async () => {
     try {
       setLoading(true);
-      await AsyncStorage.removeItem(TOKEN_KEY);
-      setTokenState(null);
-      setError(null);
+      await setToken(null);
+      queryClient.invalidateQueries();
       console.log("AuthProvider: signed out");
     } catch (e: any) {
       console.error("AuthProvider: signOut failed", e);
@@ -110,7 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [queryClient, setToken]);
 
   return (
     <AuthContext.Provider
@@ -129,6 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// Hook to consume AuthContext
 export const useAuth = (): AuthContextType => {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");

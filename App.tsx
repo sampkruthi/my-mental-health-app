@@ -1,11 +1,10 @@
+// App.tsx
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
-import { AuthProvider } from "./src/context/AuthContext";
-import AppNavigator from "./src/navigation/AppNavigator";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import AppNavigator from "./src/navigation/AppNavigator";
+import { AuthProvider } from "./src/context/AuthContext";
 
-// Create a QueryClient instance
 const queryClient = new QueryClient();
 
 export default function App() {
@@ -16,8 +15,6 @@ export default function App() {
           <AppNavigator />
         </NavigationContainer>
       </AuthProvider>
-      {/* Optional: React Query Devtools */}
-      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 }

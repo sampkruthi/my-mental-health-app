@@ -1,33 +1,46 @@
-// axios.ts
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+// src/api/axios.ts
+import axios from "axios";
 
-export const createClient = (token?: string): AxiosInstance => {
-  // Create a typed headers object
-  const headers: AxiosRequestConfig['headers'] = token
-    ? { Authorization: `Bearer ${token}` }
-    : {};
+const BASE_URL = process.env.API_URL || "http://localhost:4000";
 
-  // Create axios instance
-  const instance = axios.create({
-    baseURL: 'https://api.example.com', // replace with your API
-    headers,
-    timeout: 10000, // optional: 10s timeout
+export function createClient(token?: string | null) {
+  const client = axios.create({
+    baseURL: BASE_URL, // ✅ always uses /api
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
   });
 
-  // Optional: Add interceptors
-  instance.interceptors.request.use((config) => {
-    // you can log or modify config before sending request
+  if (token) {
+    client.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  }
+
+  // --- Debug interceptors ---
+  client.interceptors.request.use((config) => {
+    console.log(
+      "Axios Request:",
+      config.method?.toUpperCase(),
+      (config.baseURL ?? "") + (config.url ?? ""),
+      config.data
+    );
     return config;
   });
 
-  instance.interceptors.response.use(
-    (response) => response,
+  client.interceptors.response.use(
+    (response) => {
+      console.log("Axios Response:", response.status, response.data);
+      return response;
+    },
     (error) => {
-      // Optional: centralized error handling
-      console.error('Axios error:', error.message);
+      console.error(
+        "Axios Error:",
+        error.message,
+        error.response?.data
+      );
       return Promise.reject(error);
     }
   );
 
-  return instance;
-};
+  return client;
+}
