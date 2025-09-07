@@ -1,17 +1,24 @@
-import create from 'zustand';
+// src/stores/chatStore.ts
+import { create } from "zustand";
+
 export type Message = {
-id: string;
-text: string;
-sender: 'user' | 'ai';
-timestamp: string;
+  id: string;
+  text: string;
+  sender: "user" | "ai";
+  timestamp: string;
 };
+
 interface ChatState {
-messages: Message[];
-addMessage: (msg: Message) => void;
-clear: () => void;
+  messages: Message[];
+  addMessage: (msg: Message) => void;
+  clear: () => void;
 }
-export const useChatStore = create<ChatState>((set) => ({messages: [],
-addMessage: (msg) =>
-set((state) => ({ messages: [...state.messages, msg] })),
-clear: () => set({ messages: [] }),
+
+export const useChatStore = create<ChatState>((set) => ({
+  messages: [],
+  addMessage: (msg) =>
+    set((state: ChatState) => ({
+      messages: [...state.messages, msg],
+    })),
+  clear: () => set({ messages: [] }),
 }));
