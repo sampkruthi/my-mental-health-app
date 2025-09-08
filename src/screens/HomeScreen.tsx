@@ -19,8 +19,8 @@ const HomeScreen = () => {
   ];
 
   return (
-    <View style={{ flex: 1, padding: 20 }}>
-      <Button title="Force Logout" onPress={signOut} color="red" />
+    <View style={{ flex: 1,  padding: 20  }}>
+  <View style={{ width: "100%", maxWidth: 400 }}></View> {/* Limit width for larger screens */}
       <FlatList
         data={cards}
         keyExtractor={(item) => item.key}
@@ -30,7 +30,9 @@ const HomeScreen = () => {
             <Text>{item.subtitle}</Text>
           </TouchableOpacity>
         )}
-      />
+      /><View style={{ width: "100%", maxWidth: 400 }}> 
+      <Button title="Logout" onPress={signOut} color="red" /></View>
+      
     </View>
   );
 };

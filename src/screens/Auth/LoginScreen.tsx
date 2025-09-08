@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Platform } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import { useMutation } from "@tanstack/react-query";
-import { createClient } from "../../api/axios";
+import { useLogin } from "../../../src/api/hooks";
+import { getApiService } from "../../../services/api";
 
 type LoginPayload = { email: string; password: string };
 type LoginResponse = { token: string };
@@ -13,25 +14,23 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // ✅ useMutation without isLoading/isError destructure
-  const loginMutation = useMutation<LoginResponse, Error, LoginPayload>({
-    mutationFn: async ({ email, password }) => {
-      const client = createClient();
-      console.log("Axios POST to:", createClient().defaults.baseURL + "/auth/login", { email, password });
-
-      const { data } = await client.post<LoginResponse>("/auth/login", { email, password });
-      return data;
-    },
-  });
+  // =====================
+  // Use login mutation hook
+  // =====================
+  const loginMutation = useLogin();
 
   const handleSubmit = async () => {
     try {
+      console.log("[LoginScreen] handleSubmit called with:", email, password);
       const result = await loginMutation.mutateAsync({ email, password });
+      console.log("[LoginScreen] Login mutation result:", result);
+
       if (result?.token) {
         await signIn(email, password, result.token); // Pass token to AuthContext
+        console.log("[LoginScreen] User signed in successfully");
       }
     } catch (e) {
-      console.error("Login failed", e);
+      console.error("[LoginScreen] Login failed", e);
     }
   };
 
@@ -41,60 +40,67 @@ export default function LoginScreen() {
   const error = loginMutation.error;
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", padding: 20 }}>
-      <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 20 }}>Login</Text>
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20 }}>
+  <View style={{ width: "100%", maxWidth: 400 }}> {/* Limit width for larger screens */}
 
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        style={{
-          borderWidth: 1,
-          borderColor: "#ccc",
-          borderRadius: 8,
-          padding: 12,
-          marginBottom: 12,
-        }}
-      />
+    <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 20, textAlign: "center" }}>
+      Login
+    </Text>
 
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={{
-          borderWidth: 1,
-          borderColor: "#ccc",
-          borderRadius: 8,
-          padding: 12,
-          marginBottom: 20,
-        }}
-      />
+    <TextInput
+      placeholder="Email"
+      value={email}
+      onChangeText={setEmail}
+      autoCapitalize="none"
+      keyboardType="email-address"
+      style={{
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 12,
+      }}
+    />
 
-      {hasError && (
-        <Text style={{ color: "red", marginBottom: 12 }}>
-          Error: {error?.message || "Login failed"}
-        </Text>
+    <TextInput
+      placeholder="Password"
+      value={password}
+      onChangeText={setPassword}
+      secureTextEntry
+      style={{
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 20,
+      }}
+    />
+
+    {hasError && (
+      <Text style={{ color: "red", marginBottom: 12, textAlign: "center" }}>
+        Error: {error?.message || "Login failed"}
+      </Text>
+    )}
+
+    <TouchableOpacity
+      onPress={handleSubmit}
+      disabled={loading}
+      style={{
+        backgroundColor: loading ? "#aaa" : "#007bff",
+        padding: 14,
+        borderRadius: 8,
+        alignItems: "center",
+      }}
+    >
+      {loading ? (
+        <ActivityIndicator size={Platform.OS === "ios" ? 20 : "small"} color="#fff" />
+      ) : (
+        <Text style={{ color: "#fff", fontWeight: "bold" }}>Login</Text>
       )}
+    </TouchableOpacity>
 
-      <TouchableOpacity
-        onPress={handleSubmit}
-        disabled={loading}
-        style={{
-          backgroundColor: loading ? "#aaa" : "#007bff",
-          padding: 14,
-          borderRadius: 8,
-          alignItems: "center",
-        }}
-      >
-        {loading ? (
-          <ActivityIndicator size={Platform.OS === "ios" ? 20 : "small"} color="#fff" />
-        ) : (
-          <Text style={{ color: "#fff", fontWeight: "bold" }}>Login</Text>
-        )}
-      </TouchableOpacity>
-    </View>
+  </View>
+</View>
+
   );
 }
