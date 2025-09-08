@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useMutation } from "@tanstack/react-query";
 import { useLogin } from "../../../src/api/hooks";
 import { getApiService } from "../../../services/api";
+import { useTheme } from "../../context/ThemeContext";
 
 type LoginPayload = { email: string; password: string };
 type LoginResponse = { token: string };
@@ -13,6 +14,12 @@ export default function LoginScreen() {
   const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+
+  const { theme, toggleTheme } = useTheme(); // ✅ access theme + toggle
+
+  const backgroundColor = theme === "light" ? "#fff" : "#333";
+  const textColor = theme === "light" ? "#000" : "#fff";
 
   // =====================
   // Use login mutation hook
@@ -98,6 +105,12 @@ export default function LoginScreen() {
         <Text style={{ color: "#fff", fontWeight: "bold" }}>Login</Text>
       )}
     </TouchableOpacity>
+
+
+    {/* Toggle Button */}
+      <TouchableOpacity onPress={toggleTheme}>
+        <Text style={{ color: textColor }}>Switch Theme</Text>
+      </TouchableOpacity>
 
   </View>
 </View>

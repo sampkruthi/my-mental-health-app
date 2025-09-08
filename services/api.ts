@@ -29,8 +29,20 @@ export const realApiService = {
     const { data } = await apiClient.post("/auth/login", { email, password });
     return data;
   },
-  // other endpoints can go here
+  async getMoodCount() {
+    const { data } = await apiClient.get("/moods/count");
+    return data;
+  },
+  async getReminderCount() {
+    const { data } = await apiClient.get("/reminders/count");
+    return data;
+  },
+  async getUserProfile() {
+    const { data } = await apiClient.get("/me");
+    return data;
+  }
 };
+
 
 // Export mock so App.tsx can choose
 export { mockApiService };

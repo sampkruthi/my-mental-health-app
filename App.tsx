@@ -4,6 +4,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { AuthProvider } from "./src/context/AuthContext";
+import { ThemeProvider } from "./src/context/ThemeContext"; 
 
 // Import API services
 import { setApiService, realApiService } from "./services/api";
@@ -20,11 +21,13 @@ setApiService(USE_MOCK ? mockApiService : realApiService);
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
       <AuthProvider>
         <NavigationContainer>
           <AppNavigator />
         </NavigationContainer>
       </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
