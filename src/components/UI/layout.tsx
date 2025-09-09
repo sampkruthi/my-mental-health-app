@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 
+import AppLogo from "../../images/app.png";
+
 // src/components/UI/Layout.tsx
 type LayoutProps = {
   title: string;
@@ -41,7 +43,7 @@ export default function Layout({ children, title, onNavigate }: LayoutProps) {
         </TouchableOpacity>
 
         <Image
-          source={require("../../../assets/app.png")} // put your app logo in assets folder
+          source={AppLogo} // put your app logo in assets folder
           style={styles.logo}
           resizeMode="contain"
         />
@@ -106,8 +108,8 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   logo: {
-    width: 32,
-    height: 32,
+    width: 50,
+    height: 50,
     marginRight: 8,
   },
   title: {

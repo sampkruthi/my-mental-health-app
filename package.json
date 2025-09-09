@@ -6,6 +6,7 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
+    "lint": "eslint --ext=.js,.jsx,.ts,.tsx .",
     "web": "expo start --web"
   },
   "dependencies": {
@@ -29,15 +30,22 @@
     "react-native-screens": "^3.37.0",
     "react-native-svg": "^15.12.1",
     "react-native-web": "~0.20.0",
+    "rn-emoji-keyboard": "^1.7.0",
     "tailwindcss": "^4.1.13",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@eslint/js": "^9.35.0",
     "@react-native-community/cli": "^20.0.1",
     "@types/react": "~19.0.10",
     "@types/react-native": "^0.72.8",
-    "typescript": "^5.9.2"
+    "eslint": "^9.35.0",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.3.0",
+    "jiti": "^2.5.1",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.43.0"
   },
   "private": true
 }

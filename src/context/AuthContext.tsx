@@ -35,9 +35,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setTokenState(saved);
           console.log("AuthProvider: restored token");
         }
-      } catch (e: any) {
-        console.error("AuthProvider: failed to restore token", e);
-        setError(String(e));
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          console.error("AuthProvider: failed to restore token", e.message);
+          setError(e.message);
+        } else {
+          console.error("AuthProvider: unknown error", e);
+          setError("Unknown error occurred");
+        }
       } finally {
         if (mounted) {
           setLoading(false);
@@ -64,33 +69,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log("AuthProvider: token removed");
       }
       setError(null);
-    } catch (e: any) {
-      console.error("AuthProvider: setToken failed", e);
-      setError(String(e));
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        console.error("AuthProvider: setToken failed", e.message);
+        setError(e.message);
+      } else {
+        setError("Unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Sign in — accepts token returned from API / MSW
-  const signIn = useCallback(async (email: string, password: string, tokenFromServer?: string) => {
-    try {
-      setLoading(true);
-      const finalToken = tokenFromServer ?? `fake-token-${Date.now()}`;
-      await AsyncStorage.setItem(TOKEN_KEY, finalToken);
-      setTokenState(finalToken);
-      setError(null);
-      // Invalidate queries after login
-      queryClient.invalidateQueries();
-      console.log("AuthProvider: signed in");
-    } catch (e: any) {
-      console.error("AuthProvider: signIn failed", e);
-      setError(String(e));
-      throw e;
-    } finally {
-      setLoading(false);
-    }
-  }, [queryClient]);
+  // Sign in
+  const signIn = useCallback(
+    async (email: string, password: string, tokenFromServer?: string) => {
+      try {
+        setLoading(true);
+        const finalToken = tokenFromServer ?? `fake-token-${Date.now()}`;
+        await AsyncStorage.setItem(TOKEN_KEY, finalToken);
+        setTokenState(finalToken);
+        setError(null);
+        queryClient.invalidateQueries();
+        console.log("AuthProvider: signed in");
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          console.error("AuthProvider: signIn failed", e.message);
+          setError(e.message);
+          throw e;
+        } else {
+          setError("Unknown error occurred");
+          throw new Error("Unknown error occurred");
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [queryClient]
+  );
 
   // Sign out
   const signOut = useCallback(async () => {
@@ -99,9 +115,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await setToken(null);
       queryClient.invalidateQueries();
       console.log("AuthProvider: signed out");
-    } catch (e: any) {
-      console.error("AuthProvider: signOut failed", e);
-      setError(String(e));
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        console.error("AuthProvider: signOut failed", e.message);
+        setError(e.message);
+      } else {
+        setError("Unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -123,6 +143,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   );
 };
+
+
 
 // Hook to consume AuthContext
 export const useAuth = (): AuthContextType => {

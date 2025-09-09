@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import type { MoodTrendPoint, Reminder } from "./types";
 import { getApiService } from "../../services/api"; // adjust path if needed
+import type { ChatMessage } from "./types";
 
 // =====================
 // Login mutation hook
@@ -34,7 +35,7 @@ export function useFetchMoodCount(token?: string | null) {
       console.log("[useFetchMoodCount] Fetching mood count, token:", token);
       if (!token) return 0;
 
-      const data: MoodTrendPoint[] = await getApiService().getMoodTrends();
+      const data: MoodTrendPoint[] = await getApiService().getMoodTrends?.() ?? [];
       console.log("[useFetchMoodCount] Data received:", data);
 
       const count = data.reduce((acc, p) => acc + (p.avg ? 1 : 0), 0);
@@ -56,7 +57,7 @@ export function useFetchReminderCount(token?: string | null) {
       console.log("[useFetchReminderCount] Fetching reminders, token:", token);
       if (!token) return 0;
 
-      const data: Reminder[] = await getApiService().getReminders();
+      const data: Reminder[] = await getApiService().getReminders?. () ?? [];
       console.log("[useFetchReminderCount] Data received:", data);
 
       const count = Array.isArray(data) ? data.length : 0;
@@ -65,5 +66,42 @@ export function useFetchReminderCount(token?: string | null) {
     },
     enabled: Boolean(token),
     staleTime: 30000,
+  });
+}
+
+
+
+// =====================
+// Chat history hook
+// =====================
+export function useFetchChatHistory(token?: string | null) {
+  return useQuery<ChatMessage[], Error>({
+    queryKey: ["chat", "history", token],
+    queryFn: async () => {
+      console.log("[useFetchChatHistory] Fetching chat history, token:", token);
+      if (!token) return [];
+
+      const data: ChatMessage[] = await getApiService().getChatHistory?.() ?? [];
+      console.log("[useFetchChatHistory] Chat history returned:", data);
+      return data;
+    },
+    enabled: Boolean(token),
+    staleTime: 30000,
+  });
+}
+
+// =====================
+// Send chat message hook
+// =====================
+export function useSendChatMessage(token?: string | null) {
+  return useMutation<ChatMessage, Error, { text: string }>({
+    mutationFn: async ({ text }) => {
+      console.log("[useSendChatMessage] Sending message:", text, "token:", token);
+      if (!token) throw new Error("No token available");
+
+      const data: ChatMessage = await getApiService().sendChatMessage?.(text) as ChatMessage;
+      console.log("[useSendChatMessage] Bot reply received:", data);
+      return data;
+    },
   });
 }
