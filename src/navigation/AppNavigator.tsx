@@ -4,12 +4,16 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import LoginScreen from "../screens/Auth/LoginScreen";
 import HomeScreen from "../screens/HomeScreen";
-import ChatScreen from "../screens/ChatScreen";
+import ChatScreen from "../screens/ChatScreen/ChatScreen";
+import MoodTrackerScreen from "../screens/MoodTrackerScreen/MoodTrackerScreen";
+import MoodHistoryScreen from "../screens/MoodTrackerScreen/MoodHistoryScreen";
 
 export type RootStackParamList = {
   Login: undefined;
   Home: undefined;
   chat: undefined;
+  mood: undefined;
+  moodhistory : undefined
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -28,6 +32,8 @@ export default function AppNavigator() {
         <>
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="chat" component={ChatScreen} />
+        <Stack.Screen name="mood" component={MoodTrackerScreen} />
+        <Stack.Screen name="moodhistory" component={MoodHistoryScreen} />
         </>
       )}
     </Stack.Navigator>

@@ -10,18 +10,26 @@ import {
   StyleSheet,
   Dimensions,
 } from "react-native";
-import { useChatStore } from "../stores/chatStore";
-import { useAuth } from "../context/AuthContext";
-import { useSendChatMessage } from "../api/hooks";
+import { useChatStore } from "../../stores/chatStore";
+import { useAuth } from "../../context/AuthContext";
+import { useSendChatMessage } from "../../api/hooks";
 import EmojiPicker from "rn-emoji-keyboard";
-import type { ChatMessage } from "../api/types";
-import Layout from "../components/UI/layout";
-import { useTheme } from "../context/ThemeContext";
+import type { ChatMessage } from "../../api/types";
+import Layout from "../../components/UI/layout";
+import { useTheme } from "../../context/ThemeContext";
+
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../../navigation/AppNavigator";
+
+
+
 
 
 const { width } = Dimensions.get("window");
 
 const ChatScreen = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { token } = useAuth();
   const { messages, addMessage } = useChatStore();
   const { mutateAsync: sendChat } = useSendChatMessage(token);
@@ -91,7 +99,11 @@ const ChatScreen = () => {
   };
 
   return (
-    <Layout title="Chat" onNavigate={() => {}}>
+    <Layout
+  title="Chat"
+  onNavigate={(screen) => navigation.navigate(screen as never)}
+>
+
       <KeyboardAvoidingView
         style={[styles.container, { backgroundColor: colors.background }]}
         behavior={Platform.OS === "ios" ? "padding" : undefined}

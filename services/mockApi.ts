@@ -1,5 +1,5 @@
 // src/services/mockApi.ts
-import type { MoodTrendPoint, Reminder, ChatMessage } from "../src/api/types";
+import type { MoodTrendPoint, Reminder, ChatMessage, MoodLog } from "../src/api/types";
 
 type LoginResult = { token: string };
 
@@ -12,6 +12,23 @@ const dummyMoodTrends: MoodTrendPoint[] = [
   { avg: 3, date: "2025-09-02" },
   { avg: 5, date: "2025-09-03" },
 ];
+const dummyMoodHistory: MoodLog[] = [
+  { id: "1", score: 3, note: "Felt tired in the morning", timestamp: "2025-09-01T08:30:00Z" },
+  { id: "2", score: 4, note: "Productive workday", timestamp: "2025-09-02T17:00:00Z" },
+  { id: "3", score: 5, note: "Had dinner with friends", timestamp: "2025-09-03T20:15:00Z" },
+  { id: "4", score: 2, note: "Stressful meetings", timestamp: "2025-09-04T11:45:00Z" },
+  { id: "5", score: 4, note: "Evening walk was relaxing", timestamp: "2025-09-05T19:00:00Z" },
+  { id: "6", score: 3, note: "Felt okay but low energy", timestamp: "2025-09-06T14:00:00Z" },
+  { id: "7", score: 5, note: "Weekend family time ❤️", timestamp: "2025-09-07T21:30:00Z" },
+  { id: "8", score: 4, note: "Started new book", timestamp: "2025-09-08T20:00:00Z" },
+  { id: "9", score: 2, note: "Long work hours", timestamp: "2025-09-09T18:15:00Z" },
+  { id: "10", score: 3, note: "Feeling neutral", timestamp: "2025-09-10T09:45:00Z" },
+  { id: "11", score: 4, note: "Good workout session", timestamp: "2025-09-11T07:30:00Z" },
+  { id: "12", score: 5, note: "Great mood today 🎉", timestamp: "2025-09-12T16:20:00Z" },
+  { id: "13", score: 3, note: "Bit anxious but manageable", timestamp: "2025-09-13T13:10:00Z" },
+  { id: "14", score: 4, note: "Relaxed Sunday", timestamp: "2025-09-14T19:40:00Z" },
+];
+
 
 const dummyReminders: Reminder[] = [
   { id: 1, message: "Morning meditation", dueDate: "2025-09-08T09:00:00Z" },
@@ -43,7 +60,7 @@ export const mockApiService = {
     throw new Error("Invalid credentials");
   },
 
-  // Fetch mood trends
+  // ---------- Mood ----------
   async getMoodTrends(): Promise<MoodTrendPoint[]> {
     console.log("[mockApi] fetching mood trends");
     await delay(300);
@@ -51,13 +68,36 @@ export const mockApiService = {
     return dummyMoodTrends;
   },
 
+  async getMoodHistory(): Promise<MoodLog[]> {
+    console.log("[mockApi] fetching mood history");
+    await delay(300);
+    console.log("[mockApi] mood history returned:", dummyMoodHistory);
+    return dummyMoodHistory;
+  },
+
+  async logMood(input: { score: number; note?: string }): Promise<MoodLog> {
+    console.log("[mockApi] logging new mood:", input);
+    await delay(400);
+
+    const newMood: MoodLog = {
+      id: Date.now().toString(),
+      score: input.score,
+      note: input.note,
+      timestamp: new Date().toISOString(),
+    };
+
+    dummyMoodHistory.push(newMood);
+    console.log("[mockApi] mood log saved:", newMood);
+    return newMood;
+  },
+
   async getMoodCount(): Promise<number> {
     console.log("[mockApi] getting mood count");
     await delay(200);
-    return dummyMoodTrends.length;
+    return dummyMoodHistory.length;
   },
 
-  // Fetch reminders
+  // ---------- Reminders ----------
   async getReminders(): Promise<Reminder[]> {
     console.log("[mockApi] fetching reminders");
     await delay(300);
@@ -65,18 +105,19 @@ export const mockApiService = {
     return dummyReminders;
   },
 
-   async getReminderCount(): Promise<number> {
+  async getReminderCount(): Promise<number> {
     console.log("[mockApi] getting reminder count");
     await delay(200);
     return dummyReminders.length;
   },
+
   async getUserProfile(): Promise<{ name: string; email: string }> {
     console.log("[mockApi] getting user profile");
     await delay(200);
     return { name: "Test User", email: "test@test.com" };
   },
 
-  // ✅ Fetch chat history
+  // ---------- Chat ----------
   async getChatHistory(): Promise<ChatMessage[]> {
     console.log("[mockApi] fetching chat history");
     await delay(300);
@@ -84,12 +125,10 @@ export const mockApiService = {
     return dummyChatHistory;
   },
 
-  // ✅ Send chat message
   async sendChatMessage(text: string): Promise<ChatMessage> {
     console.log("[mockApi] sending message:", text);
     await delay(400);
 
-    // Add user message to dummy history
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       sender: "user",
@@ -99,9 +138,8 @@ export const mockApiService = {
 
     dummyChatHistory.push(userMessage);
 
-    // Simulate bot reply
     const botReply: ChatMessage = {
-      id: Date.now().toString() + 1,
+      id: Date.now().toString() + "r",
       sender: "ai",
       text: "Thanks for sharing. Remember to take a deep breath 🌿",
       timestamp: new Date().toISOString(),

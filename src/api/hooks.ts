@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import type { MoodTrendPoint, Reminder } from "./types";
 import { getApiService } from "../../services/api"; // adjust path if needed
-import type { ChatMessage } from "./types";
+import type { ChatMessage, MoodLog } from "./types";
 
 // =====================
 // Login mutation hook
@@ -101,6 +101,42 @@ export function useSendChatMessage(token?: string | null) {
 
       const data: ChatMessage = await getApiService().sendChatMessage?.(text) as ChatMessage;
       console.log("[useSendChatMessage] Bot reply received:", data);
+      return data;
+    },
+  });
+}
+
+// =====================
+// Mood history hook
+// =====================
+export function useFetchMoodHistory(token?: string | null) {
+  return useQuery<MoodLog[], Error>({
+    queryKey: ["mood", "history", token],
+    queryFn: async () => {
+      console.log("[useFetchMoodHistory] Fetching mood history, token:", token);
+      if (!token) return [];
+
+      const data: MoodLog[] = await getApiService().getMoodHistory?.() ?? [];
+      console.log("[useFetchMoodHistory] Mood history returned:", data);
+      return data;
+    },
+    enabled: Boolean(token),
+    staleTime: 30000,
+  });
+}
+
+// =====================
+// Log mood hook
+// =====================
+export function useLogMood(token?: string | null) {
+  return useMutation<MoodLog, Error, { score: number; note?: string }>({
+    mutationFn: async ({ score, note }) => {
+      console.log("[useLogMood] Logging mood:", { score, note }, "token:", token);
+      if (!token) throw new Error("No token available");
+
+      const data: MoodLog = await getApiService().logMood?.({ score, note }) as MoodLog;
+
+      console.log("[useLogMood] Mood log response:", data);
       return data;
     },
   });
