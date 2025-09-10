@@ -6,23 +6,23 @@ import { useAuth } from "../context/AuthContext";
 import { useFetchMoodCount, useFetchReminderCount } from "../api/hooks";
 import Layout from "../components/UI/layout";
 import { Card } from "../components/UI/Card";
-import { Button } from "../components/UI/Button";
+//import { Button } from "../components/UI/Button";
 import { useTheme } from "../context/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
 import Avatar from "../images/avatar.png";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
-import * as Hooks from "../api/hooks";
+//import * as Hooks from "../api/hooks";
 
 const HomeScreen = () => {
-  const { token, signOut } = useAuth();
+  const { token } = useAuth();
   //const { messages } = useChatStore();
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const { data: moodCount = 0, isLoading: moodLoading } = useFetchMoodCount(token);
   const { data: reminderCount = 0, isLoading: reminderLoading } = useFetchReminderCount(token);
-  console.log(Hooks);
+  //console.log(Hooks);
 
   const cards = [
     { key: "chat", title: "Chat", subtitle: "Start a conversation" },
@@ -66,7 +66,7 @@ const HomeScreen = () => {
           contentContainerStyle={{ paddingBottom: 20 }}
         />
 
-        <Button title="Logout" onPress={signOut} />
+        
       </View>
     </Layout>
   );

@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import type { MoodTrendPoint, Reminder } from "./types";
 import { getApiService } from "../../services/api"; // adjust path if needed
-import type { ChatMessage, MoodLog } from "./types";
+import type { ChatMessage, MoodLog, GuidedActivity } from "./types";
 
 // =====================
 // Login mutation hook
@@ -137,6 +137,35 @@ export function useLogMood(token?: string | null) {
       const data: MoodLog = await getApiService().logMood?.({ score, note }) as MoodLog;
 
       console.log("[useLogMood] Mood log response:", data);
+      return data;
+    },
+  });
+}
+
+// =====================
+// Guided Activity
+// =====================
+
+// Fetch activities
+export function useFetchActivities(token?: string | null) {
+  return useQuery<GuidedActivity[], Error>({
+    queryKey: ["activities", token],
+    queryFn: async () => {
+      if (!token) return [];
+      return getApiService().getActivities?.() ?? [];
+    },
+    enabled: Boolean(token),
+    staleTime: 30000,
+  });
+}
+
+// Log activity
+export function useLogActivity(token?: string | null) {
+  return useMutation<{ id: string; completedAt: string }, Error, { id: string }>({
+    mutationFn: async ({ id }) => {
+      if (!token) throw new Error("No token available");
+      const data = await getApiService().logActivity?.(id);
+      if (!data) throw new Error("No response from API");
       return data;
     },
   });

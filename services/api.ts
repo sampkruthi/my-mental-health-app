@@ -1,7 +1,7 @@
 // src/services/api.ts
 import axios from "axios";
 import { mockApiService } from "./mockApi";
-import type { MoodTrendPoint, MoodLog, Reminder, ChatMessage } from "../src/api/types";
+import type { MoodTrendPoint, MoodLog, Reminder, ChatMessage, GuidedActivity } from "../src/api/types";
 
 export interface LoginResponse {
   token: string;
@@ -20,6 +20,10 @@ export interface ApiService {
   getReminders?: () => Promise<Reminder[]>;
   getChatHistory?: () => Promise<ChatMessage[]>;
   sendChatMessage?: (text: string) => Promise<ChatMessage>;
+  // ✅ Guided Activities
+  getActivities?: () => Promise<GuidedActivity[]>;
+  logActivity?: (id: string) => Promise<{ id: string; completedAt: string }>;
+
 }
 
 // Step 2: Global service
@@ -72,6 +76,22 @@ export const realApiService: ApiService = {
   async logMood(input: { score: number; note?: string }) {
     const { data } = await apiClient.post<MoodLog>("/moods/log", input);
     return data;
+  },
+
+  //Guided activity
+
+  
+
+  // ✅ Get activities
+  async getActivities() {
+    const { data } = await apiClient.get("/activities");
+    return data; // must match GuidedActivity[]
+  },
+
+  // ✅ Log completion
+  async logActivity(id: string) {
+    const { data } = await apiClient.post("/activities/log", { id });
+    return data; // e.g. { id: string, completedAt: string }
   },
 };
 

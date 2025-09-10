@@ -1,7 +1,15 @@
 // src/services/mockApi.ts
-import type { MoodTrendPoint, Reminder, ChatMessage, MoodLog } from "../src/api/types";
+import type { MoodTrendPoint, Reminder, ChatMessage, MoodLog, GuidedActivity } from "../src/api/types";
+
+import BoxBreathingIcon from "../src/images/breathing.png";
+import DiaphragmIcon from "../src/images/diaphragm.png";
+import BodyScanIcon from "../src/images/bodyscan.png";
+import StretchIcon from "../src/images/stretching.png";
+import MusicIcon from "../src/images/music.png";
+import CalmTrack from "../src/images/watermusic.mp3";
 
 type LoginResult = { token: string };
+const activityLogs: { id: string; completedAt: string }[] = [];
 
 // Simulate network delay
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
@@ -40,6 +48,79 @@ const dummyChatHistory: ChatMessage[] = [
   { id: "1a", sender: "user", text: "Hey, I feel a bit stressed today.", timestamp: "2025-09-08T10:00:00Z" },
   { id: "2b", sender: "ai", text: "I understand. Want me to guide you through a quick breathing exercise?", timestamp: "2025-09-08T10:01:00Z" },
 ];
+
+
+//Dummy Guided Activity
+
+const activities: GuidedActivity[] = [
+  {
+    id: "1",
+    title: "5-Minute Box Breathing",
+    type: "Breathing",
+    description: "A simple technique to calm your mind and body.",
+    thumbnail:  BoxBreathingIcon,
+    steps: [
+      "Sit comfortably and close your eyes.",
+      "Inhale for 4 seconds.",
+      "Hold your breath for 4 seconds.",
+      "Exhale for 4 seconds.",
+      "Repeat the cycle for 5 minutes."
+    ]
+  },
+  {
+    id: "2",
+    title: "Daily Diaphragmatic Breathing",
+    type: "Breathing",
+    description: "Practice deep breathing to reduce tension.",
+    thumbnail: DiaphragmIcon,
+    steps: [
+      "Sit or lie down comfortably.",
+      "Place one hand on your chest and one on your belly.",
+      "Inhale deeply through your nose, feeling your belly rise.",
+      "Exhale slowly through your mouth.",
+      "Repeat for 10 breaths."
+    ]
+  },
+  {
+    id: "3",
+    title: "Body Scan Meditation",
+    type: "Meditation",
+    description: "Tune into sensations and relax your body.",
+    thumbnail: BodyScanIcon,
+    steps: [
+      "Lie down comfortably.",
+      "Close your eyes and focus on your breathing.",
+      "Bring attention to your feet, then slowly move upward.",
+      "Notice any tension and consciously relax.",
+      "Continue until you reach your head."
+    ]
+  },
+  {
+    id: "4",
+    title: "Stress Busting Stretch",
+    type: "Stretching",
+    description: "Relieve stress with simple stretches.",
+    thumbnail: StretchIcon,
+    steps: [
+      "Stand with feet shoulder-width apart.",
+      "Stretch arms overhead and hold for 10 seconds.",
+      "Bend sideways to the left and right.",
+      "Roll shoulders slowly backwards and forwards.",
+      "Repeat twice."
+    ]
+  },
+  {
+    id: "5",
+    title: "Listen to Calm Music",
+    type: "Music",
+    description: "Relax your mind with soft tunes.",
+    thumbnail: MusicIcon,
+    steps: ["Play the track and focus on the rhythm."],
+    audioFile: CalmTrack,
+    duration: 180 // 3 minutes
+  }
+];
+
 
 // =====================
 // Mock API service
@@ -150,4 +231,37 @@ export const mockApiService = {
     console.log("[mockApi] bot reply:", botReply);
     return botReply;
   },
+
+
+  //---------Guided Activity----------//
+
+  
+
+
+  // ✅ Get activities
+  async getActivities(): Promise<GuidedActivity[]> {
+    console.log("[mockApi] fetching guided activities");
+    await delay(300);
+    return activities;
+  },
+
+  // ✅ Log completion
+  async logActivity(id: string): Promise<{ id: string; completedAt: string }> {
+    console.log("[mockApi] logging completion for activity:", id);
+    await delay(200);
+
+    const log = { id, completedAt: new Date().toISOString() };
+    activityLogs.push(log);
+
+    console.log("[mockApi] activity logged:", log);
+    return log;
+  },
 };
+
+
+
+
+
+
+
+

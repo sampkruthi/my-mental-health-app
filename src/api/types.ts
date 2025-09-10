@@ -20,3 +20,28 @@ export interface ChatMessage {
   sender: "user" | "ai";
   timestamp: string; // ISO format like "2025-09-09T14:32:00Z"
 }
+
+// =====================
+// Mood log type
+// =====================
+export interface MoodLog {
+  id: string;                 // Unique ID for each log entry
+  score: number;              // Mood score (e.g., 1–5 scale)
+  note?: string;              // Optional user note about the mood
+  timestamp: string;          // ISO format like "2025-09-09T14:32:00Z"
+}
+
+
+// Guided Activity
+
+export interface GuidedActivity {
+  id: string;
+  title: string;
+  type: "Breathing" | "Meditation" | "Stretching" | "Walking" | "Music" | "Exercise";
+  description: string;
+  thumbnail: number | string; // path or require()
+  steps: string[];   // instructions
+  audioFile?: number | string; // for music activity
+  duration?: number; // for music progress (in seconds)
+}
+

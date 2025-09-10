@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 
+import { useAuth } from "../../context/AuthContext";
+
 import AppLogo from "../../images/app.png";
 
 // src/components/UI/Layout.tsx
@@ -24,6 +26,8 @@ export default function Layout({ children, title, onNavigate }: LayoutProps) {
   const { colors, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const slideAnim = useState(new Animated.Value(-250))[0]; // hidden initially
+
+  const { signOut } = useAuth();
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -89,6 +93,18 @@ export default function Layout({ children, title, onNavigate }: LayoutProps) {
         >
           <Text style={{ color: colors.text }}>👤 Profile</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.drawerItem}
+          onPress={() => {
+            signOut();
+            toggleMenu();
+          }}
+        >
+          <Text style={{ color: colors.text }}>Logout</Text>
+        </TouchableOpacity>
+
+
+
       </Animated.View>
 
       {/* Main Content */}
