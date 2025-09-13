@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { MoodTrendPoint, Reminder } from "./types";
 import { getApiService } from "../../services/api"; // adjust path if needed
-import type { ChatMessage, MoodLog, GuidedActivity, JournalEntry, JournalInsights } from "./types";
+import type { ChatMessage, MoodLog, GuidedActivity, JournalEntry, JournalInsights, ResourceRec } from "./types";
 
 // =====================
 // Login mutation hook
@@ -233,5 +233,30 @@ export function useLogJournal(token?: string | null) {
       qc.invalidateQueries({ queryKey: ["journal", "history"] });
       qc.invalidateQueries({ queryKey: ["journal", "insights"] });
     },
+   
+
+  });
+
+}
+
+// =====================
+// Resources Hooks
+// =====================
+
+
+export function useFetchContentRec(
+  token: string | null | undefined,
+  params?: { q?: string; tags?: string[]; limit?: number }
+) {
+  return useQuery<ResourceRec[], Error>({
+    queryKey: ['resources', 'recs', params, token],
+    queryFn: async () => {
+      if (!token) return [];
+
+      const data: ResourceRec[] = await getApiService().getContentRecommendations?.(params) ?? [];
+      return data;
+    },
+    enabled: Boolean(token),
+    staleTime: 60_000, // 1 minute
   });
 }

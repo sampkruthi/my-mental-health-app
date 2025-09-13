@@ -1,7 +1,7 @@
 // src/services/api.ts
 import axios from "axios";
 import { mockApiService } from "./mockApi";
-import type { MoodTrendPoint, MoodLog, Reminder, ChatMessage, GuidedActivity } from "../src/api/types";
+import type { MoodTrendPoint, MoodLog, Reminder, ChatMessage, GuidedActivity,JournalEntry, JournalInsights, ResourceRec } from "../src/api/types";
 
 export interface LoginResponse {
   token: string;
@@ -23,6 +23,14 @@ export interface ApiService {
   // ✅ Guided Activities
   getActivities?: () => Promise<GuidedActivity[]>;
   logActivity?: (id: string) => Promise<{ id: string; completedAt: string }>;
+
+  getJournalInsights(): Promise<JournalInsights>;
+  logJournal(input: { content: string }): Promise<JournalEntry>;
+  getJournalHistory(): Promise<JournalEntry[]>
+
+
+    // ---------- Resources ----------
+  getContentRecommendations(params?: { q?: string; tags?: string[]; limit?: number }): Promise<ResourceRec[]>;
 
 }
 
@@ -93,6 +101,30 @@ export const realApiService: ApiService = {
     const { data } = await apiClient.post("/activities/log", { id });
     return data; // e.g. { id: string, completedAt: string }
   },
+
+
+  // ---------- Journaling ----------
+async getJournalInsights() {
+  const { data } = await apiClient.get<JournalInsights>("/journal/insights");
+  return data;
+},
+
+async logJournal(input: { content: string }) {
+  const { data } = await apiClient.post<JournalEntry>("/journal/log", input);
+  return data;
+},
+async getJournalHistory() {
+  const { data } = await apiClient.get<JournalEntry[]>("/journal/history");
+  return data;
+},
+// ---------- Resources ----------
+async getContentRecommendations(params?: { q?: string; tags?: string[]; limit?: number }) {
+  const { data } = await apiClient.get<ResourceRec[]>("/recommend/content", { params });
+  return data;
+},
+
+
+  
 };
 
 // Step 4: Export mock too

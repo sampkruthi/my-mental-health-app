@@ -48,3 +48,38 @@ export interface GuidedActivity {
   duration?: number;
 }
 
+
+// =====================
+// JournalingScreen
+// =====================
+
+
+
+export interface JournalEntry {
+  id?: string;
+  content: string;
+  sentiment?: 'positive' | 'neutral' | 'negative' | number; // backend choice
+  timestamp: string;    // ISO
+}
+
+export interface JournalInsights {
+  totalEntries: number;
+  averageMoodScore?: number;
+  recentEntries?: JournalEntry[];
+}
+
+// =====================
+// ResourcesScreen
+// =====================
+
+
+export interface ResourceRec {
+  id: string;
+  title: string;
+  type: 'article' | 'audio' | 'video';
+  url: string;
+  tags?: string[];
+  snippet?: string;
+  thumbnail?: string;
+}
+
