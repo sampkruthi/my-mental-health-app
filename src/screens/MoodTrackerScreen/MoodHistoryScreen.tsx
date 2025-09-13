@@ -17,7 +17,7 @@ const MoodHistoryScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const { data: moodHistory = [], isLoading } = useFetchMoodHistory(token);
-    console.log("MoodHistory for chart:", moodHistory);
+    
   return (
     <Layout
       title="Mood History"

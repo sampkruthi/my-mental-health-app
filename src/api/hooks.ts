@@ -1,13 +1,15 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { MoodTrendPoint, Reminder } from "./types";
 import { getApiService } from "../../services/api"; // adjust path if needed
-import type { ChatMessage, MoodLog, GuidedActivity } from "./types";
+import type { ChatMessage, MoodLog, GuidedActivity, JournalEntry, JournalInsights } from "./types";
 
 // =====================
 // Login mutation hook
 // =====================
 type LoginPayload = { email: string; password: string };
 type LoginResponse = { token: string };
+
+
 
 export const useLogin = () => {
   // ✅ Logs for debugging
@@ -167,6 +169,69 @@ export function useLogActivity(token?: string | null) {
       const data = await getApiService().logActivity?.(id);
       if (!data) throw new Error("No response from API");
       return data;
+    },
+  });
+}
+
+
+
+
+// =====================
+// Journal Hooks
+// =====================
+
+// Fetch journal history
+export function useFetchJournalHistory(token?: string | null) {
+  return useQuery<JournalEntry[], Error>({
+    queryKey: ["journal", "history", token],
+    queryFn: async () => {
+      console.log("[useFetchJournalHistory] Fetching journal history, token:", token);
+      if (!token) return [];
+
+      const data: JournalEntry[] = await getApiService().getJournalHistory?.() ?? [];
+      console.log("[useFetchJournalHistory] Data received:", data);
+      return data;
+    },
+    enabled: Boolean(token),
+    staleTime: 60_000,
+  });
+}
+
+/// Fetch journal insights
+export function useFetchJournalInsights(token?: string | null) {
+  return useQuery<JournalInsights | null, Error>({
+    queryKey: ["journal", "insights", token],
+    queryFn: async () => {
+      console.log("[useFetchJournalInsights] Fetching journal insights, token:", token);
+      if (!token) return null;
+
+      const data: JournalInsights = await getApiService().getJournalInsights?.() ?? { totalEntries: 0 };
+      console.log("[useFetchJournalInsights] Insights received:", data);
+      return data;
+    },
+    enabled: Boolean(token),
+    staleTime: 60_000,
+  });
+}
+
+
+// Log a new journal entry
+export function useLogJournal(token?: string | null) {
+  const qc = useQueryClient();
+
+  return useMutation<JournalEntry, Error, { content: string }>({
+    mutationFn: async ({ content }) => {
+      console.log("[useLogJournal] Logging journal entry:", content, "token:", token);
+      if (!token) throw new Error("No token available");
+
+      const data: JournalEntry = await getApiService().logJournal?.({ content }) as JournalEntry;
+      console.log("[useLogJournal] Journal entry logged:", data);
+      return data;
+    },
+    onSuccess: () => {
+      console.log("[useLogJournal] Invalidating journal queries");
+      qc.invalidateQueries({ queryKey: ["journal", "history"] });
+      qc.invalidateQueries({ queryKey: ["journal", "insights"] });
     },
   });
 }

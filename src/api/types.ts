@@ -1,4 +1,7 @@
 // types.ts
+import { ImageSourcePropType } from "react-native";
+
+
 export interface MoodTrendPoint {
   avg?: number; // or whatever fields your API returns
   date?: string;
@@ -39,9 +42,9 @@ export interface GuidedActivity {
   title: string;
   type: "Breathing" | "Meditation" | "Stretching" | "Walking" | "Music" | "Exercise";
   description: string;
-  thumbnail: number | string; // path or require()
-  steps: string[];   // instructions
-  audioFile?: number | string; // for music activity
-  duration?: number; // for music progress (in seconds)
+  thumbnail: ImageSourcePropType;  // 👈 instead of number | string
+  steps: string[];
+  audioFile?: string; 
+  duration?: number;
 }
 

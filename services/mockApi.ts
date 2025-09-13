@@ -1,5 +1,5 @@
 // src/services/mockApi.ts
-import type { MoodTrendPoint, Reminder, ChatMessage, MoodLog, GuidedActivity } from "../src/api/types";
+import type { MoodTrendPoint, Reminder, ChatMessage, MoodLog, GuidedActivity, JournalEntry, JournalInsights } from "../src/api/types";
 
 import BoxBreathingIcon from "../src/images/breathing.png";
 import DiaphragmIcon from "../src/images/diaphragm.png";
@@ -119,6 +119,30 @@ const activities: GuidedActivity[] = [
     audioFile: CalmTrack,
     duration: 180 // 3 minutes
   }
+];
+
+
+
+// ---------- Dummy Journal Data ----------
+const journalEntries: JournalEntry[] = [
+  {
+    id: "1",
+    content: "Had a productive day and finished all my tasks.",
+    sentiment: "positive",
+    timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+  },
+  {
+    id: "2",
+    content: "Felt a bit stressed during meetings.",
+    sentiment: "negative",
+    timestamp: new Date(Date.now() - 43200000).toISOString(), // 12 hours ago
+  },
+  {
+    id: "3",
+    content: "Went for a walk and felt relaxed.",
+    sentiment: "positive",
+    timestamp: new Date(Date.now() - 21600000).toISOString(), // 6 hours ago
+  },
 ];
 
 
@@ -256,7 +280,68 @@ export const mockApiService = {
     console.log("[mockApi] activity logged:", log);
     return log;
   },
+  // ---------- Journaling API Functions ----------
+async getJournalInsights(): Promise<JournalInsights> {
+  console.log("[mockApi] fetching journal insights");
+  await delay(300);
+
+  const totalEntries = journalEntries.length;
+  const averageMoodScore =
+    journalEntries.length > 0
+      ? journalEntries
+          .map((e) =>
+            typeof e.sentiment === "number"
+              ? e.sentiment
+              : e.sentiment === "positive"
+              ? 1
+              : e.sentiment === "neutral"
+              ? 0
+              : -1
+          )
+          .reduce((a, b) => a + b, 0) / journalEntries.length
+      : 0;
+
+  const recentEntries = journalEntries
+    .slice()
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 5);
+
+  const insights: JournalInsights = { totalEntries, averageMoodScore, recentEntries };
+  console.log("[mockApi] journal insights:", insights);
+
+  return insights;
+},
+
+async logJournal(input: { content: string }): Promise<JournalEntry> {
+  console.log("[mockApi] logging journal entry:", input);
+  await delay(200);
+
+  const newEntry: JournalEntry = {
+    id: (journalEntries.length + 1).toString(),
+    content: input.content,
+    sentiment: "neutral", // default sentiment
+    timestamp: new Date().toISOString(),
+  };
+
+  journalEntries.push(newEntry);
+  console.log("[mockApi] journal entry logged:", newEntry);
+
+  return newEntry;
+},
+// Inside mockApiService
+async getJournalHistory(): Promise<JournalEntry[]> {
+  console.log("[mockApi] fetching journal history");
+  await delay(300);
+  console.log("[mockApi] journal history returned:", journalEntries);
+  return journalEntries;
+},
+
+
 };
+
+
+
+
 
 
 

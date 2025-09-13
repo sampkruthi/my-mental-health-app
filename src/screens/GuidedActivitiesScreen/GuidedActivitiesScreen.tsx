@@ -1,6 +1,6 @@
 // src/screens/GuidedActivitiesScreen.tsx
-import React, { useState } from "react";
-import { View, Text, Image, FlatList, Modal, ScrollView, Dimensions } from "react-native";
+import React, { useState} from "react";
+import { View, Text, Image, FlatList, Modal, ScrollView, Dimensions, StyleSheet } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation/AppNavigator";
@@ -8,12 +8,13 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { GuidedActivity } from "../../api/types";
 import { useFetchActivities, useLogActivity } from "../../api/hooks";
 import { Button } from "../../components/UI/Button";
-import { StyleSheet } from "react-native";
 import Layout from "../../components/UI/layout";
 
+import AudioPlayer from "../../audio/AudioPlayer";
+
 const { width } = Dimensions.get("window");
+
 const GuidedActivitiesScreen = () => {
-    
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { data: activities = [], isLoading } = useFetchActivities("token"); // replace with real token
@@ -21,11 +22,16 @@ const GuidedActivitiesScreen = () => {
 
   const [selectedActivity, setSelectedActivity] = useState<GuidedActivity | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  
 
   const handleStart = (activity: GuidedActivity) => {
     setSelectedActivity(activity);
     setModalVisible(true);
   };
+
+  
+
+ 
 
   const handleDone = async () => {
     if (selectedActivity) {
@@ -37,10 +43,7 @@ const GuidedActivitiesScreen = () => {
 
   const renderCard = ({ item }: { item: GuidedActivity }) => (
     <View style={styles.card}>
-      <Image
-        source={typeof item.thumbnail === "number" ? item.thumbnail : { uri: item.thumbnail }}
-        style={styles.thumbnail}
-      />
+      <Image source={item.thumbnail} style={styles.thumbnail} />
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle}>{item.title}</Text>
         <Text style={styles.cardBadge}>{item.type}</Text>
@@ -48,50 +51,51 @@ const GuidedActivitiesScreen = () => {
           {item.description}
         </Text>
         <View style={{ marginTop: 16, width: 80 }}>
-  <Button title="Start" onPress={() => handleStart(item)} />
-</View>
+          <Button title="Start" onPress={() => handleStart(item)} />
+        </View>
       </View>
     </View>
   );
 
   return (
-    <Layout title="Guided Avtivity" onNavigate={(screen) => navigation.navigate(screen as never)}>
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.header, { color: colors.text }]}>Recommended Exercises</Text>
+    <Layout title="Guided Activity" onNavigate={(screen) => navigation.navigate(screen as never)}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Text style={[styles.header, { color: colors.text }]}>Recommended Exercises</Text>
 
-      {isLoading ? (
-        <Text>Loading...</Text>
-      ) : (
-        <FlatList
-          data={activities.slice(0, 5)}
-          keyExtractor={(item) => item.id}
-          renderItem={renderCard}
-          contentContainerStyle={{ paddingBottom: 20 }}
-        />
-      )}
+        {isLoading ? (
+          <Text>Loading...</Text>
+        ) : (
+          <FlatList
+            data={activities.slice(0, 5)}
+            keyExtractor={(item) => item.id}
+            renderItem={renderCard}
+            contentContainerStyle={{ paddingBottom: 20 }}
+          />
+        )}
 
-      {/* Modal for activity steps */}
-      <Modal visible={modalVisible} animationType="slide">
-        <ScrollView style={styles.modalContainer}>
-          {selectedActivity && (
-            <>
-              <Text style={styles.modalTitle}>{selectedActivity.title}</Text>
-              {selectedActivity.steps.map((step, index) => (
-                <View key={index} style={styles.stepContainer}>
-                  <Text style={styles.stepTitle}>Step {index + 1}</Text>
-                  <Text style={styles.stepText}>{step}</Text>
+        <Modal visible={modalVisible} animationType="slide">
+          <ScrollView style={styles.modalContainer}>
+            {selectedActivity && (
+              <>
+                <Text style={styles.modalTitle}>{selectedActivity.title}</Text>
+                {selectedActivity.steps.map((step, index) => (
+                  <View key={index} style={styles.stepContainer}>
+                    <Text style={styles.stepTitle}>Step {index + 1}</Text>
+                    <Text style={styles.stepText}>{step}</Text>
+                  </View>
+                ))}
+               <AudioPlayer source={selectedActivity.audioFile!} />
+
+
+
+                <View style={{ marginTop: 16 }}>
+                  <Button title="Done" onPress={handleDone} />
                 </View>
-              ))}
-
-              <View style={{ marginTop: 16 }}>
-  <Button title="Done" onPress={handleDone} />
-</View>
-
-            </>
-          )}
-        </ScrollView>
-      </Modal>
-    </View>
+              </>
+            )}
+          </ScrollView>
+        </Modal>
+      </View>
     </Layout>
   );
 };
@@ -99,8 +103,8 @@ const GuidedActivitiesScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: width > 800 ? 900 : "100%", // Use fixed width on desktop, full on mobile
-    alignSelf: "center",               // center horizontally
+    width: width > 800 ? 900 : "100%",
+    alignSelf: "center",
     padding: 10,
   },
   header: {
@@ -110,7 +114,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: "row",
-    backgroundColor: "#f9f1d1ff", // earth-tone
+    backgroundColor: "#f9f1d1ff",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -131,7 +135,7 @@ const styles = StyleSheet.create({
   },
   cardBadge: {
     fontSize: 12,
-    backgroundColor: "#DCFCE7", // green-200
+    backgroundColor: "#DCFCE7",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
@@ -141,10 +145,6 @@ const styles = StyleSheet.create({
   cardDescription: {
     fontSize: 14,
     marginTop: 4,
-  },
-  startButton: {
-    marginTop: 8,
-    width: 80,
   },
   modalContainer: {
     flex: 1,
@@ -165,14 +165,6 @@ const styles = StyleSheet.create({
   },
   stepText: {
     fontSize: 14,
-  },
-  doneButton: {
-    marginTop: 16,
-  },
-  closeButton: {
-    marginTop: 8,
-    backgroundColor: "#E5E7EB", // gray-300
-    color: "#000000",
   },
 });
 

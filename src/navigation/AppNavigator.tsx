@@ -8,6 +8,7 @@ import ChatScreen from "../screens/ChatScreen/ChatScreen";
 import MoodTrackerScreen from "../screens/MoodTrackerScreen/MoodTrackerScreen";
 import MoodHistoryScreen from "../screens/MoodTrackerScreen/MoodHistoryScreen";
 import GuidedActivitiesScreen from "../screens/GuidedActivitiesScreen/GuidedActivitiesScreen";
+import JournalingScreen from "../screens/JournalingScreen/JournalingScreen";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -16,6 +17,7 @@ export type RootStackParamList = {
   mood: undefined;
   moodhistory : undefined;
   activities : undefined;
+  journal:undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -37,6 +39,7 @@ export default function AppNavigator() {
         <Stack.Screen name="mood" component={MoodTrackerScreen} />
         <Stack.Screen name="moodhistory" component={MoodHistoryScreen} />
         <Stack.Screen name="activities" component={GuidedActivitiesScreen} />
+        <Stack.Screen name="journal" component={JournalingScreen}/>
         </>
       )}
     </Stack.Navigator>
