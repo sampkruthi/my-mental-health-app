@@ -10,7 +10,7 @@ import { useFetchActivities, useLogActivity } from "../../api/hooks";
 import { Button } from "../../components/UI/Button";
 import Layout from "../../components/UI/layout";
 
-import AudioPlayer from "../../audio/AudioPlayer";
+//import AudioPlayer from "../../audio/AudioPlayer";
 
 const { width } = Dimensions.get("window");
 
@@ -84,7 +84,7 @@ const GuidedActivitiesScreen = () => {
                     <Text style={styles.stepText}>{step}</Text>
                   </View>
                 ))}
-               <AudioPlayer source={selectedActivity.audioFile!} />
+               
 
 
 

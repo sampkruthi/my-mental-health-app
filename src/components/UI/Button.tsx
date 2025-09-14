@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   text: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
   },
 });

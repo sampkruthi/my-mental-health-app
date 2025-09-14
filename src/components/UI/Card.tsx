@@ -1,12 +1,13 @@
 // src/components/UI/Card.tsx
 import React from "react";
-import { TouchableOpacity, Text, StyleSheet } from "react-native";
+import { TouchableOpacity, Text, StyleSheet} from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 
 export type CardProps = {
   title: string;
   subtitle?: string;
   onPress?: () => void;
+  style?: object;
 };
 
 export const Card: React.FC<CardProps> = ({ title, subtitle, onPress }) => {
@@ -17,7 +18,7 @@ export const Card: React.FC<CardProps> = ({ title, subtitle, onPress }) => {
       onPress={onPress}
       style={[styles.card, { backgroundColor: colors.cardBackground }]}
     >
-      <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+      <Text style={[styles.title, { color: colors.text, }]}>{title}</Text>
       {subtitle && <Text style={[styles.subtitle, { color: colors.subText }]}>{subtitle}</Text>}
     </TouchableOpacity>
   );
@@ -38,7 +39,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 10,
     marginTop: 4,
   },
 });

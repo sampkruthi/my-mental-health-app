@@ -1,4 +1,3 @@
-// src/components/Layout.tsx
 import React, { useState } from "react";
 import {
   View,
@@ -7,25 +6,31 @@ import {
   Animated,
   StyleSheet,
   Image,
+  Dimensions,
+  StatusBar,
+  Platform
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
-
 import { useAuth } from "../../context/AuthContext";
 
 import AppLogo from "../../images/app.png";
 
-// src/components/UI/Layout.tsx
+import { Button } from "../UI/Button";
+import { Card } from "../UI/Card";
+import Input from "../UI/Input";
+
+const { width } = Dimensions.get("window");
+
 type LayoutProps = {
   title: string;
   children: React.ReactNode;
-  onNavigate: (screen: string) => void;// 👈 accept string
+  onNavigate: (screen: string) => void;
 };
 
-
-export default function Layout({ children, title, onNavigate }: LayoutProps) {
+function Layout({ children, title, onNavigate }: LayoutProps) {
   const { colors, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
-  const slideAnim = useState(new Animated.Value(-250))[0]; // hidden initially
+  const slideAnim = useState(new Animated.Value(-250))[0];
 
   const { signOut } = useAuth();
 
@@ -39,25 +44,29 @@ export default function Layout({ children, title, onNavigate }: LayoutProps) {
   };
 
   return (
+    
+    
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
+      <StatusBar 
+  barStyle="dark-content" // or "light-content" depending on your theme
+  backgroundColor="transparent" // make it transparent to blend with header
+  translucent={true} // allow content to appear under the status bar
+/>
+      <View style={{ paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}></View>
       <View style={[styles.header, { backgroundColor: colors.primary }]}>
         <TouchableOpacity onPress={toggleMenu} style={styles.hamburger}>
           <Text style={{ fontSize: 24, color: colors.buttonText }}>☰</Text>
         </TouchableOpacity>
 
-        <Image
-          source={AppLogo} // put your app logo in assets folder
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        <Image source={AppLogo} style={styles.logo} resizeMode="contain" />
 
         <Text style={[styles.title, { color: colors.buttonText }]}>
           {title || "Mental health App"}
         </Text>
       </View>
 
-      {/* Drawer Menu */}
+      {/* Drawer */}
       <Animated.View
         style={[
           styles.drawer,
@@ -93,6 +102,7 @@ export default function Layout({ children, title, onNavigate }: LayoutProps) {
         >
           <Text style={{ color: colors.text }}>👤 Profile</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.drawerItem}
           onPress={() => {
@@ -102,17 +112,24 @@ export default function Layout({ children, title, onNavigate }: LayoutProps) {
         >
           <Text style={{ color: colors.text }}>Logout</Text>
         </TouchableOpacity>
-
-
-
       </Animated.View>
 
       {/* Main Content */}
-      <View style={{ flex: 1, padding: 16 }}>{children}</View>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        {children}
+      </View>
     </View>
   );
 }
 
+// -----------------
+// Styles
+// -----------------
 const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
@@ -149,4 +166,26 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 20,
   },
+  container: {
+    flex: 1,
+    width: width > 800 ? 900 : "100%",
+    alignSelf: "center",
+    padding: 16,
+  },
 });
+
+// -----------------
+// Extend Layout with UI components
+// -----------------
+type LayoutComponent = React.FC<LayoutProps> & {
+  Button: typeof Button;
+  Card: typeof Card;
+  Input: typeof Input;
+};
+
+const LayoutWithChildren = Layout as LayoutComponent;
+LayoutWithChildren.Button = Button;
+LayoutWithChildren.Card = Card;
+LayoutWithChildren.Input = Input;
+
+export default LayoutWithChildren;

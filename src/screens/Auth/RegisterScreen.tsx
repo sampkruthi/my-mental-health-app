@@ -9,7 +9,7 @@ import { useRegister} from "../../api/hooks";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import { Token } from "../../api/types"
 
-export const RegisterScreen: React.FC = () => {
+const RegisterScreen: React.FC = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -101,3 +101,5 @@ const loading = registerMutation.status === "pending";
     </View>
   );
 };
+
+export default RegisterScreen;
