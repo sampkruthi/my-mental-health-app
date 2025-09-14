@@ -1,7 +1,7 @@
 // src/services/api.ts
 import axios from "axios";
 import { mockApiService } from "./mockApi";
-import type { MoodTrendPoint, MoodLog, Reminder, ChatMessage, GuidedActivity,JournalEntry, JournalInsights, ResourceRec } from "../src/api/types";
+import type { MoodTrendPoint, MoodLog, Reminder, ChatMessage, GuidedActivity,JournalEntry, JournalInsights, ResourceRec, Token, Reminder1 } from "../src/api/types";
 
 export interface LoginResponse {
   token: string;
@@ -9,6 +9,10 @@ export interface LoginResponse {
 
 export interface ApiService {
   login: (email: string, password: string) => Promise<LoginResponse>;
+
+// add register
+  register(name: string, email: string, password: string): Promise<Token>;
+
   getMoodCount: () => Promise<number>;
   getReminderCount: () => Promise<number>;
   getUserProfile: () => Promise<unknown>;
@@ -27,6 +31,13 @@ export interface ApiService {
   getJournalInsights(): Promise<JournalInsights>;
   logJournal(input: { content: string }): Promise<JournalEntry>;
   getJournalHistory(): Promise<JournalEntry[]>
+
+
+    // Reminders
+  getReminders1(): Promise<Reminder1[]>;
+  addReminder(reminder: { type: string; time: string; message: string }): Promise<Reminder1>;
+  toggleReminder(id: string): Promise<Reminder1>;
+  deleteReminder(id: string): Promise<{ success: boolean }>;
 
 
     // ---------- Resources ----------
@@ -63,6 +74,12 @@ export const realApiService: ApiService = {
     const { data } = await apiClient.post("/auth/login", { email, password });
     return data;
   },
+
+  async register(name: string, email: string, password: string) {
+    const { data } = await apiClient.post("/auth/register", { name, email, password });
+    return data;
+  },
+
   async getMoodCount() {
     const { data } = await apiClient.get("/moods/count");
     return data;
@@ -122,6 +139,31 @@ async getContentRecommendations(params?: { q?: string; tags?: string[]; limit?: 
   const { data } = await apiClient.get<ResourceRec[]>("/recommend/content", { params });
   return data;
 },
+
+
+// --- Get all reminders ---
+  async getReminders1() {
+    const { data } = await apiClient.get("/reminders");
+    return data; // Reminder[]
+  },
+
+  // --- Add reminder ---
+  async addReminder(reminder: { type: string; time: string; message: string }) {
+    const { data } = await apiClient.post("/reminders", reminder);
+    return data; // Reminder
+  },
+
+  // --- Toggle reminder ---
+  async toggleReminder(id: string) {
+    const { data } = await apiClient.patch(`/reminders/${id}/toggle`);
+    return data; // Reminder
+  },
+
+  // --- Delete reminder ---
+  async deleteReminder(id: string) {
+    const { data } = await apiClient.delete(`/reminders/${id}`);
+    return data; // { success: boolean }
+  },
 
 
   

@@ -15,6 +15,25 @@ export interface Reminder {
 
 
 
+// =====================
+// Auth
+// =====================
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface RegisterResponse {
+  token: string;
+}
+export interface Token {
+  access_token: string;
+  token_type: string;
+}
+
+
 
 
 export interface ChatMessage {
@@ -83,3 +102,15 @@ export interface ResourceRec {
   thumbnail?: string;
 }
 
+
+
+
+export interface Reminder1 {
+  id: string;
+  type: string;     // "Meditation", "Journal", etc.
+  time: string;     // "08:00" or "21:00" (HH:mm format)
+  message: string;
+  enabled: boolean; // true = active, false = off
+}
+
+export type NewReminder = Omit<Reminder1, "id">; // creating one

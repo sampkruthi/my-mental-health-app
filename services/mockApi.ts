@@ -1,5 +1,6 @@
 // src/services/mockApi.ts
-import type { MoodTrendPoint, Reminder, ChatMessage, MoodLog, GuidedActivity, JournalEntry, JournalInsights, ResourceRec } from "../src/api/types";
+import type { MoodTrendPoint, Reminder, ChatMessage, MoodLog, GuidedActivity, JournalEntry, JournalInsights, ResourceRec,
+   Token, Reminder1} from "../src/api/types";
 
 import BoxBreathingIcon from "../src/images/breathing.png";
 import DiaphragmIcon from "../src/images/diaphragm.png";
@@ -188,6 +189,15 @@ const dummyResources: ResourceRec[] = [
 ];
 
 
+
+
+// ---------- Dummy Reminders Data ----------
+const dummyReminders1: Reminder1[] = [
+  { id: "r1", type: "Meditation", time: "08:00", message: "Morning session", enabled: true },
+  { id: "r2", type: "Journal", time: "21:00", message: "Write thoughts", enabled: false },
+];
+
+
 // =====================
 // Mock API service
 // =====================
@@ -205,6 +215,18 @@ export const mockApiService = {
 
     console.log("[mockApi] login failed");
     throw new Error("Invalid credentials");
+  },
+
+   async register(name: string, email: string, _password: string): Promise<Token> {
+
+     // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const password = _password;
+    console.log("[mockApi] registering user:", { name, email });
+    await new Promise((res) => setTimeout(res, 1000)); // simulate delay
+    return {
+      access_token: "mock-jwt-token-new-user",
+      token_type: "bearer",
+    };
   },
 
   // ---------- Mood ----------
@@ -406,6 +428,43 @@ async getJournalHistory(): Promise<JournalEntry[]> {
   },
 
 
+
+
+
+  // --- GET all reminders ---
+  async getReminders1(): Promise<Reminder1[]> {
+    console.log("[mockApi] fetching reminders");
+    await delay(300);
+    return dummyReminders1;
+  },
+
+  // --- ADD reminder ---
+  async addReminder(newReminder: Omit<Reminder1, "id">): Promise<Reminder1> {
+    console.log("[mockApi] adding reminder:", newReminder);
+    await delay(300);
+    const reminder: Reminder1 = {
+      id: `r${Math.floor(Math.random() * 10000)}`,
+      ...newReminder,
+    };
+    return reminder;
+  },
+
+  // --- TOGGLE reminder enabled/disabled ---
+  async toggleReminder(id: string): Promise<Reminder1 | undefined> {
+    console.log("[mockApi] toggling reminder:", id);
+    await delay(300);
+    const reminder = dummyReminders1.find((r) => r.id === id);
+    if (!reminder) return undefined;
+    return { ...reminder, enabled: !reminder.enabled };
+  },
+
+  // --- DELETE reminder ---
+  async deleteReminder(id: string): Promise<{ success: boolean }> {
+    console.log("[mockApi] deleting reminder:", id);
+    await delay(300);
+    const exists = dummyReminders1.some((r) => r.id === id);
+    return { success: exists };
+  },
 
 
 };

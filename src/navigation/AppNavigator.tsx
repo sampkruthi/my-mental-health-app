@@ -10,6 +10,9 @@ import MoodHistoryScreen from "../screens/MoodTrackerScreen/MoodHistoryScreen";
 import GuidedActivitiesScreen from "../screens/GuidedActivitiesScreen/GuidedActivitiesScreen";
 import JournalingScreen from "../screens/JournalingScreen/JournalingScreen";
 import ResourcesScreen from "../screens/ResourcesScreen/ResourcesScreen";
+import  RegisterScreen  from "../screens/Auth/RegisterScreen";
+//import RemindersScreen from "../screens/RemindersScreen/RemindersScreen";
+import ReminderScreen  from "../screens/RemindersScreen/RemindersScreen";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -20,6 +23,8 @@ export type RootStackParamList = {
   activities : undefined;
   journal:undefined;
   resources : undefined;
+  Register:undefined;
+  reminders:undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -33,7 +38,10 @@ export default function AppNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!token ? (
+        <>
         <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Register" component={RegisterScreen} />
+        </>
       ) : (
         <>
         <Stack.Screen name="Home" component={HomeScreen} />
@@ -43,6 +51,7 @@ export default function AppNavigator() {
         <Stack.Screen name="activities" component={GuidedActivitiesScreen} />
         <Stack.Screen name="journal" component={JournalingScreen}/>
         <Stack.Screen name="resources" component={ResourcesScreen}/>
+        <Stack.Screen name="reminders" component={ReminderScreen}/>
         </>
       )}
     </Stack.Navigator>

@@ -4,6 +4,9 @@ import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Platform } 
 import { useAuth } from "../../context/AuthContext";
 //import { useMutation } from "@tanstack/react-query";
 import { useLogin } from "../../../src/api/hooks";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../../navigation/AppNavigator"; 
 
 
 export default function LoginScreen() {
@@ -11,7 +14,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-
+const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
 
   // =====================
@@ -98,7 +101,18 @@ export default function LoginScreen() {
         <Text style={{ color: "#fff", fontWeight: "bold" }}>Login</Text>
       )}
     </TouchableOpacity>
-
+      <TouchableOpacity
+          onPress={() => navigation.navigate("Register")} // navigate to register screen
+          style={{
+            marginTop: 16,
+            padding: 12,
+            alignItems: "center",
+          }}
+        >
+          <Text style={{ color: "#007bff", fontWeight: "bold" }}>
+            New user? Register
+          </Text>
+        </TouchableOpacity>  
 
     
 

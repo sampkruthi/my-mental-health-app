@@ -1,7 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { MoodTrendPoint, Reminder } from "./types";
 import { getApiService } from "../../services/api"; // adjust path if needed
-import type { ChatMessage, MoodLog, GuidedActivity, JournalEntry, JournalInsights, ResourceRec } from "./types";
+import type { ChatMessage, MoodLog, GuidedActivity, JournalEntry, JournalInsights, ResourceRec, Reminder1, NewReminder } from "./types";
+import { Token, RegisterRequest } from "./types";
+
+
+
+import {  UseMutationResult } from "@tanstack/react-query";
+
 
 // =====================
 // Login mutation hook
@@ -26,6 +32,26 @@ export const useLogin = () => {
     },
   });
 };
+
+
+export function useRegister(): UseMutationResult<Token, Error, RegisterRequest, unknown> {
+  const qc = useQueryClient();
+
+  return useMutation<Token, Error, RegisterRequest>({
+    mutationFn: async ({ name, email, password }) => {
+      console.log("[useRegister] registering:", { name, email });
+      const data: Token = await getApiService().register(name, email, password);
+      console.log("[useRegister] token received:", data);
+      return data;
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries(); // optional: refresh other queries
+      console.log("[useRegister] registration successful, token:", data.access_token);
+    },
+  });
+}
+
+
 
 // =====================
 // Mood count hook
@@ -258,5 +284,94 @@ export function useFetchContentRec(
     },
     enabled: Boolean(token),
     staleTime: 60_000, // 1 minute
+  });
+}
+
+
+
+
+// =====================
+// Fetch reminders
+// =====================
+export function useFetchReminders(token?: string | null) {
+  return useQuery<Reminder1[], Error>({
+    queryKey: ["reminders", "list", token],
+    queryFn: async () => {
+      console.log("[useFetchReminders] Fetching reminders, token:", token);
+      if (!token) return [];
+
+      const data: Reminder1[] = await getApiService().getReminders1?.() ?? [];
+      console.log("[useFetchReminders] Data received:", data);
+      return data;
+    },
+    enabled: Boolean(token),
+    staleTime: 30000,
+  });
+}
+
+// =====================
+// Add reminder
+// =====================
+export function useAddReminder(token?: string | null) {
+  const qc = useQueryClient();
+
+  return useMutation<Reminder1, Error, NewReminder>({
+    mutationFn: async (input) => {
+      console.log("[useAddReminder] Adding reminder:", input, "token:", token);
+      if (!token) throw new Error("No token provided");
+
+      const data: Reminder1 = await getApiService().addReminder?.(input) as Reminder1;
+      console.log("[useAddReminder] Reminder added:", data);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["reminders", "list", token] });
+    },
+  });
+}
+
+// =====================
+// Delete reminder
+// =====================
+export function useDeleteReminder(token?: string | null) {
+  const qc = useQueryClient();
+
+  return useMutation<string, Error, string>({
+    mutationFn: async (id) => {
+      console.log("[useDeleteReminder] Deleting reminder:", id, "token:", token);
+      if (!token) throw new Error("No token provided");
+
+      await getApiService().deleteReminder?.(id);
+      console.log("[useDeleteReminder] Reminder deleted:", id);
+      return id;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["reminders", "list", token] });
+    },
+  });
+}
+
+
+
+
+
+// =====================
+// Toggle reminder (enable/disable)
+// =====================
+export function useToggleReminder(token?: string | null) {
+  const qc = useQueryClient();
+
+  return useMutation<Reminder1, Error, { id: string; enabled: boolean }>({
+    mutationFn: async ({ id, enabled }) => {
+      console.log("[useToggleReminder] Toggling reminder:", id, "to:", enabled, "token:", token);
+      if (!token) throw new Error("No token provided");
+
+      const data: Reminder1 = await getApiService().toggleReminder?.(id) as Reminder1;
+      console.log("[useToggleReminder] Reminder updated:", data);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["reminders", "list", token] });
+    },
   });
 }
