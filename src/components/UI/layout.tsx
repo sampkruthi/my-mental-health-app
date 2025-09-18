@@ -13,6 +13,10 @@ import {
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 
+import BottomNav from "./BottomNav"; 
+
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import AppLogo from "../../images/app.png";
 
 import { Button } from "../UI/Button";
@@ -31,6 +35,8 @@ function Layout({ children, title, onNavigate }: LayoutProps) {
   const { colors, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const slideAnim = useState(new Animated.Value(-250))[0];
+
+  //const [activeTab, setActiveTab] = useState<string>("Chat");
 
   const { signOut } = useAuth();
 
@@ -123,6 +129,13 @@ function Layout({ children, title, onNavigate }: LayoutProps) {
       >
         {children}
       </View>
+
+      {/* Bottom Navigation only on Android */}
+    {Platform.OS === "android" && (
+      <SafeAreaView edges={["bottom"]} style={{ backgroundColor: colors.cardBackground }}>
+    <BottomNav />  {/* no props needed */}
+  </SafeAreaView>
+    )}
     </View>
   );
 }

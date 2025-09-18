@@ -10,19 +10,20 @@ export type CardProps = {
   style?: object;
 };
 
-export const Card: React.FC<CardProps> = ({ title, subtitle, onPress }) => {
+export const Card: React.FC<CardProps> = ({ title, subtitle, onPress, style }) => {
   const { colors } = useTheme();
 
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[styles.card, { backgroundColor: colors.cardBackground }]}
+      style={[styles.card, { backgroundColor: colors.cardBackground }, style]} // <-- apply passed style
     >
-      <Text style={[styles.title, { color: colors.text, }]}>{title}</Text>
+      <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
       {subtitle && <Text style={[styles.subtitle, { color: colors.subText }]}>{subtitle}</Text>}
     </TouchableOpacity>
   );
 };
+
 
 const styles = StyleSheet.create({
   card: {
