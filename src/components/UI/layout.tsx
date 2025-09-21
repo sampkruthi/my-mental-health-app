@@ -1,3 +1,4 @@
+// src/components/UI/layout.tsx
 import React, { useState } from "react";
 import {
   View,
@@ -8,15 +9,13 @@ import {
   Image,
   Dimensions,
   StatusBar,
-  Platform
+  Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 
-import BottomNav from "./BottomNav"; 
-
-import { SafeAreaView } from "react-native-safe-area-context";
-
+import BottomNav from "./BottomNav";
 import AppLogo from "../../images/app.png";
 
 import { Button } from "../UI/Button";
@@ -36,8 +35,6 @@ function Layout({ children, title, onNavigate }: LayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const slideAnim = useState(new Animated.Value(-250))[0];
 
-  //const [activeTab, setActiveTab] = useState<string>("Chat");
-
   const { signOut } = useAuth();
 
   const toggleMenu = () => {
@@ -50,16 +47,17 @@ function Layout({ children, title, onNavigate }: LayoutProps) {
   };
 
   return (
-    
-    
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView
+      edges={["top", "left", "right"]}
+      style={{ flex: 1, backgroundColor: colors.background }}
+    >
       {/* Header */}
-      <StatusBar 
-  barStyle="dark-content" // or "light-content" depending on your theme
-  backgroundColor="transparent" // make it transparent to blend with header
-  translucent={true} // allow content to appear under the status bar
-/>
-      <View style={{ paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}></View>
+      <StatusBar
+        barStyle={colors.background === "#000" ? "light-content" : "dark-content"}
+        backgroundColor="transparent"
+        translucent
+      />
+
       <View style={[styles.header, { backgroundColor: colors.primary }]}>
         <TouchableOpacity onPress={toggleMenu} style={styles.hamburger}>
           <Text style={{ fontSize: 24, color: colors.buttonText }}>☰</Text>
@@ -68,7 +66,7 @@ function Layout({ children, title, onNavigate }: LayoutProps) {
         <Image source={AppLogo} style={styles.logo} resizeMode="contain" />
 
         <Text style={[styles.title, { color: colors.buttonText }]}>
-          {title || "Mental health App"}
+          {String(title || "Mental health App")}
         </Text>
       </View>
 
@@ -130,13 +128,14 @@ function Layout({ children, title, onNavigate }: LayoutProps) {
         {children}
       </View>
 
-      {/* Bottom Navigation only on Android */}
-    {Platform.OS === "android" && (
-      <SafeAreaView edges={["bottom"]} style={{ backgroundColor: colors.cardBackground }}>
-    <BottomNav />  {/* no props needed */}
-  </SafeAreaView>
-    )}
-    </View>
+     {/* Bottom Navigation only on Android & iOS */}
+      {(Platform.OS === "android" || Platform.OS === "ios") && (
+        <SafeAreaView edges={["bottom"]} style={{ backgroundColor: colors.cardBackground }}>
+          <BottomNav />
+        </SafeAreaView>
+      )}
+      
+    </SafeAreaView>
   );
 }
 

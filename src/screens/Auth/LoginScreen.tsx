@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Platform } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 //import { useMutation } from "@tanstack/react-query";
-import { useLogin } from "../../../src/api/hooks";
+import { useLogin } from "../../../src/hooks/auth";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/AppNavigator"; 
@@ -23,19 +23,20 @@ const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>(
   const loginMutation = useLogin();
 
   const handleSubmit = async () => {
-    try {
-      console.log("[LoginScreen] handleSubmit called with:", email, password);
-      const result = await loginMutation.mutateAsync({ email, password });
-      console.log("[LoginScreen] Login mutation result:", result);
+  try {
+    console.log("[LoginScreen] handleSubmit called with:", email, password);
+    const result = await loginMutation.mutateAsync({ email, password });
+    console.log("[LoginScreen] Login mutation result:", result);
 
-      if (result?.token) {
-        await signIn(email, password, result.token); // Pass token to AuthContext
-        console.log("[LoginScreen] User signed in successfully");
-      }
-    } catch (e) {
-      console.error("[LoginScreen] Login failed", e);
+    if (result?.access_token) {
+      await signIn(email, password, result.access_token); // Use access_token
+      console.log("[LoginScreen] User signed in successfully");
     }
-  };
+  } catch (e) {
+    console.error("[LoginScreen] Login failed", e);
+  }
+};
+
 
   // ✅ derive flags manually
   const loading = loginMutation.status === "pending";

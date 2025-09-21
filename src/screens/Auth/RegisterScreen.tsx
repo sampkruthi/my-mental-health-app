@@ -5,7 +5,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "../../context/ThemeContext";
 import { Button } from "../../components/UI/Button";
-import { useRegister} from "../../api/hooks";
+import { useRegister} from "../../hooks/auth";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import { Token } from "../../api/types"
 

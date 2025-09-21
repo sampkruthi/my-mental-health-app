@@ -1,21 +1,27 @@
 // src/screens/MoodTrackerScreen.tsx
 import React from "react";
-import { View, Text, TextInput, TouchableOpacity, Dimensions, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Dimensions,
+  StyleSheet,
+  useWindowDimensions,
+} from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import Layout from "../../components/UI/layout";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { useFetchMoodHistory, useLogMood } from "../../api/hooks";
-//import type { MoodLog } from "../../api/types";
+import type { MoodLog } from "../../../services/mock_data/mood";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 
-const emojiOptions = ["😞","😐","😊","😃","😁"]; // Example emojis
+const emojiOptions = ["😞", "😐", "😊", "😃", "😁"];
 
-const { width } = Dimensions.get("window");
-
-import { useWindowDimensions } from "react-native";
+const { width: screenWidth } = Dimensions.get("window");
 
 const MoodTrackerScreen = () => {
   const { token } = useAuth();
@@ -25,13 +31,13 @@ const MoodTrackerScreen = () => {
   const [current, setCurrent] = React.useState<number | null>(null);
   const [note, setNote] = React.useState("");
 
-  const { width: screenWidth } = useWindowDimensions();
+  const { width } = useWindowDimensions();
 
-  // Fetch mood history
-  const { data: moodHistory = [], isLoading } = useFetchMoodHistory(token);
+  // ✅ Fetch mood history
+  const { data: moodHistory = [], isLoading: historyLoading } = useFetchMoodHistory();
 
-  // Log mood mutation
-  const logMoodMutation = useLogMood(token);
+  // ✅ Log mood mutation
+  const logMoodMutation = useLogMood();
 
   const handleLogMood = async () => {
     if (!current) return;
@@ -40,14 +46,14 @@ const MoodTrackerScreen = () => {
       setCurrent(null);
       setNote("");
     } catch (err) {
-      console.log("Error logging mood:", err);
+      console.error("Error logging mood:", err);
     }
   };
 
   return (
     <Layout title="Mood Tracker" onNavigate={(screen) => navigation.navigate(screen as never)}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        {/* New Entry Section */}
+        {/* New Entry */}
         <Text style={[styles.heading, { color: colors.text }]}>New Entry</Text>
         <View style={styles.emojiRow}>
           {emojiOptions.map((emoji, index) => (
@@ -73,24 +79,19 @@ const MoodTrackerScreen = () => {
         />
 
         <TouchableOpacity
-  style={[
-    styles.logButton,
-    { backgroundColor: colors.primary } // your theme color
-  ]}
-  onPress={handleLogMood}
->
-  <Text style={[styles.logButtonText, { color: colors.background }]}>
-    Log Mood
-  </Text>
-</TouchableOpacity>
+          style={[styles.logButton, { backgroundColor: colors.primary }]}
+          onPress={handleLogMood}
+          disabled={logMoodMutation.isLoading} // ✅ disable while loading
+        >
+          <Text style={[styles.logButtonText, { color: colors.background }]}>
+            {logMoodMutation.isLoading ? "Logging..." : "Log Mood"}
+          </Text>
+        </TouchableOpacity>
 
+        {/* Recent Trends */}
+        <Text style={[styles.heading, { color: colors.text, marginTop: 20 }]}>Recent Trends</Text>
 
-        {/* Recent Trends Section */}
-        <Text style={[styles.heading, { color: colors.text, marginTop: 20 }]}>
-          Recent Trends
-        </Text>
-
-        {isLoading ? (
+        {historyLoading ? (
           <Text style={{ color: colors.subText }}>Loading mood history...</Text>
         ) : moodHistory.length > 0 ? (
           <LineChart
@@ -100,12 +101,12 @@ const MoodTrackerScreen = () => {
               ),
               datasets: [
                 {
-                  data: moodHistory.map((m) => m.score),
+                  data: moodHistory.map((m) => m.mood_score), // ✅ matches MoodLog type
                 },
               ],
             }}
-              width={screenWidth > 800 ? 900 : screenWidth - 30} // ✅ responsive width
-              height={200} // you can also shrink this if too tall
+            width={screenWidth > 800 ? 900 : screenWidth - 30} // responsive
+            height={200}
             yAxisInterval={1}
             chartConfig={{
               backgroundGradientFrom: "#fff",
@@ -113,9 +114,7 @@ const MoodTrackerScreen = () => {
               decimalPlaces: 0,
               color: () => colors.primary,
               labelColor: () => colors.text,
-              style: {
-                borderRadius: 16,
-              },
+              style: { borderRadius: 16 },
             }}
             bezier
             style={{ marginVertical: 8, borderRadius: 16 }}
@@ -135,8 +134,8 @@ const MoodTrackerScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: width > 800 ? 900 : "100%", // Use fixed width on desktop, full on mobile
-    alignSelf: "center",               // center horizontally
+    width: screenWidth > 800 ? 900 : "100%",
+    alignSelf: "center",
     padding: 10,
   },
   heading: {
@@ -164,22 +163,21 @@ const styles = StyleSheet.create({
     padding: 8,
     marginBottom: 12,
   },
+  logButton: {
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  logButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
   link: {
     marginTop: 12,
     textAlign: "center",
     fontWeight: "600",
   },
-  logButton: {
-  paddingVertical: 12,
-  borderRadius: 12,
-  alignItems: "center",
-  marginTop: 8,
-},
-logButtonText: {
-  fontSize: 16,
-  fontWeight: "600",
-},
-
 });
 
 export default MoodTrackerScreen;
