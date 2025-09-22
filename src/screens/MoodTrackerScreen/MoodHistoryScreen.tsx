@@ -3,21 +3,19 @@ import React from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
 import Layout from "../../components/UI/layout";
 import { useTheme } from "../../context/ThemeContext";
-import { useAuth } from "../../context/AuthContext";
-import { useFetchMoodHistory } from "../../api/hooks";
-import type { MoodLog } from "../../api/types";
+import { useFetchMoodHistory } from "../../hooks/mood";
+import type { MoodLog } from "../../../services/mock_data/mood";
 
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 
 const MoodHistoryScreen = () => {
-  const { token } = useAuth();
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-  const { data: moodHistory = [], isLoading } = useFetchMoodHistory(token);
-    
+  const { data: moodHistory = [], isLoading } = useFetchMoodHistory();
+
   return (
     <Layout
       title="Mood History"
@@ -31,12 +29,15 @@ const MoodHistoryScreen = () => {
         ) : (
           <FlatList
             data={moodHistory as MoodLog[]}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <View
                 style={[
                   styles.entry,
-                  { backgroundColor: colors.cardBackground, borderColor: colors.inputBorder },
+                  {
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.inputBorder,
+                  },
                 ]}
               >
                 <Text style={[styles.date, { color: colors.subText }]}>
@@ -48,7 +49,7 @@ const MoodHistoryScreen = () => {
                     : "-"}
                 </Text>
                 <Text style={[styles.score, { color: colors.text }]}>
-                  Score: {item.score}
+                  Score: {item.mood_score}
                 </Text>
                 {item.note ? (
                   <Text style={[styles.note, { color: colors.text }]}>{item.note}</Text>

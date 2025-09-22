@@ -1,12 +1,5 @@
-import { create } from 'zustand';
-
-export type Reminder = {
-  id: string;
-  type: string;
-  time: string;
-  message: string;
-  enabled: boolean;
-};
+import { create } from "zustand";
+import { Reminder } from "../../services/mock_data/reminders";
 
 interface ReminderState {
   list: Reminder[];
@@ -18,12 +11,10 @@ interface ReminderState {
 export const useReminderStore = create<ReminderState>((set) => ({
   list: [],
   setList: (items) => set({ list: items }),
-  toggle: (id) =>
-    set((state) => ({
-      list: state.list.map((r) =>
-        r.id === id ? { ...r, enabled: !r.enabled } : r
-      ),
-    })),
-  remove: (id) =>
-    set((state) => ({ list: state.list.filter((r) => r.id !== id) })),
+  toggle: (id) => set(state => ({
+    list: state.list.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r)
+  })),
+  remove: (id) => set(state => ({
+    list: state.list.filter(r => r.id !== id)
+  }))
 }));

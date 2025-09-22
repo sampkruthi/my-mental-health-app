@@ -1,31 +1,29 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export type ResourceType = 'article' | 'audio' | 'video';
+export type ResourceType = "article" | "audio" | "video" | "podcast";
 
 export interface ResourceItem {
-  id: string;
+  id: string | number;
   title: string;
-  type: ResourceType;
+  content_type: ResourceType;
   url: string;
   tags?: string[];
-  snippet?: string;
-  thumbnail?: string;
-  createdAt?: string;
+  score?: number;
   read?: boolean;
 }
 
 export interface ResourceFilter {
   query?: string;
   tags?: string[];
-  type?: ResourceType | 'all';
+  type?: ResourceType | "all";
 }
 
 interface ResourcesState {
   list: ResourceItem[];
-  favorites: string[];
-  lastViewed?: string | null;
+  favorites: (string | number)[];
+  lastViewed?: string | number | null;
   filter: ResourceFilter;
 
   setList: (items: ResourceItem[]) => void;
@@ -33,31 +31,29 @@ interface ResourcesState {
   setFilter: (filter: Partial<ResourceFilter>) => void;
   clearFilter: () => void;
 
-  select: (id: string) => void;
-  markRead: (id: string, read?: boolean) => void;
+  select: (id: string | number) => void;
+  markRead: (id: string | number, read?: boolean) => void;
 
-  addFavorite: (id: string) => void;
-  removeFavorite: (id: string) => void;
+  addFavorite: (id: string | number) => void;
+  removeFavorite: (id: string | number) => void;
 
   clear: () => void;
 }
 
-// ✅ Persisted slice type
-type PersistedResourcesState = Pick<ResourcesState, 'favorites' | 'lastViewed' | 'filter'>;
+type PersistedResourcesState = Pick<ResourcesState, "favorites" | "lastViewed" | "filter">;
 
-// ✅ Correctly typed store
 export const useResourcesStore = create<ResourcesState>()(
   persist(
     (set, get) => ({
       list: [],
       favorites: [],
       lastViewed: null,
-      filter: { type: 'all' },
+      filter: { type: "all" },
 
       setList: (items) => set({ list: items }),
       append: (items) => set({ list: [...get().list, ...items] }),
       setFilter: (filter) => set({ filter: { ...get().filter, ...filter } }),
-      clearFilter: () => set({ filter: { type: 'all' } }),
+      clearFilter: () => set({ filter: { type: "all" } }),
       select: (id) => set({ lastViewed: id }),
       markRead: (id, read = true) =>
         set({ list: get().list.map((r) => (r.id === id ? { ...r, read } : r)) }),
@@ -67,7 +63,7 @@ export const useResourcesStore = create<ResourcesState>()(
       clear: () => set({ list: [], favorites: [], lastViewed: null }),
     }),
     {
-      name: 'resources-store',
+      name: "resources-store",
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         favorites: state.favorites,

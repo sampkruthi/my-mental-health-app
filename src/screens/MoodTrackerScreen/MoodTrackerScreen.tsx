@@ -7,14 +7,16 @@ import {
   TouchableOpacity,
   Dimensions,
   StyleSheet,
-  useWindowDimensions,
+
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import Layout from "../../components/UI/layout";
 import { useTheme } from "../../context/ThemeContext";
-import { useAuth } from "../../context/AuthContext";
-import { useFetchMoodHistory, useLogMood } from "../../api/hooks";
-import type { MoodLog } from "../../../services/mock_data/mood";
+//import { useAuth } from "../../context/AuthContext";
+import { useFetchMoodHistory, useLogMood } from "../../hooks/mood";
+//import type { MoodLog, MoodTrend } from "../../../services/mock_data/mood";
+//import { moodApi } from "../../../services/mock_data/mood";
+
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/AppNavigator";
@@ -24,14 +26,14 @@ const emojiOptions = ["😞", "😐", "😊", "😃", "😁"];
 const { width: screenWidth } = Dimensions.get("window");
 
 const MoodTrackerScreen = () => {
-  const { token } = useAuth();
+  //const { token } = useAuth();
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const [current, setCurrent] = React.useState<number | null>(null);
   const [note, setNote] = React.useState("");
 
-  const { width } = useWindowDimensions();
+  //const { width } = useWindowDimensions();
 
   // ✅ Fetch mood history
   const { data: moodHistory = [], isLoading: historyLoading } = useFetchMoodHistory();
@@ -81,10 +83,10 @@ const MoodTrackerScreen = () => {
         <TouchableOpacity
           style={[styles.logButton, { backgroundColor: colors.primary }]}
           onPress={handleLogMood}
-          disabled={logMoodMutation.isLoading} // ✅ disable while loading
+          disabled={logMoodMutation.isPending} // ✅ disable while loading
         >
           <Text style={[styles.logButtonText, { color: colors.background }]}>
-            {logMoodMutation.isLoading ? "Logging..." : "Log Mood"}
+            {logMoodMutation.isPending ? "Logging..." : "Log Mood"}
           </Text>
         </TouchableOpacity>
 
@@ -95,30 +97,38 @@ const MoodTrackerScreen = () => {
           <Text style={{ color: colors.subText }}>Loading mood history...</Text>
         ) : moodHistory.length > 0 ? (
           <LineChart
-            data={{
-              labels: moodHistory.map((m) =>
-                new Date(m.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-              ),
-              datasets: [
-                {
-                  data: moodHistory.map((m) => m.mood_score), // ✅ matches MoodLog type
-                },
-              ],
-            }}
-            width={screenWidth > 800 ? 900 : screenWidth - 30} // responsive
-            height={200}
-            yAxisInterval={1}
-            chartConfig={{
-              backgroundGradientFrom: "#fff",
-              backgroundGradientTo: "#fff",
-              decimalPlaces: 0,
-              color: () => colors.primary,
-              labelColor: () => colors.text,
-              style: { borderRadius: 16 },
-            }}
-            bezier
-            style={{ marginVertical: 8, borderRadius: 16 }}
-          />
+  data={{
+    labels: moodHistory.map((m) =>
+      new Date(m.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    ),
+    datasets: [
+      {
+        data: moodHistory.map((m) => m.mood_score),
+      },
+    ],
+  }}
+  width={Math.min(screenWidth - 30, 900)} // ✅ never crumples, max 900px
+  height={screenWidth < 400 ? 180 : 220}   // ✅ smaller height on phones
+  yAxisInterval={1}
+  chartConfig={{
+    backgroundGradientFrom: "#fff",
+    backgroundGradientTo: "#fff",
+    decimalPlaces: 0,
+    color: () => colors.primary,
+    labelColor: () => colors.text,
+    style: { borderRadius: 16 },
+    propsForLabels: {
+      fontSize: screenWidth < 400 ? 8 : 12, // ✅ smaller labels on phones
+    },
+  }}
+  bezier
+  style={{
+    marginVertical: 8,
+    borderRadius: 16,
+    alignSelf: "center", // ✅ center align
+  }}
+/>
+
         ) : (
           <Text style={{ color: colors.subText }}>No mood data yet</Text>
         )}

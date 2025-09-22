@@ -11,28 +11,23 @@ import {
   Dimensions,
 } from "react-native";
 import { useChatStore } from "../../stores/chatStore";
-import { useAuth } from "../../context/AuthContext";
-import { useSendChatMessage } from "../../api/hooks";
+//import { useAuth } from "../../context/AuthContext";
+import { useSendChatMessage } from "../../hooks/chat";
 import EmojiPicker from "rn-emoji-keyboard";
-import type { ChatMessage } from "../../api/types";
+import type { ChatMessage } from "../../../services/mock_data/chat";
 import Layout from "../../components/UI/layout";
 import { useTheme } from "../../context/ThemeContext";
-
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/AppNavigator";
-
-
-
-
 
 const { width } = Dimensions.get("window");
 
 const ChatScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { token } = useAuth();
+  //const { token } = useAuth();
   const { messages, addMessage } = useChatStore();
-  const { mutateAsync: sendChat } = useSendChatMessage(token);
+  const { mutateAsync: sendChat } = useSendChatMessage();
   const { colors } = useTheme();
 
   const [input, setInput] = useState("");
@@ -48,24 +43,19 @@ const ChatScreen = () => {
   const handleSend = async () => {
     if (!input.trim()) return;
 
-    const newMessage: ChatMessage = {
+    const userMessage: ChatMessage = {
       id: Date.now().toString(),
-      text: input,
       sender: "user",
+      text: input,
       timestamp: new Date().toISOString(),
     };
 
-    addMessage({ ...newMessage, id: newMessage.id.toString() });
-
+    addMessage(userMessage);
     setInput("");
 
     try {
-      const botReply = await sendChat({ text: input });
-      addMessage({
-        ...botReply,
-        id: (Date.now() + 1).toString(),
-        sender: "ai",
-      });
+      const botReply = await sendChat({ text: userMessage.text });
+      addMessage(botReply);
     } catch (error) {
       console.error("Send failed:", error);
     }
@@ -83,12 +73,12 @@ const ChatScreen = () => {
         <View
           style={[
             styles.bubble,
-            isUser ? styles.userBubble : styles.assistantBubble,
+            { backgroundColor: isUser ? colors.userBubble : colors.aiBubble },
           ]}
         >
-          <Text style={styles.messageText}>{item.text}</Text>
+          <Text style={[styles.messageText, { color: colors.text }]}>{item.text}</Text>
         </View>
-        <Text style={styles.timestamp}>
+        <Text style={[styles.timestamp, { color: colors.subText }]}>
           {new Date(item.timestamp).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -100,10 +90,9 @@ const ChatScreen = () => {
 
   return (
     <Layout
-  title="Chat"
-  onNavigate={(screen) => navigation.navigate(screen as never)}
->
-
+      title="Chat"
+      onNavigate={(screen) => navigation.navigate(screen as never)}
+    >
       <KeyboardAvoidingView
         style={[styles.container, { backgroundColor: colors.background }]}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -121,7 +110,12 @@ const ChatScreen = () => {
             contentContainerStyle={styles.chatContainer}
           />
 
-          <View style={styles.inputRow}>
+          <View
+            style={[
+              styles.inputRow,
+              { borderColor: colors.inputBorder },
+            ]}
+          >
             <TouchableOpacity
               onPress={() => setShowEmoji(true)}
               style={styles.emojiBtn}
@@ -130,8 +124,12 @@ const ChatScreen = () => {
             </TouchableOpacity>
 
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                { color: colors.text, borderColor: colors.inputBorder },
+              ]}
               placeholder="Type your message…"
+              placeholderTextColor={colors.subText}
               value={input}
               onChangeText={setInput}
               multiline
@@ -157,35 +155,29 @@ const ChatScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 }, // Keep full height
+  container: { flex: 1 },
 
-  // Wrapper to center chat and control width
   chatWrapper: {
     flex: 1,
-    width: width > 800 ? 900 : "100%", // Use fixed width on desktop, full on mobile
-    alignSelf: "center",               // center horizontally
+    width: width > 800 ? 900 : "100%",
+    alignSelf: "center",
     padding: 10,
   },
 
-  chatContainer: { padding: 10 },      // padding inside FlatList
+  chatContainer: { padding: 10 },
 
-  // Messages
-  messageContainer: { marginVertical: 4, maxWidth: "95%" }, // make bubbles wider
+  messageContainer: { marginVertical: 4, maxWidth: "95%" },
   messageLeft: { alignSelf: "flex-start" },
   messageRight: { alignSelf: "flex-end" },
-  bubble: { padding: 10, borderRadius: 16 },                 // slightly bigger padding
-  userBubble: { backgroundColor: "#DCF8C6" },
-  assistantBubble: { backgroundColor: "#E5E5EA" },
+  bubble: { padding: 10, borderRadius: 16 },
   messageText: { fontSize: 16 },
-  timestamp: { fontSize: 10, color: "#888", marginTop: 2, textAlign: "right" },
+  timestamp: { fontSize: 10, marginTop: 2, textAlign: "right" },
 
-  // Input
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
     padding: 6,
     borderTopWidth: 1,
-    borderColor: "#ddd",
   },
   emojiBtn: { padding: 6 },
   input: {
@@ -193,7 +185,6 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#ccc",
     marginHorizontal: 6,
     maxHeight: 120,
   },

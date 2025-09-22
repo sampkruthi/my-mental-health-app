@@ -5,17 +5,17 @@ import { useTheme } from "../../context/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { ResourceRec } from "../../api/types";
-import { useFetchContentRec } from "../../api/hooks";
-import { Button } from "../../components/UI/Button";
 import Layout from "../../components/UI/layout";
+import { Button } from "../../components/UI/Button";
+import { useFetchContentRec } from "../../hooks/resources";
+import { ResourceRec } from "../../../services/mock_data/resources";
 
 const { width } = Dimensions.get("window");
 
 const ResourcesScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const token = "token"; // replace with real token or from context
+  const token = "token"; // replace with real token
   const { data: resources = [], isLoading } = useFetchContentRec(token, { limit: 10 });
 
   const [selectedResource, setSelectedResource] = useState<ResourceRec | null>(null);
@@ -32,14 +32,14 @@ const ResourcesScreen = () => {
   };
 
   const renderCard = ({ item }: { item: ResourceRec }) => (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: colors.cardBackground || "#f0f4ff" }]}>
       {item.thumbnail && <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />}
       <View style={styles.cardContent}>
-        <Text style={styles.cardTitle}>{item.title}</Text>
+        <Text style={[styles.cardTitle, { color: colors.text }]}>{item.title}</Text>
         <Text style={styles.cardBadge}>{item.type.toUpperCase()}</Text>
-        {item.snippet && <Text style={styles.cardDescription} numberOfLines={2}>{item.snippet}</Text>}
-        <View style={{ marginTop: 16, width: 80 }}>
-          <Button title="Watch" onPress={() => handleOpen(item)} />
+        {item.snippet && <Text style={[styles.cardDescription, { color: colors.subText }]} numberOfLines={2}>{item.snippet}</Text>}
+        <View style={{ marginTop: 12, width: 80 }}>
+          <Button title="Open" onPress={() => handleOpen(item)} />
         </View>
       </View>
     </View>
@@ -48,10 +48,10 @@ const ResourcesScreen = () => {
   return (
     <Layout title="Resources" onNavigate={(screen) => navigation.navigate(screen as never)}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Text style={[styles.header, { color: colors.text }]}>Recommended Videos</Text>
+        <Text style={[styles.header, { color: colors.text }]}>Recommended Resources</Text>
 
         {isLoading ? (
-          <Text>Loading...</Text>
+          <Text style={{ color: colors.subText }}>Loading...</Text>
         ) : (
           <FlatList
             data={resources}
@@ -66,9 +66,9 @@ const ResourcesScreen = () => {
             {selectedResource && (
               <>
                 <Text style={styles.modalTitle}>{selectedResource.title}</Text>
-                <Text style={styles.modalDescription}>{selectedResource.snippet}</Text>
+                {selectedResource.snippet && <Text style={styles.modalDescription}>{selectedResource.snippet}</Text>}
                 <View style={{ marginTop: 16 }}>
-                  <Button title="Open in YouTube" onPress={() => Linking.openURL(selectedResource.url)} />
+                  <Button title="Open Link" onPress={() => Linking.openURL(selectedResource.url)} />
                 </View>
                 <View style={{ marginTop: 16 }}>
                   <Button title="Close" onPress={handleClose} />
@@ -96,7 +96,6 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: "row",
-    backgroundColor: "#f0f4ff",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,

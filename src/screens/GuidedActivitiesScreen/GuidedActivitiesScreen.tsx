@@ -1,16 +1,14 @@
 // src/screens/GuidedActivitiesScreen.tsx
-import React, { useState} from "react";
+import React, { useState } from "react";
 import { View, Text, Image, FlatList, Modal, ScrollView, Dimensions, StyleSheet } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { GuidedActivity } from "../../api/types";
-import { useFetchActivities, useLogActivity } from "../../api/hooks";
+import { GuidedActivity } from "../../../services/mock_data/activities";
+import { useFetchActivities, useLogActivity } from "../../hooks/activities";
 import { Button } from "../../components/UI/Button";
 import Layout from "../../components/UI/layout";
-
-//import AudioPlayer from "../../audio/AudioPlayer";
 
 const { width } = Dimensions.get("window");
 
@@ -22,16 +20,11 @@ const GuidedActivitiesScreen = () => {
 
   const [selectedActivity, setSelectedActivity] = useState<GuidedActivity | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  
 
   const handleStart = (activity: GuidedActivity) => {
     setSelectedActivity(activity);
     setModalVisible(true);
   };
-
-  
-
- 
 
   const handleDone = async () => {
     if (selectedActivity) {
@@ -42,15 +35,15 @@ const GuidedActivitiesScreen = () => {
   };
 
   const renderCard = ({ item }: { item: GuidedActivity }) => (
-    <View style={styles.card}>
-      <Image source={item.thumbnail} style={styles.thumbnail} />
+    <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
+      {item.thumbnail && <Image source={item.thumbnail} style={styles.thumbnail} />}
       <View style={styles.cardContent}>
-        <Text style={styles.cardTitle}>{item.title}</Text>
-        <Text style={styles.cardBadge}>{item.type}</Text>
-        <Text style={styles.cardDescription} numberOfLines={2}>
+        <Text style={[styles.cardTitle, { color: colors.text }]}>{item.title}</Text>
+        <Text style={[styles.cardBadge, { backgroundColor: "#DCFCE7" }]}>{item.type}</Text>
+        <Text style={[styles.cardDescription, { color: colors.subText }]} numberOfLines={2}>
           {item.description}
         </Text>
-        <View style={{ marginTop: 16, width: 80 }}>
+        <View style={{ marginTop: 12, width: 80 }}>
           <Button title="Start" onPress={() => handleStart(item)} />
         </View>
       </View>
@@ -58,12 +51,12 @@ const GuidedActivitiesScreen = () => {
   );
 
   return (
-    <Layout title="Guided Activity" onNavigate={(screen) => navigation.navigate(screen as never)}>
+    <Layout title="Guided Activities" onNavigate={(screen) => navigation.navigate(screen as never)}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Text style={[styles.header, { color: colors.text }]}>Recommended Exercises</Text>
 
         {isLoading ? (
-          <Text>Loading...</Text>
+          <Text style={{ color: colors.subText }}>Loading...</Text>
         ) : (
           <FlatList
             data={activities.slice(0, 5)}
@@ -74,20 +67,16 @@ const GuidedActivitiesScreen = () => {
         )}
 
         <Modal visible={modalVisible} animationType="slide">
-          <ScrollView style={styles.modalContainer}>
+          <ScrollView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
             {selectedActivity && (
               <>
-                <Text style={styles.modalTitle}>{selectedActivity.title}</Text>
-                {selectedActivity.steps.map((step, index) => (
+                <Text style={[styles.modalTitle, { color: colors.text }]}>{selectedActivity.title}</Text>
+                {selectedActivity.steps?.map((step, index) => (
                   <View key={index} style={styles.stepContainer}>
-                    <Text style={styles.stepTitle}>Step {index + 1}</Text>
-                    <Text style={styles.stepText}>{step}</Text>
+                    <Text style={[styles.stepTitle, { color: colors.text }]}>Step {index + 1}</Text>
+                    <Text style={[styles.stepText, { color: colors.subText }]}>{step}</Text>
                   </View>
                 ))}
-               
-
-
-
                 <View style={{ marginTop: 16 }}>
                   <Button title="Done" onPress={handleDone} />
                 </View>
@@ -114,7 +103,6 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: "row",
-    backgroundColor: "#f9f1d1ff",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -135,7 +123,6 @@ const styles = StyleSheet.create({
   },
   cardBadge: {
     fontSize: 12,
-    backgroundColor: "#DCFCE7",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
@@ -149,7 +136,6 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#FFFFFF",
   },
   modalTitle: {
     fontSize: 24,

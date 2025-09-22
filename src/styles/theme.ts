@@ -25,6 +25,8 @@ export const lightTheme = {
   headerText: "#2C2C2C",
   logoTint: pastelColors.coral,
   fontFamily: "System",
+  userBubble: "#DCF8C6", // light green
+  aiBubble: "#E5E5EA",   // light gray
 };
 
 export const darkTheme = {
@@ -42,4 +44,6 @@ export const darkTheme = {
   headerText: "#fff",
   logoTint: pastelColors.peach,
   fontFamily: "System",
+  userBubble: "#4A6F4D", // darker green for dark mode
+  aiBubble: "#3A3A3A",
 };

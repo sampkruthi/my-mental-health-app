@@ -12,18 +12,35 @@ export type MoodTrend = {
   avg_mood: number;
 };
 
-// Dummy data
+// Dummy data - last 14 days
 export const dummyMoodHistory: MoodLog[] = [
-  { id: 1, mood_score: 4, note: "Feeling good today, accomplished a lot", timestamp: "2024-01-15T10:30:00Z" },
-  { id: 2, mood_score: 2, note: "Stressful day at work, deadline pressure", timestamp: "2024-01-14T09:15:00Z" },
-  { id: 3, mood_score: 5, note: "Amazing weekend with friends!", timestamp: "2024-01-13T18:45:00Z" },
+  { id: 1, mood_score: 3, note: "Monday blues but manageable", timestamp: "2024-01-15T08:30:00Z" },
+  { id: 2, mood_score: 4, note: "Good progress at work", timestamp: "2024-01-14T09:15:00Z" },
+  { id: 3, mood_score: 5, note: "Great weekend with family!", timestamp: "2024-01-13T18:45:00Z" },
+  { id: 4, mood_score: 2, note: "Felt tired and stressed", timestamp: "2024-01-12T20:20:00Z" },
+  { id: 5, mood_score: 3, note: "Okay day, nothing special", timestamp: "2024-01-11T11:10:00Z" },
+  { id: 6, mood_score: 4, note: "Productive day, finished tasks", timestamp: "2024-01-10T16:40:00Z" },
+  { id: 7, mood_score: 1, note: "Overwhelmed with deadlines", timestamp: "2024-01-09T22:00:00Z" },
+  { id: 8, mood_score: 2, note: "Couldn’t focus much today", timestamp: "2024-01-08T13:50:00Z" },
+  { id: 9, mood_score: 3, note: "Decent, went for a walk", timestamp: "2024-01-07T17:25:00Z" },
+  { id: 10, mood_score: 4, note: "Enjoyed working out", timestamp: "2024-01-06T09:45:00Z" },
 ];
 
+// Daily averages for trends
 export const dummyMoodTrends: MoodTrend[] = [
-  { date: "2024-01-15", avg_mood: 3.5 },
-  { date: "2024-01-14", avg_mood: 2.8 },
-  { date: "2024-01-13", avg_mood: 4.2 },
+  { date: "2024-01-15", avg_mood: 3 },
+  { date: "2024-01-14", avg_mood: 4 },
+  { date: "2024-01-13", avg_mood: 5 },
+  { date: "2024-01-12", avg_mood: 2 },
+  { date: "2024-01-11", avg_mood: 3 },
+  { date: "2024-01-10", avg_mood: 4 },
+  { date: "2024-01-09", avg_mood: 1 },
+  { date: "2024-01-08", avg_mood: 2 },
+  { date: "2024-01-07", avg_mood: 3 },
+  { date: "2024-01-06", avg_mood: 4 },
+
 ];
+
 
 // Mock API
 export const moodApi = {

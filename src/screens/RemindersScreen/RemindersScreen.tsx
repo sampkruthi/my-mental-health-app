@@ -1,4 +1,3 @@
-// src/screens/ReminderScreen.tsx
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -15,97 +14,86 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Layout from "../../components/UI/layout";
 import { Button } from "../../components/UI/Button";
 import { RootStackParamList } from "../../navigation/AppNavigator";
-import { useAuth } from "../../context/AuthContext";
 import { useReminderStore } from "../../stores/reminderStore";
 import {
   useFetchReminders,
   useAddReminder,
   useDeleteReminder,
   useToggleReminder,
-} from "../../api/hooks";
-import type { Reminder1, NewReminder } from "../../api/types";
+} from "../../hooks/reminders";
+import type { Reminder, NewReminder } from "../../../services/mock_data/reminders";
 
 const { width } = Dimensions.get("window");
 
 const ReminderScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { token } = useAuth();
 
   // Zustand store
   const { list, setList, toggle, remove } = useReminderStore();
 
   // Hooks
-  const remindersQuery = useFetchReminders(token);
-  const addMutation = useAddReminder(token);
-  const deleteMutation = useDeleteReminder(token);
-  const toggleMutation = useToggleReminder(token);
+  const remindersQuery = useFetchReminders();
+  const addMutation = useAddReminder();
+  const deleteMutation = useDeleteReminder();
+  const toggleMutation = useToggleReminder();
 
   // Form state
   const [type, setType] = useState("");
-  const [time, setTime] = useState("");
+  const [hour, setHour] = useState("");
+  const [minute, setMinute] = useState("");
   const [message, setMessage] = useState("");
 
   // Sync API → store
   useEffect(() => {
-    if (remindersQuery.data) {
-      setList(remindersQuery.data);
-    }
+    if (remindersQuery.data) setList(remindersQuery.data);
   }, [remindersQuery.data, setList]);
 
   // Add reminder
   const handleAdd = () => {
-    if (!type || !time) return;
-    const input: NewReminder = { type, time, message, enabled: true };
+    if (!type || hour === "" || minute === "") return;
+
+    const input: NewReminder = {
+      type,
+      hour: parseInt(hour),
+      minute: parseInt(minute),
+      message,
+      enabled: true,
+    };
+
     addMutation.mutate(input, {
       onSuccess: (newReminder) => {
         setList([...list, newReminder]);
         setType("");
-        setTime("");
+        setHour("");
+        setMinute("");
         setMessage("");
       },
     });
   };
 
   // Toggle reminder
-  const handleToggle = (id: string, enabled: boolean) => {
-    toggleMutation.mutate(
-      { id, enabled },
-      {
-        onSuccess: (updated) => {
-          toggle(updated.id);
-        },
-      }
-    );
+  const handleToggle = (id: string) => {
+    toggleMutation.mutate(id, { onSuccess: (updated) => toggle(updated.id) });
   };
 
   // Delete reminder
   const handleDelete = (id: string) => {
-    deleteMutation.mutate(id, {
-      onSuccess: () => {
-        remove(id);
-      },
-    });
+    deleteMutation.mutate(id, { onSuccess: () => remove(id) });
   };
 
-  const renderCard = ({ item }: { item: Reminder1 }) => (
+  // Render single reminder card
+  const renderCard = ({ item }: { item: Reminder }) => (
     <View style={styles.card}>
       <View style={{ flex: 1 }}>
         <Text style={styles.cardTitle}>
-          {item.type} at {item.time}
+          {item.type} at {item.hour.toString().padStart(2, "0")}:
+          {item.minute.toString().padStart(2, "0")}
         </Text>
-        {item.message ? (
-          <Text style={styles.cardMessage}>{item.message}</Text>
-        ) : null}
+        {item.message ? <Text style={styles.cardMessage}>{item.message}</Text> : null}
       </View>
       <View style={styles.actions}>
-        <Switch
-          value={item.enabled}
-          onValueChange={(val) => handleToggle(item.id, val)}
-        />
-        <TouchableOpacity
-          onPress={() => handleDelete(item.id)}
-          style={styles.deleteBtn}
-        >
+        <Switch value={item.enabled} onValueChange={() => handleToggle(item.id)} />
+        <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.deleteBtn}>
           <Text style={styles.deleteText}>Delete</Text>
         </TouchableOpacity>
       </View>
@@ -123,12 +111,25 @@ const ReminderScreen = () => {
           value={type}
           onChangeText={setType}
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Time (HH:mm)"
-          value={time}
-          onChangeText={setTime}
-        />
+        <View style={styles.timeContainer}>
+          <TextInput
+            style={[styles.input, styles.timeInput]}
+            placeholder="HH"
+            value={hour}
+            onChangeText={setHour}
+            keyboardType="numeric"
+            maxLength={2}
+          />
+          <Text style={styles.colon}>:</Text>
+          <TextInput
+            style={[styles.input, styles.timeInput]}
+            placeholder="MM"
+            value={minute}
+            onChangeText={setMinute}
+            keyboardType="numeric"
+            maxLength={2}
+          />
+        </View>
         <TextInput
           style={styles.input}
           placeholder="Message (optional)"
@@ -136,11 +137,8 @@ const ReminderScreen = () => {
           onChangeText={setMessage}
         />
 
-        <View style={{ marginBottom: 16, width: 160 }}>
-          <Button
-            title={addMutation.isPending ? "Adding..." : "Add Reminder"}
-            onPress={handleAdd}
-          />
+        <View style={{ marginBottom: 16, width: "100%", maxWidth: 200 }}>
+          <Button title={addMutation.isPending ? "Adding..." : "Add Reminder"} onPress={handleAdd} />
         </View>
 
         <FlatList
@@ -162,12 +160,12 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   header: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
     marginBottom: 12,
   },
   input: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 12,
     fontSize: 16,
@@ -175,13 +173,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ddd",
   },
+  timeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  timeInput: {
+    flex: 1,
+    textAlign: "center",
+  },
+  colon: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginHorizontal: 4,
+  },
   card: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#f9fafb",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
+    alignItems: "center",
   },
   cardTitle: {
     fontWeight: "600",
@@ -189,7 +202,7 @@ const styles = StyleSheet.create({
   },
   cardMessage: {
     fontSize: 14,
-    color: "#333",
+    color: "#555",
     marginTop: 4,
   },
   actions: {
