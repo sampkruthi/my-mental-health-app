@@ -13,7 +13,9 @@ import { mockApiService } from "./services/mockApi";
 const queryClient = new QueryClient();
 
 // 🔥 Toggle flag (change this later or read from .env)
-const USE_MOCK = true;
+const USE_MOCK = false;
+console.log("USE_MOCK", USE_MOCK);
+console.log('🔍 API Service:', USE_MOCK ? 'MOCK' : 'REAL');
 
 // ✅ Initialize apiService once before rendering
 setApiService(USE_MOCK ? mockApiService : realApiService);

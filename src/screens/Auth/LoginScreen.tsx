@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Platform } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 //import { useMutation } from "@tanstack/react-query";
-import { useLogin } from "../../../src/hooks/auth";
+import { useLogin } from "../../api/hooks";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/AppNavigator"; 
@@ -28,8 +28,8 @@ const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>(
     const result = await loginMutation.mutateAsync({ email, password });
     console.log("[LoginScreen] Login mutation result:", result);
 
-    if (result?.access_token) {
-      await signIn(email, password, result.access_token); // Use access_token
+    if (result?.token) {
+      await signIn(email, password, result.token); // Use access_token
       console.log("[LoginScreen] User signed in successfully");
     }
   } catch (e) {

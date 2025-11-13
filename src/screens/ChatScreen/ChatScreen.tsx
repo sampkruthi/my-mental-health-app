@@ -11,10 +11,10 @@ import {
   Dimensions,
 } from "react-native";
 import { useChatStore } from "../../stores/chatStore";
-//import { useAuth } from "../../context/AuthContext";
-import { useSendChatMessage } from "../../hooks/chat";
+import { useAuth } from "../../context/AuthContext";
+import { useSendChatMessage } from "../../api/hooks";
 import EmojiPicker from "rn-emoji-keyboard";
-import type { ChatMessage } from "../../../services/mock_data/chat";
+import type { ChatMessage } from "../../api/types";
 import Layout from "../../components/UI/layout";
 import { useTheme } from "../../context/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
@@ -25,9 +25,9 @@ const { width } = Dimensions.get("window");
 
 const ChatScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  //const { token } = useAuth();
+  const { token } = useAuth();
   const { messages, addMessage } = useChatStore();
-  const { mutateAsync: sendChat } = useSendChatMessage();
+  const { mutateAsync: sendChat } = useSendChatMessage(token);
   const { colors } = useTheme();
 
   const [input, setInput] = useState("");

@@ -231,7 +231,11 @@ export function useFetchJournalInsights(token?: string | null) {
       console.log("[useFetchJournalInsights] Fetching journal insights, token:", token);
       if (!token) return null;
 
-      const data: JournalInsights = await getApiService().getJournalInsights?.() ?? { totalEntries: 0 };
+      const data: JournalInsights = await getApiService().getJournalInsights?.() ?? {
+        avg_sentiment: null,
+        entry_count: 0,
+        entries_per_day: 0
+      };
       console.log("[useFetchJournalInsights] Insights received:", data);
       return data;
     },

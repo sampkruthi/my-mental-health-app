@@ -22,20 +22,20 @@ const dummyMoodTrends: MoodTrendPoint[] = [
   { avg: 5, date: "2025-09-03" },
 ];
 const dummyMoodHistory: MoodLog[] = [
-  { id: "1", score: 3, note: "Felt tired in the morning", timestamp: "2025-09-01T08:30:00Z" },
-  { id: "2", score: 4, note: "Productive workday", timestamp: "2025-09-02T17:00:00Z" },
-  { id: "3", score: 5, note: "Had dinner with friends", timestamp: "2025-09-03T20:15:00Z" },
-  { id: "4", score: 2, note: "Stressful meetings", timestamp: "2025-09-04T11:45:00Z" },
-  { id: "5", score: 4, note: "Evening walk was relaxing", timestamp: "2025-09-05T19:00:00Z" },
-  { id: "6", score: 3, note: "Felt okay but low energy", timestamp: "2025-09-06T14:00:00Z" },
-  { id: "7", score: 5, note: "Weekend family time ❤️", timestamp: "2025-09-07T21:30:00Z" },
-  { id: "8", score: 4, note: "Started new book", timestamp: "2025-09-08T20:00:00Z" },
-  { id: "9", score: 2, note: "Long work hours", timestamp: "2025-09-09T18:15:00Z" },
-  { id: "10", score: 3, note: "Feeling neutral", timestamp: "2025-09-10T09:45:00Z" },
-  { id: "11", score: 4, note: "Good workout session", timestamp: "2025-09-11T07:30:00Z" },
-  { id: "12", score: 5, note: "Great mood today 🎉", timestamp: "2025-09-12T16:20:00Z" },
-  { id: "13", score: 3, note: "Bit anxious but manageable", timestamp: "2025-09-13T13:10:00Z" },
-  { id: "14", score: 4, note: "Relaxed Sunday", timestamp: "2025-09-14T19:40:00Z" },
+  { mood_score: 3, note: "Felt tired in the morning", timestamp: "2025-09-01T08:30:00Z" },
+  { mood_score: 4, note: "Productive workday", timestamp: "2025-09-02T17:00:00Z" },
+  { mood_score: 5, note: "Had dinner with friends", timestamp: "2025-09-03T20:15:00Z" },
+  { mood_score: 2, note: "Stressful meetings", timestamp: "2025-09-04T11:45:00Z" },
+  { mood_score: 4, note: "Evening walk was relaxing", timestamp: "2025-09-05T19:00:00Z" },
+  { mood_score: 3, note: "Felt okay but low energy", timestamp: "2025-09-06T14:00:00Z" },
+  { mood_score: 5, note: "Weekend family time ❤️", timestamp: "2025-09-07T21:30:00Z" },
+  { mood_score: 4, note: "Started new book", timestamp: "2025-09-08T20:00:00Z" },
+  { mood_score: 2, note: "Long work hours", timestamp: "2025-09-09T18:15:00Z" },
+  { mood_score: 3, note: "Feeling neutral", timestamp: "2025-09-10T09:45:00Z" },
+  { mood_score: 4, note: "Good workout session", timestamp: "2025-09-11T07:30:00Z" },
+  { mood_score: 5, note: "Great mood today 🎉", timestamp: "2025-09-12T16:20:00Z" },
+  { mood_score: 3, note: "Bit anxious but manageable", timestamp: "2025-09-13T13:10:00Z" },
+  { mood_score: 4, note: "Relaxed Sunday", timestamp: "2025-09-14T19:40:00Z" },
 ];
 
 
@@ -249,8 +249,7 @@ export const mockApiService = {
     await delay(400);
 
     const newMood: MoodLog = {
-      id: Date.now().toString(),
-      score: input.score,
+      mood_score: input.score,
       note: input.note,
       timestamp: new Date().toISOString(),
     };
@@ -266,6 +265,17 @@ export const mockApiService = {
     return dummyMoodHistory.length;
   },
 
+  async getReminderCount(): Promise<number> {
+    console.log("[mockApi] getting reminder count");
+    await delay(200);
+    return dummyReminders1.length;
+  },
+
+  async logout(): Promise<void> {
+    console.log("[mockApi] logout");
+    await delay(200);
+  },
+
   // ---------- Reminders ----------
   async getReminders(): Promise<Reminder[]> {
     console.log("[mockApi] fetching reminders");
@@ -274,7 +284,7 @@ export const mockApiService = {
     return dummyReminders;
   },
 
-  async getReminderCount(): Promise<number> {
+  /*async getReminderCount(): Promise<number> {
     console.log("[mockApi] getting reminder count");
     await delay(200);
     return dummyReminders.length;
@@ -285,7 +295,7 @@ export const mockApiService = {
     await delay(200);
     return { name: "Test User", email: "test@test.com" };
   },
-
+*/
   // ---------- Chat ----------
   async getChatHistory(): Promise<ChatMessage[]> {
     console.log("[mockApi] fetching chat history");
@@ -370,7 +380,11 @@ async getJournalInsights(): Promise<JournalInsights> {
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, 5);
 
-  const insights: JournalInsights = { totalEntries, averageMoodScore, recentEntries };
+  const insights: JournalInsights = {
+    entry_count: totalEntries,
+    avg_sentiment: averageMoodScore,
+    entries_per_day: totalEntries / 30 // rough calculation
+  };
   console.log("[mockApi] journal insights:", insights);
 
   return insights;
@@ -449,6 +463,7 @@ async getJournalHistory(): Promise<JournalEntry[]> {
     return reminder;
   },
 
+  /*
   // --- TOGGLE reminder enabled/disabled ---
   async toggleReminder(id: string): Promise<Reminder1 | undefined> {
     console.log("[mockApi] toggling reminder:", id);
@@ -457,7 +472,7 @@ async getJournalHistory(): Promise<JournalEntry[]> {
     if (!reminder) return undefined;
     return { ...reminder, enabled: !reminder.enabled };
   },
-
+*/
   // --- DELETE reminder ---
   async deleteReminder(id: string): Promise<{ success: boolean }> {
     console.log("[mockApi] deleting reminder:", id);

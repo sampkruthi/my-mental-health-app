@@ -5,8 +5,8 @@ import { useTheme } from "../../context/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { GuidedActivity } from "../../../services/mock_data/activities";
-import { useFetchActivities, useLogActivity } from "../../hooks/activities";
+import { GuidedActivity } from "../../api/types";
+import { useFetchActivities, useLogActivity } from "../../api/hooks";
 import { Button } from "../../components/UI/Button";
 import Layout from "../../components/UI/layout";
 

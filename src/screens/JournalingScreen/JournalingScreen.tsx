@@ -5,12 +5,12 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Layout from "../../components/UI/layout";
 import { Button } from "../../components/UI/Button";
-import { useFetchJournalHistory, useFetchJournalInsights, useLogJournal } from "../../hooks/journal";
+import { useFetchJournalHistory, useFetchJournalInsights, useLogJournal } from "../../api/hooks";
 import { useJournalStore } from "../../stores/journalStore";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
-import type { JournalEntry } from "../../../services/mock_data/journal";
+import type { JournalEntry } from "../../api/types";
 
 const { width } = Dimensions.get("window");
 
@@ -31,15 +31,11 @@ const JournalingScreen = () => {
     logMutation.mutate({ content: draft }, { onSuccess: () => clearDraft() });
   };
 
-  const getSentimentColor = (sentiment?: string) => {
-    switch (sentiment) {
-      case "positive":
-        return "#DCFCE7"; // green
-      case "negative":
-        return "#FECACA"; // red
-      default:
-        return "#E5E7EB"; // gray / neutral
-    }
+  const getSentimentColor = (sentiment?: number) => {
+    if (sentiment === undefined || sentiment === null) return "#E5E7EB"; // gray
+    if (sentiment > 0.2) return "#DCFCE7"; // positive - green
+    if (sentiment < -0.2) return "#FECACA"; // negative - red
+    return "#E5E7EB"; // neutral - gray
   };
 
   const renderCard = ({ item }: { item: JournalEntry }) => {
@@ -57,9 +53,9 @@ const JournalingScreen = () => {
         <Text style={[styles.cardContent, { color: colors.text }]}>
           {isExpanded ? item.content : preview}
         </Text>
-        {isExpanded && item.sentiment && (
+        {isExpanded && item.sentiment !== undefined && (
           <View style={[styles.sentimentBadge, { backgroundColor: getSentimentColor(item.sentiment) }]}>
-            <Text style={styles.sentimentText}>{item.sentiment}</Text>
+            <Text style={styles.sentimentText}>Sentiment: {item.sentiment.toFixed(2)}</Text>
           </View>
         )}
       </TouchableOpacity>
@@ -74,13 +70,13 @@ const JournalingScreen = () => {
         {journalInsights.data && (
           <View style={styles.insightsContainer}>
             <Text style={[styles.insightText, { color: colors.text }]}>
-              Avg Sentiment: {journalInsights.data.averageMoodScore.toFixed(2)}
+              Avg Sentiment: {journalInsights.data.avg_sentiment?.toFixed(2) ?? 'N/A'}
             </Text>
             <Text style={[styles.insightText, { color: colors.text }]}>
-              Total Entries: {journalInsights.data.totalEntries}
+              Total Entries: {journalInsights.data.entry_count}
             </Text>
             <Text style={[styles.insightText, { color: colors.text }]}>
-              Recent Entries: {journalInsights.data.recentEntries.length}
+              Entries/Day: {journalInsights.data.entries_per_day.toFixed(2)}
             </Text>
           </View>
         )}

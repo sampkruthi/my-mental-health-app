@@ -2,9 +2,10 @@
 import { ImageSourcePropType } from "react-native";
 
 
+// Updated to match OpenAPI MoodTrend schema
 export interface MoodTrendPoint {
-  avg?: number; // or whatever fields your API returns
-  date?: string;
+  date: string;                 // required date string
+  avg_mood: number;             // required average mood score
 }
 
 export interface Reminder {
@@ -46,11 +47,11 @@ export interface ChatMessage {
 // =====================
 // Mood log type
 // =====================
+// Updated to match OpenAPI MoodEntry schema
 export interface MoodLog {
-  id: string;                 // Unique ID for each log entry
-  score: number;              // Mood score (e.g., 1–5 scale)
-  note?: string;              // Optional user note about the mood
-  timestamp: string;          // ISO format like "2025-09-09T14:32:00Z"
+  timestamp: string;          // ISO format date-time
+  mood_score: number;         // Mood score (integer)
+  note: string | null;        // Note (can be null)
 }
 
 
@@ -74,17 +75,19 @@ export interface GuidedActivity {
 
 
 
+// Updated to match OpenAPI JournalEntryResponse schema
 export interface JournalEntry {
-  id?: string;
+  id: number;                 // integer ID from backend
   content: string;
-  sentiment?: 'positive' | 'neutral' | 'negative' | number; // backend choice
-  timestamp: string;    // ISO
+  sentiment: number;          // numeric sentiment score
+  timestamp: string;          // ISO date-time format
 }
 
+// Updated to match OpenAPI JournalInsightResponse schema
 export interface JournalInsights {
-  totalEntries: number;
-  averageMoodScore?: number;
-  recentEntries?: JournalEntry[];
+  avg_sentiment: number | null;
+  entry_count: number;
+  entries_per_day: number;
 }
 
 // =====================
@@ -93,24 +96,68 @@ export interface JournalInsights {
 
 
 export interface ResourceRec {
-  id: string;
+  id: number;
   title: string;
-  type: 'article' | 'audio' | 'video';
   url: string;
-  tags?: string[];
-  snippet?: string;
+  content_type: 'article' | 'podcast' | 'video';
+  tags: string[];
   thumbnail?: string;
+  snippet?: string;
+  score?: number; //Optional since it comes from FAISS
 }
 
 
 
 
+// Updated to match OpenAPI ReminderResponse schema
 export interface Reminder1 {
-  id: string;
-  type: string;     // "Meditation", "Journal", etc.
-  time: string;     // "08:00" or "21:00" (HH:mm format)
+  id: number;                 // integer ID from backend
+  type: string;               // reminder type
+  hour: number;               // hour (0-23)
+  minute: number;             // minute (0-59)
   message: string;
-  enabled: boolean; // true = active, false = off
+  // Note: 'enabled' field doesn't exist in OpenAPI - remove or handle separately
 }
 
-export type NewReminder = Omit<Reminder1, "id">; // creating one
+// Type for creating new reminders (matches OpenAPI ReminderRequest schema)
+export interface NewReminder {
+  type: string;                 // pattern: ^(meditation|journaling|hydration|activity)$
+  hour: number;                 // 0-23
+  minute: number;               // 0-59
+  message: string;
+}
+
+// Add MoodRequest type to match OpenAPI schema
+export interface MoodRequest {
+  mood_score: number;           // integer, required
+  note?: string | null;         // optional note
+}
+
+// Add ChatResponse type to match updated OpenAPI schema
+export interface ChatResponse {
+  response: string;                           // required
+  safety_metadata?: Record<string, any> | null;
+  crisis_intervention?: boolean | null;       // default: false
+  usage_info?: Record<string, any> | null;
+  debug_info?: Record<string, any> | null;
+}
+
+// Updated to match OpenAPI ActivityResponseDTO schema
+export interface ActivityResponse {
+  id: number;                   // integer ID from backend
+  title: string;
+  type: string;                 // activity type
+  description: string;
+  script: string;               // activity script/instructions
+}
+
+// Keep GuidedActivity for frontend compatibility (with local fields)
+// This extends ActivityResponse with frontend-specific fields
+export interface GuidedActivity extends Omit<ActivityResponse, 'id'> {
+  id: string;                   // frontend uses string IDs
+  type: "Breathing" | "Meditation" | "Stretching" | "Walking" | "Music" | "Exercise";
+  thumbnail: ImageSourcePropType;
+  steps: string[];
+  audioFile?: string;
+  duration?: number;
+}
