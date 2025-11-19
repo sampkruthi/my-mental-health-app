@@ -104,6 +104,7 @@ export interface ResourceRec {
   thumbnail?: string;
   snippet?: string;
   score?: number; //Optional since it comes from FAISS
+  recommendation_reason?: string;  
 }
 
 
@@ -160,4 +161,27 @@ export interface GuidedActivity extends Omit<ActivityResponse, 'id'> {
   steps: string[];
   audioFile?: string;
   duration?: number;
+}
+
+// src/api/types.ts
+
+export interface MemorySummary {
+  summary: string;
+  journal_count: number;
+  mood_count: number;
+  days_tracked: number;
+  last_updated: string;
+  key_themes: string[];
+}
+
+// src/api/types.ts
+
+export interface ProgressDashboard {
+  mood_trend: 'improving' | 'stable' | 'declining';
+  mood_change_percent: number;
+  journal_consistency: number;
+  current_streak: number;
+  longest_streak: number;
+  total_entries: number;
+  avg_sentiment: number | null;
 }

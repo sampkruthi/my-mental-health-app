@@ -1,17 +1,21 @@
 // src/screens/Auth/RegisterScreen.tsx
 import React, { useState } from "react";
 import { View, Text, TextInput, Alert } from "react-native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useNavigation } from "@react-navigation/native";
+//import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+//import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "../../context/ThemeContext";
 import { Button } from "../../components/UI/Button";
 import { useRegister} from "../../api/hooks";
-import { RootStackParamList } from "../../navigation/AppNavigator";
-import { Token } from "../../api/types"
+//import { RootStackParamList } from "../../navigation/AppNavigator";
+import { Token } from "../../api/types";
+import { useAuth } from "../../context/AuthContext";
+import { showAlert } from "../../utils/alert";
+
 
 const RegisterScreen: React.FC = () => {
   const { colors } = useTheme();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  //const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const {signIn} = useAuth();
 
   const registerMutation = useRegister();
 
@@ -25,13 +29,26 @@ const loading = registerMutation.status === "pending";
   const handleRegister = async () => {
     try {
       const res: Token = await registerMutation.mutateAsync({ name, email, password });
-      console.log("Mock token:", res.access_token);
+      console.log("Registration token:", res.access_token);
+      // Store the token in AuthContext
+      await signIn(email, password, res.access_token, email);
+      
       Alert.alert("Success", "Registered successfully!");
-      navigation.navigate("Login");
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong";
-      Alert.alert("Error", message);
+      //navigation.navigate("Login"); AuthContext state change will trigger navigation to login
+    } catch (err: any) {
+      console.error("Registration error:", err);
+    const message = 
+      err?.response?.data?.detail ||
+      err?.response?.data?.message ||
+      err?.message ||
+      "Registration failed";
+
+      showAlert("Error", message); 
+    
+    console.log("🔴 Final message:", message);
+    
+    // Try a simple hardcoded alert first
+    //Alert.alert("Error", "Test alert - can you see this?");
     }
   };
 

@@ -93,6 +93,16 @@ const ResourcesScreen = () => {
           <View style={[styles.cardBadge, { backgroundColor: getResourceColor(resourceType) }]}>
             <Text style={styles.badgeText}>{resourceType}</Text>
           </View>
+
+          {/* ADD RECOMMENDATION REASON */}
+        {item.recommendation_reason && (
+          <View style={styles.reasonContainer}>
+            <Text style={styles.reasonIcon}>💡</Text>
+            <Text style={[styles.reasonText, { color: colors.subText }]} numberOfLines={2}>
+              {item.recommendation_reason}
+            </Text>
+          </View>
+        )}
           
           {/* Show tags if available */}
           {item.tags && item.tags.length > 0 && (
@@ -334,6 +344,26 @@ const styles = StyleSheet.create({
   cardDescription: {
     fontSize: 14,
     marginTop: 4,
+  },
+  reasonContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#FFF9E6',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  reasonIcon: {
+    fontSize: 14,
+    marginRight: 6,
+  },
+  reasonText: {
+    fontSize: 12,
+    flex: 1,
+    lineHeight: 16,
+    fontStyle: 'italic',
   },
   
   // Modal styles

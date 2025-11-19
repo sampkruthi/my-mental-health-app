@@ -16,6 +16,8 @@
       "supportsTablet": true
     },
     "android": {
+      "permissions": ["INTERNET"],
+      "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -30,6 +32,17 @@
     },
     "packagerOpts": {
       "config": "metro.config.js"
-    }
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true,
+            "networkInspector": true
+          }
+        }
+      ]
+    ]
   }
 }

@@ -7,6 +7,9 @@ import { useLogin } from "../../api/hooks";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/AppNavigator"; 
+import { Button } from "../../components/UI/Button";
+import axios from "axios";
+import { Alert } from "react-native";
 
 
 export default function LoginScreen() {
@@ -15,6 +18,24 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
 
 const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+
+//testing for android
+
+const testConnection = async () => {
+  try {
+    console.log('🧪 Testing connection to:', 'http://192.168.86.27:8000/docs');
+    await axios.get('http://192.168.86.27:8000/docs', {
+      timeout: 5000
+    });
+    console.log('✅ Connection test SUCCESS');
+    Alert.alert('Success', 'Can reach backend!');
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.log('❌ Connection test FAILED:', errorMessage);
+    Alert.alert('Failed', errorMessage);
+  }
+};
 
 
   // =====================
@@ -114,6 +135,9 @@ const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>(
             New user? Register
           </Text>
         </TouchableOpacity>  
+      <Button title="Test Connection" onPress={testConnection} />
+
+
 
     
 

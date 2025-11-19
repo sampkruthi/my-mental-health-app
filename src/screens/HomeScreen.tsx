@@ -1,6 +1,6 @@
 // src/screens/HomeScreen.tsx
 import React from "react";
-import { View, Text, Image, StyleSheet,  Dimensions } from "react-native";
+import { View, Text, Image, StyleSheet, Dimensions, ScrollView } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { useFetchMoodCount, useFetchReminderCount } from "../api/hooks";
 import Layout from "../components/UI/layout";
@@ -30,11 +30,18 @@ const HomeScreen = () => {
     { key: "activities", title: "Activities", subtitle: "Explore exercises" },
     { key: "reminders", title: "Reminders", subtitle: reminderLoading ? "Loading..." : `${reminderCount} today` },
     { key: "resources", title: "Resources", subtitle: "Read articles" },
+    { key: "memorysummary", title: "Memory summary", subtitle: "Your journey so far" },
+    { key: "progressdashboard", title: "Progress", subtitle: "Your progress stats"},
+
   ];
 
   return (
     <Layout title="Home" onNavigate={(screen) => navigation.navigate(screen as never)}>
-      <View style={{ flex: 1, paddingHorizontal: CARD_MARGIN, paddingTop: 16 }}>
+      <ScrollView
+        style={{ flex: 1, backgroundColor: colors.background }}
+        contentContainerStyle={{ paddingHorizontal: CARD_MARGIN, paddingTop: 16, paddingBottom: 20 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
         <Text style={[styles.date, { color: colors.subText }]}>
           {new Date().toLocaleDateString("en-US", {
@@ -66,7 +73,7 @@ const HomeScreen = () => {
             />
           ))}
         </View>
-      </View>
+      </ScrollView>
     </Layout>
   );
 };

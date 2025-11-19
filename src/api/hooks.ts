@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { MoodTrendPoint, Reminder } from "./types";
+
 import { getApiService } from "../../services/api"; // adjust path if needed
-import type { ChatMessage, MoodLog, GuidedActivity, JournalEntry, JournalInsights, ResourceRec, Reminder1, NewReminder } from "./types";
-import { Token, RegisterRequest } from "./types";
+import type { Reminder,  ChatMessage, MoodLog, GuidedActivity, JournalEntry, 
+JournalInsights, ResourceRec, Reminder1, NewReminder, MemorySummary, Token, RegisterRequest, ProgressDashboard } from "./types";
+
 
 
 
@@ -13,7 +14,7 @@ import {  UseMutationResult } from "@tanstack/react-query";
 // Login mutation hook
 // =====================
 type LoginPayload = { email: string; password: string };
-type LoginResponse = { token: string };
+type LoginResponse = { token: string, userId?: string };
 
 
 
@@ -26,9 +27,10 @@ export const useLogin = () => {
       if (!getApiService) throw new Error("API Service not initialized");
       console.log("[useLogin] Attempting login with:", email, password);
 
-      const data: LoginResponse = await getApiService().login(email, password);
-      console.log("[useLogin] Login response received:", data);
-      return data;
+      //const data: LoginResponse = await getApiService().login(email, password);
+      const { token, userId} : LoginResponse = await getApiService().login(email, password);
+      console.log("[useLogin] Login response received:", {token, userId});
+      return {token, userId};
     },
   });
 };
@@ -48,6 +50,9 @@ export function useRegister(): UseMutationResult<Token, Error, RegisterRequest, 
       qc.invalidateQueries(); // optional: refresh other queries
       console.log("[useRegister] registration successful, token:", data.access_token);
     },
+    onError: (error) => {
+      console.error("[useRegister] registration failed:", error);
+    }
   });
 }
 
@@ -63,10 +68,10 @@ export function useFetchMoodCount(token?: string | null) {
       console.log("[useFetchMoodCount] Fetching mood count, token:", token);
       if (!token) return 0;
 
-      const data: MoodTrendPoint[] = await getApiService().getMoodTrends?.() ?? [];
-      console.log("[useFetchMoodCount] Data received:", data);
+      const data: MoodLog[] = await getApiService().getMoodHistory?.() ?? [];
+      console.log("[useFetchMoodCount] Mood Data  received:", data);
 
-      const count = data.reduce((acc, p) => acc + (p.avg ? 1 : 0), 0);
+      const count = Array.isArray(data) ? data.length : 0;
       console.log("[useFetchMoodCount] Mood count calculated:", count);
       return count;
     },
@@ -85,7 +90,7 @@ export function useFetchReminderCount(token?: string | null) {
       console.log("[useFetchReminderCount] Fetching reminders, token:", token);
       if (!token) return 0;
 
-      const data: Reminder[] = await getApiService().getReminders?. () ?? [];
+      const data: Reminder[] = await getApiService().getReminders1?. () ?? [];
       console.log("[useFetchReminderCount] Data received:", data);
 
       const count = Array.isArray(data) ? data.length : 0;
@@ -379,3 +384,46 @@ export function useToggleReminder(token?: string | null) {
     },
   });
 }
+
+export function useFetchMemorySummary(token?: string | null) {
+  return useQuery<MemorySummary, Error>({
+    queryKey: ["memory", "summary", token],
+    queryFn: async () => {
+      console.log("[useFetchMemorySummary] Fetching memory summary, token:", token);
+      
+      if (!token) {
+        throw new Error("No authentication token available");
+      }
+
+      const data = await getApiService().getMemorySummary?.();
+      
+      if (!data) {
+        throw new Error("No memory summary data returned");
+      }
+      
+      console.log("[useFetchMemorySummary] Memory summary received:", data);
+      return data; // Now guaranteed to be MemorySummary, not null
+    },
+    enabled: Boolean(token),
+    staleTime: 60000, // Cache for 1 minute
+  });
+}
+
+// src/api/hooks.ts
+
+export function useFetchProgressDashboard(token?: string | null) {
+  return useQuery<ProgressDashboard, Error>({
+    queryKey: ["progress", "dashboard", token],
+    queryFn: async () => {
+      console.log("[useFetchProgressDashboard] Fetching progress, token:", token);
+      if (!token) return null;
+
+      const data = await getApiService().getProgressDashboard?.();
+      console.log("[useFetchProgressDashboard] Progress data received:", data);
+      return data;
+    },
+    enabled: Boolean(token),
+    staleTime: 300000, // Cache for 5 minutes
+  });
+}
+

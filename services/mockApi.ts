@@ -1,6 +1,6 @@
 // src/services/mockApi.ts
 import type { MoodTrendPoint, Reminder, ChatMessage, MoodLog, GuidedActivity, JournalEntry, JournalInsights, ResourceRec,
-   Token, Reminder1} from "../src/api/types";
+   Token, Reminder1, MemorySummary} from "../src/api/types";
 
 import BoxBreathingIcon from "../src/images/breathing.png";
 import DiaphragmIcon from "../src/images/diaphragm.png";
@@ -201,7 +201,9 @@ const dummyReminders1: Reminder1[] = [
 // =====================
 // Mock API service
 // =====================
-export const mockApiService = {
+import type { ApiService } from "./api";
+
+export const mockApiService: ApiService = {
   // Login
   async login(email: string, password: string): Promise<LoginResult> {
     console.log("[mockApi] login attempt:", { email });
@@ -481,6 +483,21 @@ async getJournalHistory(): Promise<JournalEntry[]> {
     return { success: exists };
   },
 
+  // --- Get memory summary ---
+  async getMemorySummary(): Promise<MemorySummary> {
+    console.log("[mockApi] fetching memory summary");
+    await delay(300);
+    const summary: MemorySummary = {
+      summary: "You've been tracking your mood consistently over the past 2 weeks. Your journal entries show themes of work stress, family time, and self-care activities. Overall, you're maintaining a positive outlook with occasional challenges.",
+      journal_count: journalEntries.length,
+      mood_count: dummyMoodHistory.length,
+      days_tracked: 14,
+      last_updated: new Date().toISOString(),
+      key_themes: ["work stress", "family time", "self-care", "productivity", "relaxation"],
+    };
+    console.log("[mockApi] returning memory summary:", summary);
+    return summary;
+  },
 
 };
 

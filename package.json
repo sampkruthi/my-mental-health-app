@@ -23,6 +23,7 @@
     "expo-av": "^16.0.7",
     "expo-secure-store": "^15.0.7",
     "expo-status-bar": "^3.0.8",
+    "jwt-decode": "^4.0.0",
     "nativewind": "^4.1.23",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -37,7 +38,8 @@
     "react-native-web": "^0.21.0",
     "rn-emoji-keyboard": "^1.7.0",
     "tailwindcss": "^4.1.13",
-    "zustand": "^5.0.8"
+    "zustand": "^5.0.8",
+    "expo-build-properties": "~1.0.9"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

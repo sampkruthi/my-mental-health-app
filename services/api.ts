@@ -1,22 +1,25 @@
 // src/services/api.ts
 import axios from "axios";
 import { mockApiService } from "./mockApi";
-import type { MoodTrendPoint, MoodLog, Reminder, ChatMessage, GuidedActivity,JournalEntry, JournalInsights, ResourceRec, Token, Reminder1 } from "../src/api/types";
+import type { MoodTrendPoint, MoodLog, Reminder, ChatMessage, GuidedActivity,JournalEntry, JournalInsights, ResourceRec, 
+  Token, Reminder1, MemorySummary, ProgressDashboard } from "../src/api/types";
 import { Platform } from "react-native";
+import {storage, STORAGE_KEYS} from "../src/utils/storage";
 import * as SecureStore from 'expo-secure-store';
 
 export interface LoginResponse {
   token: string;
+  userId?: string;
 }
 
 export interface ApiService {
   login: (email: string, password: string) => Promise<LoginResponse>;
 
 // add register
-  register(name: string, email: string, password: string): Promise<Token>;
+  register(name: string, email: string, password: string): Promise<Token & { userId?: string }>;
 
-  getMoodCount: () => Promise<number>;
-  getReminderCount: () => Promise<number>;
+  //getMoodCount: () => Promise<MoodLog[]>;
+  //getReminderCount: () => Promise<number>; invalid
   //getUserProfile: () => Promise<unknown>;
 
   // mock-only or optional
@@ -44,6 +47,9 @@ export interface ApiService {
 
     // ---------- Resources ----------
   getContentRecommendations(params?: { q?: string; tags?: string[]; limit?: number }): Promise<ResourceRec[]>;
+  getMemorySummary(): Promise<MemorySummary>;
+  getProgressDashboard?(): Promise<ProgressDashboard>;
+
 
   //add logout function
   logout(): Promise<void>;
@@ -63,13 +69,38 @@ export const getApiService = (): ApiService => {
   return apiService;
 };
 
+
+//Adding these 3 methods for unified SecureStore implementation 11/14
+// Helper functions for token and userId (read from unified storage)
+const getStoredToken = async (): Promise<string | null> => {
+  return await storage.getItem(STORAGE_KEYS.TOKEN);
+};
+
+const getStoredUserId = async (): Promise<string | null> => {
+  return await storage.getItem(STORAGE_KEYS.USER_ID);
+};
+
+const getCurrentUserId = async (): Promise<string> => {
+  const userId = await getStoredUserId();
+  if (!userId) {
+    throw new Error('User not authenticated - no user ID found');
+  }
+  return userId;
+};
+//end of adding 11/14
+
+
+
 //NK adding this logic
 const getApiBaseUrl = () => {
   // Hardcoded for debugging - we'll make it conditional later
   if (__DEV__) {
     // Development environment
     if (Platform.OS === 'android') {
-      return 'http://10.0.2.2:8000'; // Android emulator
+      //return 'http://10.0.2.2:8000'; // Android emulator
+      const url =  'http://192.168.86.27:8000';
+      console.log('🌐 Android API URL:', url);
+      return url;
     }
     return 'http://127.0.0.1:8000'; // iOS simulator, web, or physical device on same network
   }
@@ -110,16 +141,82 @@ const API_BASE_URL = __DEV__
 */
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json', //adding this to headers NK
   },
+
   // For development with self-signed certificates
   /* Simplifying for now to test integration problems
   ...__DEV__ && {
     httpsAgent: undefined, // Let React Native handle HTTPS
   } */
 });
+console.log('🌐 Axios baseURL:', apiClient.defaults.baseURL);
+
+
+// Adding these for unified SecureStore implementation 11/14
+
+// Request interceptor - add auth token
+apiClient.interceptors.request.use(
+  async (config) => {
+    try {
+      console.log('Request interceptor started');
+    const token = await getStoredToken();
+    console.log('🔑 Token retrieved:', token ? 'exists' : 'null');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    console.log('✅ Request interceptor complete');
+    console.log('Making request:', {
+      method: config.method,
+      baseURL: config.baseURL,
+      url: config.url,
+      fullURL: `${config.baseURL}${config.url}`
+    });
+
+    return config;
+  } catch(error) 
+  {
+    console.error('Request interceptor error, continuing anyway', error);
+    return config;
+  }
+  },
+  (error) => {
+    console.error('request interceptor rejected', error);
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor - handle auth errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    console.error('API Error:', {
+      message: error.message,
+      url: error.config?.url,
+      status: error.response?.status,
+      data: error.response?.data,
+    });
+
+    if (error.response?.data?.detail) {
+      error.message = error.response.data.detail;
+    }
+
+    if (error.response?.status === 401) {
+      console.warn('⚠️ 401 Unauthorized - Token may be expired');
+      // Don't clear storage here - let AuthContext handle it
+      // Just reject so the app can handle it appropriately
+    }
+    
+    
+    return Promise.reject(error);
+  }
+);
+
+//ending of adding for unified SecureStore 11/14
+
+/* Commenting this out to check for unified SecureStore implementation 11/14
 
 //NK adding auth, login, register etc
 
@@ -222,10 +319,58 @@ apiClient.interceptors.response.use(
 );
 
 
-
+Commented this section out for unified SecureStore implemnetaiton trial*/
 
 export const realApiService: ApiService = {
 
+  async login(username: string, password: string): Promise<LoginResponse> {
+    console.log('🔐 Login attempt:', { username });
+    
+    const formData = new FormData();
+    formData.append('username', username);
+    formData.append('password', password);
+
+    const { data } = await apiClient.post("/api/auth/token", formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+
+    console.log('✅ Login successful');
+    
+    // Return token and userId to be handled by AuthContext
+    return {
+      token: data.access_token,
+      userId: username, // Using username as userId (adjust if your API returns a different ID)
+    };
+  },
+
+  async register(name: string, email: string, password: string): Promise<Token & { userId?: string }> {
+    console.log('📝 Registration attempt:', { name, email });
+    
+    const { data } = await apiClient.post("/api/auth/register", {
+      username: email,
+      password: password,
+      name: name,
+    });
+
+    console.log('✅ Registration successful');
+    
+    // Return token and userId to be handled by AuthContext
+    return {
+      ...data,
+      userId: email, // Using email as userId
+    };
+  },
+
+  async logout(): Promise<void> {
+    console.log('🚪 Logout from API service');
+    // Just a placeholder - actual logout is handled by AuthContext
+    // You could add a server-side logout call here if needed
+  },
+
+
+  /* testing for Unified Secure Store 11/14
   async login(username, password) {
     console.log('🔍 RealAPI called for this login attempt:', { username });
     const formData = new FormData();
@@ -267,14 +412,18 @@ export const realApiService: ApiService = {
     await clearUserSession();
   },
 
+  Unified SecureStore 11/14 */
+
+  /* commenting for now
   async getMoodCount() {
-    const { data } = await apiClient.get("/mood/trends");
+    const { data } = await apiClient.get("/api/mood/history");
     return data;
-  },
+  }, */
+  /* invalid
   async getReminderCount() {
     const { data } = await apiClient.get("/reminders/count");
     return data;
-  },
+  }, */
   /*async getUserProfile() {
     const { data } = await apiClient.get("/me");
     return data;
@@ -406,8 +555,20 @@ async getContentRecommendations(params?: { q?: string; tags?: string[]; limit?: 
     return data; // { success: boolean }
   },
 
+  // --- Get memory summary ---
+  async getMemorySummary() {
+    console.log('🔍 RealAPI called for memory summary');
+    const { data } = await apiClient.get<MemorySummary>("/api/memory/summary");
+    console.log('🔍 Memory summary response:', data);
+    return data;
+  },
 
-  
+  async getProgressDashboard() {
+    const { data } = await apiClient.get<ProgressDashboard>("/api/progress/dashboard");
+    return data;
+  },
+
+
 };
 
 // Step 4: Export mock too
