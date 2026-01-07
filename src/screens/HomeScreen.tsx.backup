@@ -6,11 +6,9 @@ import { useFetchMoodCount, useFetchReminderCount } from "../api/hooks";
 import Layout from "../components/UI/layout";
 import { useTheme } from "../context/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
-//import Logo from "../images/Meditating_logo.png";
-import Logo from "../images/MeditatingLogoTransparent.png";
+import Avatar from "../images/avatar.png";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
-import { SPACING, TYPOGRAPHY, BORDER_RADIUS, SHADOWS } from "../constants/styles";
 
 const CARD_MARGIN = 12;
 
@@ -41,11 +39,7 @@ const HomeScreen = () => {
     <Layout title="Home" onNavigate={(screen) => navigation.navigate(screen as never)}>
       <ScrollView
         style={{ flex: 1, backgroundColor: colors.background }}
-        contentContainerStyle={{
-          paddingHorizontal: SPACING.md,
-          paddingTop: SPACING.md,
-          paddingBottom: SPACING.lg,
-        }}
+        contentContainerStyle={{ paddingHorizontal: CARD_MARGIN, paddingTop: 16, paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
@@ -59,7 +53,7 @@ const HomeScreen = () => {
         <Text style={[styles.welcome, { color: colors.text }]}>
           Welcome, how are you feeling today?
         </Text>
-        <Image source={Logo} style={styles.logo} resizeMode="contain" />
+        <Image source={Avatar} style={styles.avatar} resizeMode="contain" />
 
         {/* Cards Grid */}
         <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }}>
@@ -75,9 +69,6 @@ const HomeScreen = () => {
                 marginBottom: CARD_MARGIN,
                 justifyContent: "center",
                 alignItems: "center",
-                backgroundColor: colors.cardBackground,
-                borderRadius: BORDER_RADIUS.lg,
-                ...SHADOWS.none,
               }}
             />
           ))}
@@ -89,20 +80,20 @@ const HomeScreen = () => {
 
 const styles = StyleSheet.create({
   date: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    marginBottom: SPACING.sm,
+    fontSize: 14,
+    marginBottom: 6,
     textAlign: "center",
   },
   welcome: {
-    fontSize: TYPOGRAPHY.sizes.lg,
-    fontWeight: TYPOGRAPHY.weights.bold,
+    fontSize: 20,
+    fontWeight: "bold",
     textAlign: "center",
-    marginBottom: SPACING.lg,
+    marginBottom: 16,
   },
-  logo: {
-    width: 180,
-    height: 180,
-    marginBottom: SPACING.lg,
+  avatar: {
+    width: 100,
+    height: 100,
+    marginBottom: 20,
     alignSelf: "center",
   },
 });

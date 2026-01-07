@@ -16,9 +16,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 
 import BottomNav from "./BottomNav";
-//import AppLogo from "../../images/Meditating_logo.png";
-//import AppLogo from "../../images/MeditatingLogoBlueBG.png";
-import AppLogo from "../../images/MeditatingLogoTransparent.png";
+import AppLogo from "../../images/Meditating_logo.png";
 
 import { Button } from "../UI/Button";
 import { Card } from "../UI/Card";
@@ -65,9 +63,7 @@ function Layout({ children, title, onNavigate }: LayoutProps) {
           <Text style={{ fontSize: 24, color: colors.buttonText }}>☰</Text>
         </TouchableOpacity>
 
-        <View style={[styles.logoContainer, { backgroundColor: colors.primary }, ]}>
-          <Image source={AppLogo} style={styles.logo} resizeMode="contain" />
-        </View>
+        <Image source={AppLogo} style={styles.logo} resizeMode="contain" />
 
         <Text style={[styles.title, { color: colors.buttonText }]}>
           {String(title || "Mental health App")}
@@ -156,18 +152,10 @@ const styles = StyleSheet.create({
   hamburger: {
     marginRight: 12,
   },
-  logoContainer: {
+  logo: {
     width: 50,
     height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
     marginRight: 8,
-    overflow: 'hidden',
-  },
-  logo: {
-    width: 45,
-    height: 45,
   },
   title: {
     fontSize: 20,

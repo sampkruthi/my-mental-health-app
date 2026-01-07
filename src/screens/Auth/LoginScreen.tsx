@@ -1,148 +1,391 @@
 // src/screens/Auth/LoginScreen.tsx
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Platform } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  Platform,
+  StyleSheet,
+  ScrollView,
+  Image,
+  Dimensions,
+  LinearGradientComponent,
+  KeyboardAvoidingView,
+  SafeAreaView,
+} from "react-native";
 import { useAuth } from "../../context/AuthContext";
-//import { useMutation } from "@tanstack/react-query";
 import { useLogin } from "../../api/hooks";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../navigation/AppNavigator"; 
+import { RootStackParamList } from "../../navigation/AppNavigator";
 import { Button } from "../../components/UI/Button";
 import axios from "axios";
 import { Alert } from "react-native";
+import MeditatingLogo from "../../images/Meditating_logo.png";
 
+const { width } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
-const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
+  const testConnection = async () => {
+    try {
+      console.log('🧪 Testing connection to:', 'http://192.168.86.27:8000/docs');
+      await axios.get('http://192.168.86.27:8000/docs', {
+        timeout: 5000
+      });
+      console.log('✅ Connection test SUCCESS');
+      Alert.alert('Success', 'Can reach backend!');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.log('❌ Connection test FAILED:', errorMessage);
+      Alert.alert('Failed', errorMessage);
+    }
+  };
 
-//testing for android
-
-const testConnection = async () => {
-  try {
-    console.log('🧪 Testing connection to:', 'http://192.168.86.27:8000/docs');
-    await axios.get('http://192.168.86.27:8000/docs', {
-      timeout: 5000
-    });
-    console.log('✅ Connection test SUCCESS');
-    Alert.alert('Success', 'Can reach backend!');
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.log('❌ Connection test FAILED:', errorMessage);
-    Alert.alert('Failed', errorMessage);
-  }
-};
-
-
-  // =====================
   // Use login mutation hook
-  // =====================
   const loginMutation = useLogin();
 
   const handleSubmit = async () => {
-  try {
-    console.log("[LoginScreen] handleSubmit called with:", email, password);
-    const result = await loginMutation.mutateAsync({ email, password });
-    console.log("[LoginScreen] Login mutation result:", result);
+    try {
+      console.log("[LoginScreen] handleSubmit called with:", email, password);
+      const result = await loginMutation.mutateAsync({ email, password });
+      console.log("[LoginScreen] Login mutation result:", result);
 
-    if (result?.token) {
-      await signIn(email, password, result.token); // Use access_token
-      console.log("[LoginScreen] User signed in successfully");
+      if (result?.token) {
+        await signIn(email, password, result.token);
+        console.log("[LoginScreen] User signed in successfully");
+      }
+    } catch (e) {
+      console.error("[LoginScreen] Login failed", e);
     }
-  } catch (e) {
-    console.error("[LoginScreen] Login failed", e);
-  }
-};
+  };
 
-
-  // ✅ derive flags manually
   const loading = loginMutation.status === "pending";
   const hasError = loginMutation.status === "error";
   const error = loginMutation.error;
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20 }}>
-  <View style={{ width: "100%", maxWidth: 400 }}> {/* Limit width for larger screens */}
-
-    <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 20, textAlign: "center" }}>
-      Login
-    </Text>
-
-    <TextInput
-      placeholder="Email"
-      value={email}
-      onChangeText={setEmail}
-      autoCapitalize="none"
-      keyboardType="email-address"
-      style={{
-        borderWidth: 1,
-        borderColor: "#ccc",
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 12,
-      }}
-    />
-
-    <TextInput
-      placeholder="Password"
-      value={password}
-      onChangeText={setPassword}
-      secureTextEntry
-      style={{
-        borderWidth: 1,
-        borderColor: "#ccc",
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 20,
-      }}
-    />
-
-    {hasError && (
-      <Text style={{ color: "red", marginBottom: 12, textAlign: "center" }}>
-        Error: {error?.message || "Login failed"}
-      </Text>
-    )}
-
-    <TouchableOpacity
-      onPress={handleSubmit}
-      disabled={loading}
-      style={{
-        backgroundColor: loading ? "#aaa" : "#007bff",
-        padding: 14,
-        borderRadius: 8,
-        alignItems: "center",
-      }}
-    >
-      {loading ? (
-        <ActivityIndicator size={Platform.OS === "ios" ? 20 : "small"} color="#fff" />
-      ) : (
-        <Text style={{ color: "#fff", fontWeight: "bold" }}>Login</Text>
-      )}
-    </TouchableOpacity>
-      <TouchableOpacity
-          onPress={() => navigation.navigate("Register")} // navigate to register screen
-          style={{
-            marginTop: 16,
-            padding: 12,
-            alignItems: "center",
-          }}
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4DB" }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={{ color: "#007bff", fontWeight: "bold" }}>
-            New user? Register
+        {/* White Card Container */}
+        <View style={styles.card}>
+          {/* Logo Section */}
+          <View style={styles.logoSection}>
+            <Image
+              source={MeditatingLogo}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+
+          {/* App Title */}
+          <Text style={styles.appTitle}>Bodhira</Text>
+
+          {/* Tab Navigation */}
+          <View style={styles.tabContainer}>
+            <TouchableOpacity style={[styles.tab, styles.activeTab]}>
+              <Text style={[styles.tabText, styles.activeTabText]}>Sign In</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Register")}
+              style={styles.tab}
+            >
+              <Text style={styles.tabText}>Sign Up</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Email Section */}
+          <View style={styles.inputSection}>
+            <Text style={styles.label}>Email</Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputIcon}>✉️</Text>
+              <TextInput
+                placeholder="you@example.com"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                placeholderTextColor="#999"
+                style={styles.input}
+                autoFocus={false}
+                returnKeyType="next"
+                onSubmitEditing={() => {}}
+              />
+            </View>
+          </View>
+
+          {/* Password Section */}
+          <View style={styles.inputSection}>
+            <Text style={styles.label}>Password</Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputIcon}>🔒</Text>
+              <TextInput
+                placeholder="••••••••"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                placeholderTextColor="#999"
+                style={styles.input}
+                autoFocus={false}
+                returnKeyType="done"
+                onSubmitEditing={handleSubmit}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeIcon}
+              >
+                <Text>{showPassword ? "👁️" : "👁️‍🗨️"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Remember Me & Forgot Password */}
+          <View style={styles.actionsRow}>
+            <TouchableOpacity
+              style={styles.rememberMeContainer}
+              onPress={() => setRememberMe(!rememberMe)}
+            >
+              <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+                {rememberMe && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <Text style={styles.rememberMeText}>Remember me</Text>
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Error Message */}
+          {hasError && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>
+                Error: {error?.message || "Login failed"}
+              </Text>
+            </View>
+          )}
+
+          {/* Sign In Button */}
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={loading}
+            style={[
+              styles.signInButton,
+              loading && styles.signInButtonDisabled,
+            ]}
+          >
+            {loading ? (
+              <ActivityIndicator
+                size={Platform.OS === "ios" ? 20 : "small"}
+                color="#fff"
+              />
+            ) : (
+              <Text style={styles.signInButtonText}>Sign In</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* Privacy Notice */}
+          <Text style={styles.privacyText}>
+            By continuing, you agree to our commitment to your privacy and
+            mental wellness.
           </Text>
-        </TouchableOpacity>  
-      <Button title="Test Connection" onPress={testConnection} />
+        </View>
 
-
-
-    
-
-  </View>
-</View>
-
+          {/* Test Connection Button - for debugging */}
+          <Button title="Test Connection" onPress={testConnection} />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#EDE4DB",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 600,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  logoSection: {
+    alignItems: "center",
+    marginBottom: 24,
+    height: 150,
+  },
+  logo: {
+    width: 140,
+    height: 140,
+  },
+  appTitle: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: "#2C3E50",
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  tabContainer: {
+    flexDirection: "row",
+    marginBottom: 32,
+    backgroundColor: "#F8F8F8",
+    borderRadius: 12,
+    padding: 4,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderRadius: 10,
+  },
+  activeTab: {
+    backgroundColor: "#FFFFFF",
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#7F8C8D",
+  },
+  activeTabText: {
+    color: "#5B9ACD",
+  },
+  inputSection: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#2C2C2C",
+    marginBottom: 8,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    backgroundColor: "#F9F9F9",
+  },
+  inputIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: "#2C2C2C",
+  },
+  eyeIcon: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  actionsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  rememberMeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: "#2C2C2C",
+    marginRight: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkboxChecked: {
+    backgroundColor: "#2C2C2C",
+  },
+  checkmark: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  rememberMeText: {
+    fontSize: 14,
+    color: "#7F8C8D",
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    color: "#5B9ACD",
+    fontWeight: "500",
+  },
+  errorContainer: {
+    backgroundColor: "#FFE5E5",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: "#D32F2F",
+    fontSize: 14,
+    textAlign: "center",
+  },
+  signInButton: {
+    backgroundColor: "#5B9ACD",
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+    shadowColor: "#5B9ACD",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  signInButtonDisabled: {
+    opacity: 0.6,
+  },
+  signInButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 16,
+  },
+  privacyText: {
+    fontSize: 12,
+    color: "#999",
+    textAlign: "center",
+    lineHeight: 18,
+  },
+});

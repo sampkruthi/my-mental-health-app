@@ -27,7 +27,12 @@ export interface ApiService {
   getMoodHistory?: () => Promise<MoodLog[]>;
   logMood?: (input: { score: number; note?: string }) => Promise<MoodLog>;
   getReminders?: () => Promise<Reminder[]>;
-  getChatHistory?: () => Promise<ChatMessage[]>;
+  //getChatHistory?: () => Promise<ChatMessage[]>;
+  getChatHistory?: (limit?: number, offset?: number) => Promise<{
+    messages: ChatMessage[];
+    total_count: number;
+    has_more: boolean;
+  }>;
   sendChatMessage?: (text: string) => Promise<ChatMessage>;
   // Guided Activities
   getActivities?: () => Promise<GuidedActivity[]>;
@@ -98,7 +103,8 @@ const getApiBaseUrl = () => {
     // Development environment
     if (Platform.OS === 'android') {
       //return 'http://10.0.2.2:8000'; // Android emulator
-      const url =  'http://192.168.86.27:8000';
+      const url =  'http://192.168.86.25:8000';
+      const urlCA = 'http://192.168.1.238:8000';
       console.log('🌐 Android API URL:', url);
       return url;
     }
@@ -326,6 +332,23 @@ export const realApiService: ApiService = {
   async login(username: string, password: string): Promise<LoginResponse> {
     console.log('🔐 Login attempt:', { username });
     
+    const params = new URLSearchParams();
+  params.append('username', username);
+  params.append('password', password);
+
+  const { data } = await apiClient.post("/api/auth/token", params.toString(), {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  });
+  
+  console.log('✅ Login successful');
+  
+  return {
+    token: data.access_token,
+    userId: username,
+  };
+    /* Commenting FormData due to issues with logging in in Android
     const formData = new FormData();
     formData.append('username', username);
     formData.append('password', password);
@@ -342,7 +365,9 @@ export const realApiService: ApiService = {
     return {
       token: data.access_token,
       userId: username, // Using username as userId (adjust if your API returns a different ID)
-    };
+    }; 
+
+    Commenting FormData due to issues with logging in in Android*/
   },
 
   async register(name: string, email: string, password: string): Promise<Token & { userId?: string }> {
@@ -470,6 +495,19 @@ export const realApiService: ApiService = {
     } as ChatMessage;
   },
 
+  //Chat history
+
+  async getChatHistory(limit: number = 20, offset: number = 0) {
+    const { data } = await apiClient.get("/api/chat/history", {
+      params: { limit, offset }
+    });
+    
+    return {
+      messages: data.messages,
+      total_count: data.total_count,
+      has_more: data.has_more
+    };
+  },
   //Guided activity
 
   

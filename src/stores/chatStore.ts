@@ -11,6 +11,8 @@ export type Message = {
 interface ChatState {
   messages: Message[];
   addMessage: (msg: Message) => void;
+  setMessages: (messages: Message[]) => void;
+  prependMessages: (messages: Message[]) => void; 
   clear: () => void;
 }
 
@@ -21,4 +23,8 @@ export const useChatStore = create<ChatState>((set) => ({
       messages: [...state.messages, msg],
     })),
   clear: () => set({ messages: [] }),
+  setMessages: (messages) => 
+    set({ messages }),
+  prependMessages: (messages) =>
+    set((state) => ({ messages: [...messages, ...state.messages] })),
 }));

@@ -102,20 +102,26 @@ export function useFetchReminderCount(token?: string | null) {
   });
 }
 
+// Paginated chat history hook
 
-
-// =====================
-// Chat history hook
-// =====================
-export function useFetchChatHistory(token?: string | null) {
-  return useQuery<ChatMessage[], Error>({
-    queryKey: ["chat", "history", token],
+export function useFetchChatHistory(
+  token?: string | null,
+  limit: number = 20,
+  offset: number = 0
+) {
+  return useQuery({
+    queryKey: ["chat", "history", token, limit, offset],
     queryFn: async () => {
-      console.log("[useFetchChatHistory] Fetching chat history, token:", token);
-      if (!token) return [];
+      console.log(`[useFetchChatHistory] Fetching history: limit=${limit}, offset=${offset}`);
+      if (!token) return { messages: [], total_count: 0, has_more: false };
 
-      const data: ChatMessage[] = await getApiService().getChatHistory?.() ?? [];
-      console.log("[useFetchChatHistory] Chat history returned:", data);
+      const data = await getApiService().getChatHistory?.(limit, offset) ?? {
+        messages: [],
+        total_count: 0,
+        has_more: false
+      };
+      
+      console.log(`[useFetchChatHistory] Loaded ${data.messages.length} messages, has_more=${data.has_more}`);
       return data;
     },
     enabled: Boolean(token),
