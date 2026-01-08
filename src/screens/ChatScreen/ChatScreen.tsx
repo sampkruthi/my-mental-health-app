@@ -37,6 +37,8 @@ const ChatScreen = () => {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
   
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -53,6 +55,33 @@ const ChatScreen = () => {
     0
   );
 
+  //keyboard listeners
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+        // Scroll to end when keyboard opens
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    );
+
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, []);
+
+  //Load initial history
   useEffect(() => {
     if (initialHistory && !initialLoadDone) {
       if (initialHistory.messages.length > 0) {
@@ -73,6 +102,7 @@ const ChatScreen = () => {
     }
   }, [initialHistory, initialLoadDone]);
 
+  //Scroll to bottom when messages change
   useEffect(() => {
     if (flatListRef.current && messages.length > 0 && initialLoadDone) {
       setTimeout(() => {
@@ -218,9 +248,10 @@ const ChatScreen = () => {
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 100}
         >
+            { /* FlatList takes up all available space */}
           <FlatList
             ref={flatListRef}
             data={messages}
@@ -228,7 +259,7 @@ const ChatScreen = () => {
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={[
               styles.chatContainer,
-              { paddingBottom: Platform.OS === 'android' ? 80 : 10 }
+              { paddingBottom: Platform.OS === 'android' ? 100 : 10 }
             ]}
             ListHeaderComponent={renderListHeader}
             ListFooterComponent={renderListFooter}
@@ -241,8 +272,13 @@ const ChatScreen = () => {
             scrollEventThrottle={400}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
+            maintainVisibleContentPosition={{
+                minIndexForVisible: 0,
+                autoscrollToTopThreshold: 10,
+              }}
           />
 
+          {/* Input row - positioned at bottom */}
           <View style={[
             styles.inputRow, 
             { 
@@ -270,6 +306,11 @@ const ChatScreen = () => {
               blurOnSubmit={false}
               autoFocus={false}
               returnKeyType="default"
+              onFocus={() => {
+                setTimeout(() => {
+                  flatListRef.current?.scrollToEnd({ animated: true });
+                }, 300);
+              }}
             />
 
             <TouchableOpacity onPress={handleSend} style={styles.sendBtn}>
