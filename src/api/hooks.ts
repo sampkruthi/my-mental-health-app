@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { getApiService } from "../../services/api"; // adjust path if needed
 import type { Reminder,  ChatMessage, MoodLog, GuidedActivity, JournalEntry, 
-JournalInsights, ResourceRec, Reminder1, NewReminder, MemorySummary, Token, RegisterRequest, ProgressDashboard } from "./types";
+JournalInsights, ResourceRec, Reminder1, NewReminder, MemorySummary, Token, RegisterRequest, ProgressDashboard, ResourceRecRAG } from "./types";
 
 
 
@@ -295,6 +295,28 @@ export function useFetchContentRec(
       if (!token) return [];
 
       const data: ResourceRec[] = await getApiService().getContentRecommendations?.(params) ?? [];
+      return data;
+    },
+    enabled: Boolean(token),
+    staleTime: 60_000, // 1 minute
+  });
+}
+
+export function useFetchContentRecWithRAG(
+  token: string | null | undefined,
+  params?: {  limit?: number }
+) {
+  return useQuery<ResourceRecRAG, Error>({
+    queryKey: ['resources', 'recs-rag', params, token],
+    queryFn: async () => {
+      if (!token) return { recommendations: [], personalized_summary: '', query: '', user_context: {} };
+
+      const data: ResourceRecRAG = await getApiService().getContentRecommendationsRag?.(params) ?? {
+        recommendations: [],
+        personalized_summary: '',
+        query: '',
+        user_context: {}
+      };
       return data;
     },
     enabled: Boolean(token),

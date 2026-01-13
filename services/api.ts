@@ -2,7 +2,8 @@
 import axios from "axios";
 import { mockApiService } from "./mockApi";
 import type { MoodTrendPoint, MoodLog, Reminder, ChatMessage, GuidedActivity,JournalEntry, JournalInsights, ResourceRec, 
-  Token, Reminder1, MemorySummary, ProgressDashboard } from "../src/api/types";
+  Token, Reminder1, MemorySummary, ProgressDashboard, 
+  ResourceRecRAG} from "../src/api/types";
 import { Platform } from "react-native";
 import {storage, STORAGE_KEYS} from "../src/utils/storage";
 import * as SecureStore from 'expo-secure-store';
@@ -54,6 +55,7 @@ export interface ApiService {
   getContentRecommendations(params?: { q?: string; tags?: string[]; limit?: number }): Promise<ResourceRec[]>;
   getMemorySummary(): Promise<MemorySummary>;
   getProgressDashboard?(): Promise<ProgressDashboard>;
+  getContentRecommendationsRag(params?: { limit?: number }): Promise<ResourceRecRAG>;
 
 
   //add logout function
@@ -544,7 +546,7 @@ async getJournalHistory() {
 },
 // ---------- Resources ----------
 async getContentRecommendations(params?: { q?: string; tags?: string[]; limit?: number }) {
-  const { data } = await apiClient.get<ResourceRec[]>("/api/recommend/content", { 
+  const { data } = await apiClient.get<ResourceRec[]>("/api/recommend/content", {
     params: { k: params?.limit || 5}
    });
    console.log('🔍 Content recommendations response:', data); // DEBUG
@@ -552,6 +554,14 @@ async getContentRecommendations(params?: { q?: string; tags?: string[]; limit?: 
   return data;
 },
 
+// --- Get RAG recommendations ---
+async getContentRecommendationsRag(params?: { limit?: number }) {
+  const { data } = await apiClient.get<ResourceRecRAG>("/api/recommend/rag", {
+    params: { limit: params?.limit || 10 }
+  });
+  console.log('🔍 RAG Content recommendations response:', data); // DEBUG
+  return data;
+},
 
 
 // --- Get all reminders ---

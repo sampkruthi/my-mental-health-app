@@ -104,7 +104,42 @@ export interface ResourceRec {
   thumbnail?: string;
   snippet?: string;
   score?: number; //Optional since it comes from FAISS
-  recommendation_reason?: string;  
+  recommendation_reason?: string;
+}
+
+// Content data model - matches ContentDTO from backend
+export interface Content {
+  id: number;
+  title: string;
+  url: string;
+  content_type: 'article' | 'podcast' | 'video';
+  tags: string[];
+  thumbnail?: string;
+  snippet?: string;
+  score: number;  // FAISS score (smaller distance = closer match)
+  recommendation_reason?: string;
+}
+
+// RAG Recommendation - enhanced content with relevance score
+export interface RAGRecommendation {
+  id: number;
+  title: string;
+  description?: string;
+  url: string;
+  content_type: 'article' | 'podcast' | 'video';
+  tags: string[];
+  thumbnail?: string;
+  snippet?: string;
+  score: number;  // FAISS score (smaller distance = closer match)
+  relevance_score: number;  // Similarity score (0-1, higher = better)
+}
+
+// RAG Response - complete response with recommendations and summary
+export interface ResourceRecRAG {
+  recommendations: RAGRecommendation[];
+  personalized_summary: string;
+  query: string;
+  user_context: Record<string, any>;
 }
 
 

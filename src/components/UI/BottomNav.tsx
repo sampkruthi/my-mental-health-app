@@ -16,7 +16,7 @@ const tabs: { name: NavKeys; label: string; icon: keyof typeof Ionicons.glyphMap
   { name: "mood", label: "Mood", icon: "happy-outline" },
   { name: "journal", label: "Journal", icon: "book-outline" },
   { name: "resources", label: "Resources", icon: "layers-outline" },
-  { name: "activities", label: "Activities", icon: "checkmark-done-outline" },
+ // { name: "activities", label: "Activities", icon: "checkmark-done-outline" },
   { name: "reminders", label: "Reminders", icon: "notifications-outline" },
   { name: "memorysummary", label: "Memory", icon: "calendar-outline" },
   { name: "progressdashboard", label: "Progress", icon: "trending-up-outline" },

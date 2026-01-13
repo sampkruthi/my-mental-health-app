@@ -20,8 +20,8 @@ import { RootStackParamList } from "../../navigation/AppNavigator";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Layout from "../../components/UI/layout";
 import { Button } from "../../components/UI/Button";
-import { useFetchContentRec } from "../../api/hooks";
-import { ResourceRec } from "../../api/types";
+import { useFetchContentRec, useFetchContentRecWithRAG } from "../../api/hooks";
+import { ResourceRec, ResourceRecRAG, RAGRecommendation } from "../../api/types";
 
 const { width } = Dimensions.get("window");
 
@@ -29,18 +29,35 @@ const ResourcesScreen = () => {
   const { colors } = useTheme();
   const { token } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  
-  const { data: resources = [], isLoading, isError, error } = useFetchContentRec(token, { limit: 10 });
 
-  const [selectedResource, setSelectedResource] = useState<ResourceRec | null>(null);
+  // const { data: resources = [], isLoading, isError, error } = useFetchContentRec(token, { limit: 10 });
+
+  const {
+    data: ragData = {
+      recommendations: [],
+      personalized_summary: '',
+      query: '',
+      user_context: {}
+    },
+    isLoading,
+    isError,
+    error
+  } = useFetchContentRecWithRAG(token, { limit: 10 });
+
+  // Extract recommendations from RAG response
+  const resources: RAGRecommendation[] = ragData?.recommendations || [];
+  const ragSummary = ragData?.personalized_summary || '';
+
+  const [selectedResource, setSelectedResource] = useState<RAGRecommendation | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
   // Debug logs
   console.log('🔍 Resources token:', token ? 'EXISTS' : 'MISSING');
   console.log('🔍 Resources count:', resources.length);
+  console.log('🔍 RAG Summary:', ragSummary);
   console.log('🔍 First resource:', resources[0]);
 
-  const handleOpen = (resource: ResourceRec) => {
+  const handleOpen = (resource: RAGRecommendation) => {
     setSelectedResource(resource);
     setModalVisible(true);
   };
@@ -50,9 +67,20 @@ const ResourcesScreen = () => {
     setSelectedResource(null);
   };
 
-  const getResourceType = (item: ResourceRec) => {
+  // OLD CODE - COMMENTED OUT
+  // const handleOpen = (resource: ResourceRec) => {
+  //   setSelectedResource(resource);
+  //   setModalVisible(true);
+  // };
+
+  const getResourceType = (item: RAGRecommendation) => {
     return item.content_type?.toUpperCase() || 'RESOURCE';
   };
+
+  // OLD CODE - COMMENTED OUT
+  // const getResourceType = (item: ResourceRec) => {
+  //   return item.content_type?.toUpperCase() || 'RESOURCE';
+  // };
 
   const getResourceColor = (type: string) => {
     const colorMap: Record<string, string> = {
@@ -73,37 +101,49 @@ const ResourcesScreen = () => {
     return placeholders[contentType.toLowerCase()] || 'https://via.placeholder.com/200/9E9E9E/FFFFFF?text=Resource';
   };
 
-  const renderCard = ({ item }: { item: ResourceRec }) => {
+  const renderCard = ({ item }: { item: RAGRecommendation }) => {
     const resourceType = getResourceType(item);
     const thumbnailUrl = item.thumbnail || getDefaultThumbnail(item.content_type);
-    
+
     return (
       <View style={[styles.card, { backgroundColor: colors.cardBackground || "#f0f4ff" }]}>
-        <Image 
-          source={{ uri: thumbnailUrl }} 
-          style={styles.thumbnail}
-          defaultSource={{ uri: getDefaultThumbnail(item.content_type) }}
-        />
-        
+        <View style={styles.thumbnailContainer}>
+          <Image
+            source={{ uri: thumbnailUrl }}
+            style={styles.thumbnail}
+            onError={() => console.log('Failed to load image:', thumbnailUrl)}
+          />
+        </View>
+
         <View style={styles.cardContent}>
           <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
             {item.title}
           </Text>
-          
+
           <View style={[styles.cardBadge, { backgroundColor: getResourceColor(resourceType) }]}>
             <Text style={styles.badgeText}>{resourceType}</Text>
           </View>
 
-          {/* ADD RECOMMENDATION REASON */}
-        {item.recommendation_reason && (
-          <View style={styles.reasonContainer}>
-            <Text style={styles.reasonIcon}>💡</Text>
-            <Text style={[styles.reasonText, { color: colors.subText }]} numberOfLines={2}>
-              {item.recommendation_reason}
-            </Text>
-          </View>
-        )}
-          
+          {/* Show description if available (RAG recommendation) */}
+          {item.description && (
+            <View style={styles.reasonContainer}>
+              <Text style={styles.reasonIcon}>💡</Text>
+              <Text style={[styles.reasonText, { color: colors.subText }]} numberOfLines={2}>
+                {item.description}
+              </Text>
+            </View>
+          )}
+
+          {/* OLD CODE - COMMENTED OUT */}
+          {/* {item.recommendation_reason && (
+            <View style={styles.reasonContainer}>
+              <Text style={styles.reasonIcon}>💡</Text>
+              <Text style={[styles.reasonText, { color: colors.subText }]} numberOfLines={2}>
+                {item.recommendation_reason}
+              </Text>
+            </View>
+          )} */}
+
           {/* Show tags if available */}
           {item.tags && item.tags.length > 0 && (
             <View style={styles.tagsContainer}>
@@ -114,20 +154,27 @@ const ResourcesScreen = () => {
               ))}
             </View>
           )}
-          
+
           {item.snippet && (
             <Text style={[styles.cardDescription, { color: colors.subText }]} numberOfLines={2}>
               {item.snippet}
             </Text>
           )}
-          
-          {/* Show score if available */}
-          {item.score !== undefined && (
+
+          {/* Show relevance_score (RAG) instead of score */}
+          {item.relevance_score !== undefined && (
+            <Text style={[styles.score, { color: colors.subText }]}>
+              Relevance: {(item.relevance_score * 100).toFixed(0)}%
+            </Text>
+          )}
+
+          {/* OLD CODE - COMMENTED OUT */}
+          {/* {item.score !== undefined && (
             <Text style={[styles.score, { color: colors.subText }]}>
               Relevance: {(item.score * 100).toFixed(0)}%
             </Text>
-          )}
-          
+          )} */}
+
           <View style={{ marginTop: 12, width: 80 }}>
             <Button title="Open" onPress={() => handleOpen(item)} />
           </View>
@@ -150,36 +197,54 @@ const ResourcesScreen = () => {
 
   return (
     <Layout title="Resources" onNavigate={(screen) => navigation.navigate(screen as never)}>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Text style={[styles.header, { color: colors.text }]}>Recommended Resources</Text>
+      <ScrollView
+        style={[styles.scrollContainer, { backgroundColor: colors.background }]}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+          <Text style={[styles.header, { color: colors.text }]}>Recommended Resources</Text>
 
-        {isLoading ? (
-          <View style={styles.centerContent}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={[styles.loadingText, { color: colors.subText }]}>
-              Loading resources...
-            </Text>
-          </View>
-        ) : isError ? (
-          <View style={styles.centerContent}>
-            <Text style={[styles.errorText, { color: 'red' }]}>
-              Error: {error?.message || 'Failed to load resources'}
-            </Text>
-          </View>
-        ) : resources.length === 0 ? (
-          <View style={styles.centerContent}>
-            <Text style={[styles.emptyText, { color: colors.subText }]}>
-              No resources available yet. Check back soon!
-            </Text>
-          </View>
-        ) : (
-          <FlatList
-            data={resources}
-            keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-            renderItem={renderCard}
-            contentContainerStyle={{ paddingBottom: 20 }}
-          />
-        )}
+          {isLoading ? (
+            <View style={styles.centerContent}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={[styles.loadingText, { color: colors.subText }]}>
+                Loading resources...
+              </Text>
+            </View>
+          ) : isError ? (
+            <View style={styles.centerContent}>
+              <Text style={[styles.errorText, { color: 'red' }]}>
+                Error: {error?.message || 'Failed to load resources'}
+              </Text>
+            </View>
+          ) : resources.length === 0 ? (
+            <View style={styles.centerContent}>
+              <Text style={[styles.emptyText, { color: colors.subText }]}>
+                No resources available yet. Check back soon!
+              </Text>
+            </View>
+          ) : (
+            <View>
+              {resources.map((item, index) => (
+                <View key={item.id?.toString() || index.toString()}>
+                  {renderCard({ item })}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Show RAG personalized summary at the bottom if available */}
+          {ragSummary && resources.length > 0 && (
+            <View style={[styles.summaryBox, { backgroundColor: colors.cardBackground || "#f0f4ff" }]}>
+              <Text style={[styles.summaryLabel, { color: colors.text }]}>AI Summary</Text>
+              <Text style={[styles.summaryText, { color: colors.subText }]}>
+                {ragSummary}
+              </Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
 
         {/* Modal for viewing resource details */}
         <Modal visible={modalVisible} animationType="slide" transparent={false}>
@@ -217,18 +282,46 @@ const ResourcesScreen = () => {
                     </View>
                   )}
 
+                  {/* Show description (RAG) */}
+                  {selectedResource.description && (
+                    <Text style={[styles.modalDescription, { color: colors.text }]}>
+                      {selectedResource.description}
+                    </Text>
+                  )}
+
+                  {/* OLD CODE - COMMENTED OUT */}
+                  {/* {selectedResource.snippet && (
+                    <Text style={[styles.modalDescription, { color: colors.text }]}>
+                      {selectedResource.snippet}
+                    </Text>
+                  )} */}
+
                   {selectedResource.snippet && (
                     <Text style={[styles.modalDescription, { color: colors.text }]}>
                       {selectedResource.snippet}
                     </Text>
                   )}
 
-                  {/* Score */}
+                  {/* Show relevance_score (RAG) */}
+                  {selectedResource.relevance_score !== undefined && (
+                    <Text style={[styles.modalScore, { color: colors.subText }]}>
+                      Relevance Score: {(selectedResource.relevance_score * 100).toFixed(0)}%
+                    </Text>
+                  )}
+
+                  {/* Show score if available (fallback) */}
                   {selectedResource.score !== undefined && (
+                    <Text style={[styles.modalScore, { color: colors.subText }]}>
+                      FAISS Score: {(selectedResource.score * 100).toFixed(0)}%
+                    </Text>
+                  )}
+
+                  {/* OLD CODE - COMMENTED OUT */}
+                  {/* {selectedResource.score !== undefined && (
                     <Text style={[styles.modalScore, { color: colors.subText }]}>
                       Relevance Score: {(selectedResource.score * 100).toFixed(0)}%
                     </Text>
-                  )}
+                  )} */}
 
                   <TouchableOpacity 
                     style={[styles.linkButton, { backgroundColor: colors.primary }]}
@@ -250,20 +343,21 @@ const ResourcesScreen = () => {
             </ScrollView>
           </View>
         </Modal>
-      </View>
     </Layout>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  scrollContainer: {
     flex: 1,
+  },
+  container: {
     width: width > 800 ? 900 : "100%",
     alignSelf: "center",
     padding: 10,
   },
   centerContent: {
-    flex: 1,
+    minHeight: 300,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 40,
@@ -294,11 +388,21 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     alignItems: "flex-start",
   },
-  thumbnail: {
+  thumbnailContainer: {
     width: 80,
     height: 80,
     borderRadius: 8,
     marginRight: 12,
+    overflow: 'hidden',
+    backgroundColor: '#E5E7EB',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  thumbnail: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   cardContent: {
     flex: 1,
@@ -440,6 +544,24 @@ const styles = StyleSheet.create({
   closeButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  // RAG Summary Box Styles
+  summaryBox: {
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#5B9ACD',
+  },
+  summaryLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  summaryText: {
+    fontSize: 13,
+    lineHeight: 20,
   },
 });
 
