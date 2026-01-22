@@ -99,20 +99,30 @@ const getCurrentUserId = async (): Promise<string> => {
 
 
 //NK adding this logic
+// Environment configuration
+const APP_ENV = __DEV__ ? 'development' : 'production'; // Change to 'beta' for beta testing
+
 const getApiBaseUrl = () => {
-  // Hardcoded for debugging - we'll make it conditional later
-  if (__DEV__) {
-    // Development environment
+  console.log('🔧 Current Environment:', APP_ENV);
+
+  if (APP_ENV === 'development') {
+    // Local development
     if (Platform.OS === 'android') {
-      //return 'http://10.0.2.2:8000'; // Android emulator
-      const url =  'http://192.168.86.25:8000';
-      const urlCA = 'http://192.168.1.238:8000';
-      console.log('🌐 Android API URL:', url);
+      const url = 'http://192.168.86.25:8000'; // Local machine for Android
+      console.log('🌐 Android Dev API URL:', url);
       return url;
     }
-    return 'http://127.0.0.1:8000'; // iOS simulator, web, or physical device on same network
+    return 'http://127.0.0.1:8000'; // iOS simulator, web, or local machine
+  } 
+  /*
+  else if (APP_ENV === 'beta') {
+    // Beta testing - same as production for now
+    // Can be changed to a separate beta server if needed
+    return 'https://mental-health-assistant-app-production.up.railway.app';
+  } */ else {
+    // Production
+    return 'https://mental-health-assistant-app-production.up.railway.app';
   }
-  return 'https://your-production-api.com'; // Production
 };
 
 /*
@@ -138,8 +148,10 @@ console.log('🔍 API Base URL:', getApiBaseUrl());
   */
 
 
-const API_BASE_URL = getApiBaseUrl();
-console.log('🔍 API Base URL:', getApiBaseUrl());
+//const API_BASE_URL = getApiBaseUrl();
+//console.log('🔍 API Base URL:', getApiBaseUrl());
+const API_BASE_URL = 'https://mental-health-assistant-app-production.up.railway.app';
+console.log('Using API URL:', API_BASE_URL);
 
 // Step 3: Real API
 /*
@@ -175,7 +187,7 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log('✅ Request interceptor complete');
+    console.log('Request interceptor complete');
     console.log('Making request:', {
       method: config.method,
       baseURL: config.baseURL,
@@ -212,7 +224,7 @@ apiClient.interceptors.response.use(
     }
 
     if (error.response?.status === 401) {
-      console.warn('⚠️ 401 Unauthorized - Token may be expired');
+      console.warn('401 Unauthorized - Token may be expired');
       // Don't clear storage here - let AuthContext handle it
       // Just reject so the app can handle it appropriately
     }
@@ -332,7 +344,7 @@ Commented this section out for unified SecureStore implemnetaiton trial*/
 export const realApiService: ApiService = {
 
   async login(username: string, password: string): Promise<LoginResponse> {
-    console.log('🔐 Login attempt:', { username });
+    console.log('Login attempt:', { username });
     
     const params = new URLSearchParams();
   params.append('username', username);
@@ -344,7 +356,7 @@ export const realApiService: ApiService = {
     },
   });
   
-  console.log('✅ Login successful');
+  console.log(' Login successful, user id is', username);
   
   return {
     token: data.access_token,
@@ -373,7 +385,7 @@ export const realApiService: ApiService = {
   },
 
   async register(name: string, email: string, password: string): Promise<Token & { userId?: string }> {
-    console.log('📝 Registration attempt:', { name, email });
+    console.log('Registration attempt:', { name, email });
     
     const { data } = await apiClient.post("/api/auth/register", {
       username: email,
@@ -381,7 +393,8 @@ export const realApiService: ApiService = {
       name: name,
     });
 
-    console.log('✅ Registration successful');
+    console.log('Registration successful');
+    console.log('Response from', API_BASE_URL);
     
     // Return token and userId to be handled by AuthContext
     return {
@@ -391,7 +404,7 @@ export const realApiService: ApiService = {
   },
 
   async logout(): Promise<void> {
-    console.log('🚪 Logout from API service');
+    console.log('Logout from API service');
     // Just a placeholder - actual logout is handled by AuthContext
     // You could add a server-side logout call here if needed
   },
