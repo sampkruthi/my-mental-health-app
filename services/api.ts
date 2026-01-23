@@ -100,7 +100,7 @@ const getCurrentUserId = async (): Promise<string> => {
 
 //NK adding this logic
 // Environment configuration
-const APP_ENV = __DEV__ ? 'development' : 'production'; // Change to 'beta' for beta testing
+const APP_ENV = __DEV__ ? 'development' : 'beta'; // Change to 'beta' for beta testing
 
 const getApiBaseUrl = () => {
   console.log('🔧 Current Environment:', APP_ENV);
