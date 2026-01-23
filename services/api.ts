@@ -579,7 +579,7 @@ async getContentRecommendationsRag(params?: { limit?: number }) {
 
 // --- Get all reminders ---
   async getReminders1() {
-    const { data } = await apiClient.get("/api/reminders");
+    const { data } = await apiClient.get("/api/reminders/");
     return data; // Reminder[]
   },
 
