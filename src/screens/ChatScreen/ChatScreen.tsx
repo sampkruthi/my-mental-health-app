@@ -195,6 +195,8 @@ const ChatScreen = () => {
             {new Date(item.timestamp).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
+              hour12: true,
+              timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             })}
           </Text>
         </View>

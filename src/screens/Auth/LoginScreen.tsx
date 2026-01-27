@@ -21,7 +21,6 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import { Button } from "../../components/UI/Button";
-import axios from "axios";
 import { Alert } from "react-native";
 import MeditatingLogo from "../../images/Meditating_logo.png";
 
@@ -36,20 +35,6 @@ export default function LoginScreen() {
 
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-  const testConnection = async () => {
-    try {
-      console.log('🧪 Testing connection to:', 'http://192.168.86.27:8000/docs');
-      await axios.get('http://192.168.86.27:8000/docs', {
-        timeout: 5000
-      });
-      console.log('✅ Connection test SUCCESS');
-      Alert.alert('Success', 'Can reach backend!');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.log('❌ Connection test FAILED:', errorMessage);
-      Alert.alert('Failed', errorMessage);
-    }
-  };
 
   // Use login mutation hook
   const loginMutation = useLogin();
@@ -207,9 +192,6 @@ export default function LoginScreen() {
             mental wellness.
           </Text>
         </View>
-
-          {/* Test Connection Button - for debugging */}
-          <Button title="Test Connection" onPress={testConnection} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -225,12 +207,13 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 40,
+    paddingHorizontal: Platform.OS === "web" ? 50 : 20,
+    paddingVertical: Platform.OS === "web" ? 60 : 40,
   },
   card: {
-    width: "100%",
-    maxWidth: 600,
+    width: Platform.OS === "web" ? "80%" : "100%",
+    maxWidth: Platform.OS === "web" ? 700 : 600,
+    minHeight: Platform.OS === "web" ? 670 : undefined,
     backgroundColor: "#FFFFFF",
     borderRadius: 24,
     paddingHorizontal: 24,

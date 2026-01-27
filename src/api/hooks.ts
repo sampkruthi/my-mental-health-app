@@ -455,3 +455,51 @@ export function useFetchProgressDashboard(token?: string | null) {
   });
 }
 
+// =====================
+// Notification Hooks
+// =====================
+
+/**
+ * Hook to register device token for push notifications
+ */
+export function useRegisterDeviceToken(token?: string | null) {
+  return useMutation({
+    mutationFn: async ({ deviceToken, platform }: { deviceToken: string; platform: string }) => {
+      console.log("[useRegisterDeviceToken] Registering device token");
+      if (!token) throw new Error("No authentication token available");
+
+      const data = await getApiService().registerDeviceToken(deviceToken, platform);
+      console.log("[useRegisterDeviceToken] Device token registered successfully:", data);
+      return data;
+    },
+    onError: (error) => {
+      console.error("[useRegisterDeviceToken] Failed to register device token:", error);
+    },
+  });
+}
+
+/**
+ * Hook to toggle notifications on/off
+ */
+export function useToggleNotifications(token?: string | null) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (enabled: boolean) => {
+      console.log("[useToggleNotifications] Toggling notifications:", enabled);
+      if (!token) throw new Error("No authentication token available");
+
+      const data = await getApiService().toggleNotifications(enabled);
+      console.log("[useToggleNotifications] Notifications toggled:", data);
+      return data;
+    },
+    onSuccess: () => {
+      console.log("[useToggleNotifications] Invalidating notification queries");
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: (error) => {
+      console.error("[useToggleNotifications] Failed to toggle notifications:", error);
+    },
+  });
+}
+

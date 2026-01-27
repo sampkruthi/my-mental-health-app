@@ -101,15 +101,6 @@ function Layout({ children, title, onNavigate }: LayoutProps) {
           <Text style={{ color: colors.text }}>🌗 Switch Theme</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.drawerItem}
-          onPress={() => {
-            onNavigate("Profile");
-            toggleMenu();
-          }}
-        >
-          <Text style={{ color: colors.text }}>👤 Profile</Text>
-        </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.drawerItem}

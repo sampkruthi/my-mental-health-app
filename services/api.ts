@@ -46,7 +46,7 @@ export interface ApiService {
 
     // Reminders
   getReminders1(): Promise<Reminder1[]>;
-  addReminder(reminder: { type: string; hour: number; minute: number; message: string }): Promise<Reminder1>;
+  addReminder(reminder: { type: string; hour: number; minute: number; period: "AM" | "PM"; message: string }): Promise<Reminder1>;
   //toggleReminder(id: string): Promise<Reminder1>;
   deleteReminder(id: string): Promise<{ success: boolean }>;
 
@@ -57,6 +57,9 @@ export interface ApiService {
   getProgressDashboard?(): Promise<ProgressDashboard>;
   getContentRecommendationsRag(params?: { limit?: number }): Promise<ResourceRecRAG>;
 
+  // ---------- Notifications ----------
+  registerDeviceToken(deviceToken: string, platform: string): Promise<{ status: string; message: string }>;
+  toggleNotifications(enabled: boolean): Promise<{ status: string; notifications_enabled: boolean }>;
 
   //add logout function
   logout(): Promise<void>;
@@ -562,7 +565,7 @@ async getContentRecommendations(params?: { q?: string; tags?: string[]; limit?: 
   const { data } = await apiClient.get<ResourceRec[]>("/api/recommend/content", {
     params: { k: params?.limit || 5}
    });
-   console.log('🔍 Content recommendations response:', data); // DEBUG
+   console.log(' Content recommendations response:', data); // DEBUG
 
   return data;
 },
@@ -572,7 +575,7 @@ async getContentRecommendationsRag(params?: { limit?: number }) {
   const { data } = await apiClient.get<ResourceRecRAG>("/api/recommend/rag", {
     params: { limit: params?.limit || 10 }
   });
-  console.log('🔍 RAG Content recommendations response:', data); // DEBUG
+  console.log('RAG Content recommendations response:', data); // DEBUG
   return data;
 },
 
@@ -584,17 +587,18 @@ async getContentRecommendationsRag(params?: { limit?: number }) {
   },
 
   // --- Add reminder ---
-  async addReminder(reminder: { type: string; hour: number; minute: number; message: string }) {
+  async addReminder(reminder: { type: string; hour: number; minute: number; period: "AM" | "PM"; message: string }) {
     // Parse time string to hour/minute
     //const [hour, minute] = reminder.time.split(':').map(Number);
-    
+
     const { data } = await apiClient.post("/api/reminders/", {
       type: reminder.type,
       hour: reminder.hour,
       minute: reminder.minute,
+      period: reminder.period,
       message: reminder.message
     });
-    console.log('🔵 API Service - addReminder response:', data); 
+    console.log('API Service - addReminder response:', data);
     return data;
 
     //const { data } = await apiClient.post("/reminders", reminder);
@@ -618,9 +622,9 @@ async getContentRecommendationsRag(params?: { limit?: number }) {
 
   // --- Get memory summary ---
   async getMemorySummary() {
-    console.log('🔍 RealAPI called for memory summary');
+    console.log('RealAPI called for memory summary');
     const { data } = await apiClient.get<MemorySummary>("/api/memory/summary");
-    console.log('🔍 Memory summary response:', data);
+    console.log('Memory summary response:', data);
     return data;
   },
 
@@ -629,6 +633,26 @@ async getContentRecommendationsRag(params?: { limit?: number }) {
     return data;
   },
 
+  // --- Register device token for push notifications ---
+  async registerDeviceToken(deviceToken: string, platform: string) {
+    console.log('[API] Registering device token for notifications');
+    const { data } = await apiClient.post("/api/auth/device", {
+      device_token: deviceToken,
+      platform: platform,
+    });
+    console.log('[API] Device token registered:', data);
+    return data;
+  },
+
+  // --- Toggle notifications ---
+  async toggleNotifications(enabled: boolean) {
+    console.log('[API] Toggling notifications:', enabled);
+    const { data } = await apiClient.post("/api/auth/notifications/toggle", {
+      enabled: enabled,
+    });
+    console.log('[API] Notifications toggled:', data);
+    return data;
+  },
 
 };
 

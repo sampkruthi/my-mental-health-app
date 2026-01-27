@@ -1,6 +1,6 @@
 // src/screens/MemorySummaryScreen/MemorySummaryScreen.tsx
 import React from 'react';
-import { ScrollView, StyleSheet, View, Text, ActivityIndicator, Dimensions } from 'react-native';
+import { ScrollView, StyleSheet, View, Text, ActivityIndicator, Dimensions, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
@@ -9,7 +9,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useFetchMemorySummary } from '../../api/hooks';
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export const MemorySummaryScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -46,12 +46,12 @@ export const MemorySummaryScreen: React.FC = () => {
         ) : (
           <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
             <Text style={[styles.title, { color: colors.text }]}>
-              🧠 What I Remember About You
+               Your journey so far
             </Text>
 
-            <ScrollView style={styles.summaryContainer} scrollEnabled={false}>
+            <ScrollView style={styles.summaryContainer} scrollEnabled={true} nestedScrollEnabled={true}>
               <Text style={[styles.summary, { color: colors.text }]}>
-                {memory.summary}
+                {memory.summary.replace(/\*\*Recent conversation:\*\*\s*/gi, '').trim()}
               </Text>
             </ScrollView>
 
@@ -111,7 +111,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    width: screenWidth > 800 ? 900 : '100%',
+    width: screenWidth > 800 ? '90%' : '100%',
+    maxWidth: screenWidth > 800 ? 1200 : undefined,
     alignSelf: 'center',
   },
   loadingContainer: {
@@ -144,8 +145,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   summaryContainer: {
-    maxHeight: 120,
+    maxHeight: screenWidth > 800 ? 400 : 250,
     marginBottom: 16,
+    borderRadius: 8,
+    paddingRight: 8,
   },
   summary: {
     fontSize: 15,

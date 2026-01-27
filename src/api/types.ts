@@ -149,8 +149,9 @@ export interface ResourceRecRAG {
 export interface Reminder1 {
   id: number;                 // integer ID from backend
   type: string;               // reminder type
-  hour: number;               // hour (0-23)
+  hour: number;               // hour (1-12 in 12-hour format)
   minute: number;             // minute (0-59)
+  period: string;             // "AM" or "PM"
   message: string;
   // Note: 'enabled' field doesn't exist in OpenAPI - remove or handle separately
 }
@@ -158,8 +159,9 @@ export interface Reminder1 {
 // Type for creating new reminders (matches OpenAPI ReminderRequest schema)
 export interface NewReminder {
   type: string;                 // pattern: ^(meditation|journaling|hydration|activity)$
-  hour: number;                 // 0-23
+  hour: number;                 // 1-12 in 12-hour format
   minute: number;               // 0-59
+  period: "AM" | "PM";         // AM or PM
   message: string;
 }
 

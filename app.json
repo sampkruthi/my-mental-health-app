@@ -28,6 +28,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "googleServicesFile":"./google.servcies.json",
       "package": "com.namrata.skapoor.mymentalhealthapp"
     },
     "web": {
@@ -54,6 +55,7 @@
       "eas": {
         "projectId": "5d8f0aa6-a9ee-40a7-b25f-11a0ee91904b"
       }
-    }
+    },
+    "owner": "namrata.skapoor"
   }
 }

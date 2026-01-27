@@ -31,7 +31,7 @@ const HomeScreen = () => {
     { key: "journal", title: "Journal", subtitle: "Write a new entry" },
     //{ key: "activities", title: "Activities", subtitle: "Explore exercises" },
     { key: "reminders", title: "Reminders", subtitle: reminderLoading ? "Loading..." : `${reminderCount} today` },
-    { key: "resources", title: "Resources", subtitle: "Read articles" },
+    { key: "resources", title: "Resources" },
     { key: "memorysummary", title: "Memory summary", subtitle: "Your journey so far" },
     { key: "progressdashboard", title: "Progress", subtitle: "Your progress stats"},
 

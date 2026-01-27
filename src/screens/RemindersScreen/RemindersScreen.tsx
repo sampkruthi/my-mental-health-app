@@ -50,6 +50,7 @@ const ReminderScreen = () => {
   const [type, setType] = useState("");
   const [hour, setHour] = useState("");
   const [minute, setMinute] = useState("");
+  const [period, setPeriod] = useState<"AM" | "PM">("AM");
   const [message, setMessage] = useState("");
 
   const list = remindersQuery.data || [];
@@ -61,10 +62,23 @@ const ReminderScreen = () => {
       return;
     }
 
+    const hourNum = parseInt(hour);
+    if (hourNum < 1 || hourNum > 12) {
+      alert("Hour must be between 1 and 12");
+      return;
+    }
+
+    const minuteNum = parseInt(minute);
+    if (minuteNum < 0 || minuteNum > 59) {
+      alert("Minute must be between 0 and 59");
+      return;
+    }
+
     const input: NewReminder = {
       type,
-      hour: parseInt(hour),
-      minute: parseInt(minute),
+      hour: hourNum,
+      minute: minuteNum,
+      period,
       message,
     };
 
@@ -73,6 +87,7 @@ const ReminderScreen = () => {
         setType("");
         setHour("");
         setMinute("");
+        setPeriod("AM");
         setMessage("");
         queryClient.invalidateQueries({ queryKey: ["reminders", "list", token] });
       },
@@ -108,7 +123,7 @@ const ReminderScreen = () => {
             <Text style={styles.reminderIcon}>{icon}</Text>
             <Text style={[styles.reminderTitle, { color: colors.text }]}>
               {item.type} at {item.hour.toString().padStart(2, "0")}:
-              {item.minute.toString().padStart(2, "0")}
+              {item.minute.toString().padStart(2, "0")} {item.period}
             </Text>
           </View>
           {item.message ? (
@@ -122,7 +137,6 @@ const ReminderScreen = () => {
           onPress={() => handleDelete(item.id)}
           style={[styles.deleteBtn]}
         >
-          <Text style={styles.deleteIcon}>🗑️</Text>
           <Text style={styles.deleteText}>Delete</Text>
         </TouchableOpacity>
       </View>
@@ -211,40 +225,94 @@ const ReminderScreen = () => {
 
           {/* Time Input */}
           <Text style={[styles.label, { color: colors.text }]}>Time</Text>
-          <View style={styles.timeContainer}>
-            <TextInput
-              style={[
-                styles.timeInput,
-                {
-                  backgroundColor: colors.background,
-                  borderColor: colors.inputBorder,
-                  color: colors.text,
-                },
-              ]}
-              placeholder="HH"
-              placeholderTextColor={colors.subText}
-              value={hour}
-              onChangeText={setHour}
-              keyboardType="numeric"
-              maxLength={2}
-            />
-            <Text style={[styles.timeSeparator, { color: colors.text }]}>:</Text>
-            <TextInput
-              style={[
-                styles.timeInput,
-                {
-                  backgroundColor: colors.background,
-                  borderColor: colors.inputBorder,
-                  color: colors.text,
-                },
-              ]}
-              placeholder="MM"
-              placeholderTextColor={colors.subText}
-              value={minute}
-              onChangeText={setMinute}
-              keyboardType="numeric"
-              maxLength={2}
-            />
+          <View style={styles.timeInputRow}>
+            <View style={styles.timeInputsWrapper}>
+              <TextInput
+                style={[
+                  styles.timeInput,
+                  {
+                    backgroundColor: colors.background,
+                    borderColor: colors.inputBorder,
+                    color: colors.text,
+                  },
+                ]}
+                placeholder="HH"
+                placeholderTextColor={colors.subText}
+                value={hour}
+                onChangeText={setHour}
+                keyboardType="numeric"
+                maxLength={2}
+              />
+              <Text style={[styles.timeSeparator, { color: colors.text }]}>:</Text>
+              <TextInput
+                style={[
+                  styles.timeInput,
+                  {
+                    backgroundColor: colors.background,
+                    borderColor: colors.inputBorder,
+                    color: colors.text,
+                  },
+                ]}
+                placeholder="MM"
+                placeholderTextColor={colors.subText}
+                value={minute}
+                onChangeText={setMinute}
+                keyboardType="numeric"
+                maxLength={2}
+              />
+            </View>
+
+            {/* AM/PM Toggle */}
+            <View style={styles.periodContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.periodButton,
+                  period === "AM" && [
+                    styles.periodButtonActive,
+                    { backgroundColor: colors.primary },
+                  ],
+                  {
+                    borderColor: period === "AM" ? colors.primary : colors.inputBorder,
+                    backgroundColor: period === "AM" ? colors.primary : colors.background,
+                  },
+                ]}
+                onPress={() => setPeriod("AM")}
+              >
+                <Text
+                  style={[
+                    styles.periodButtonText,
+                    period === "AM" && styles.periodButtonTextActive,
+                    { color: period === "AM" ? "#fff" : colors.text },
+                  ]}
+                >
+                  AM
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.periodButton,
+                  period === "PM" && [
+                    styles.periodButtonActive,
+                    { backgroundColor: colors.primary },
+                  ],
+                  {
+                    borderColor: period === "PM" ? colors.primary : colors.inputBorder,
+                    backgroundColor: period === "PM" ? colors.primary : colors.background,
+                  },
+                ]}
+                onPress={() => setPeriod("PM")}
+              >
+                <Text
+                  style={[
+                    styles.periodButtonText,
+                    period === "PM" && styles.periodButtonTextActive,
+                    { color: period === "PM" ? "#fff" : colors.text },
+                  ]}
+                >
+                  PM
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Message Input */}
@@ -378,17 +446,24 @@ const styles = StyleSheet.create({
   },
 
   // Time Input
-  timeContainer: {
+  timeInputRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: SPACING.lg,
+    gap: SPACING.lg,
+    justifyContent: "space-between",
+  },
+  timeInputsWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: SPACING.lg,
-    gap: SPACING.sm,
+    gap: SPACING.xs,
+    flex: 0,
   },
   timeInput: {
-    flex: 1,
-    height: 52,
+    width: 65,
+    height: 50,
     borderRadius: BORDER_RADIUS.md,
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: SPACING.sm,
     fontSize: TYPOGRAPHY.sizes.md,
     textAlign: "center",
     borderWidth: 1,
@@ -398,6 +473,30 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.sizes.lg,
     fontWeight: TYPOGRAPHY.weights.bold,
     marginHorizontal: SPACING.xs,
+  },
+
+  // AM/PM Period
+  periodContainer: {
+    flexDirection: "column",
+    gap: SPACING.sm,
+    width: 65,
+  },
+  periodButton: {
+    height: 50,
+    borderRadius: BORDER_RADIUS.md,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+  },
+  periodButtonActive: {
+    borderWidth: 0,
+  },
+  periodButtonText: {
+    fontSize: TYPOGRAPHY.sizes.md,
+    fontWeight: TYPOGRAPHY.weights.semibold,
+  },
+  periodButtonTextActive: {
+    color: "#fff",
   },
 
   // Message Input
@@ -475,16 +574,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#FF4B4B",
     paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
+    paddingVertical: 4,
     borderRadius: BORDER_RADIUS.md,
     gap: SPACING.xs,
   },
-  deleteIcon: {
-    fontSize: 16,
-  },
   deleteText: {
     color: "#fff",
-    fontSize: TYPOGRAPHY.sizes.sm,
+    fontSize: TYPOGRAPHY.sizes.xs,
     fontWeight: TYPOGRAPHY.weights.semibold,
   },
 
