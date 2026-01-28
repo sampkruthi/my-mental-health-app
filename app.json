@@ -28,8 +28,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "googleServicesFile":"./google.servcies.json",
-      "package": "com.namrata.skapoor.mymentalhealthapp"
+      "package": "com.namrata.skapoor.mymentalhealthapp",
+      "googleServicesFile":"./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
