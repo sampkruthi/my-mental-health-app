@@ -1,7 +1,7 @@
 // src/services/notificationService.ts
 import * as Notifications from 'expo-notifications';
 import { Platform, Alert } from 'react-native';
-import { storage, STORAGE_KEYS } from '../utils/storage';
+import { storage, STORAGE_KEYS } from '../src/utils/storage';
 
 /**
  * Notification Service
