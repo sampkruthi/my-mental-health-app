@@ -14,7 +14,7 @@ module.exports = {
       backgroundColor: "#ffffff"
     },
     ios: {
-      bundleIdentifier: "com.namrata.skapoor.mymentalhealthapp",
+      bundleIdentifier: "com.Bodhira.mentalhealthassistant",
       supportsTablet: true,
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false
@@ -27,7 +27,7 @@ module.exports = {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#ffffff"
       },
-      package: "com.namrata.skapoor.mymentalhealthapp",
+      package: "com.Bodhira.mentalhealthassistant",
       googleServicesFile: process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
     },
     web: {
