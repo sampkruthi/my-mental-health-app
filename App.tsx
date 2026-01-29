@@ -2,6 +2,7 @@
 import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { View, ActivityIndicator } from "react-native";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { ThemeProvider } from "./src/context/ThemeContext";
@@ -22,24 +23,31 @@ import { useRegisterDeviceToken } from "./src/api/hooks";
 
 const queryClient = new QueryClient();
 
-// 🔥 Toggle flag (change this later or read from .env)
+// Toggle flag
 const USE_MOCK = false;
 console.log("USE_MOCK", USE_MOCK);
-console.log('🔍 API Service:', USE_MOCK ? 'MOCK' : 'REAL');
+console.log('API Service:', USE_MOCK ? 'MOCK' : 'REAL');
 
-// ✅ Initialize apiService once before rendering
+// Initialize apiService once before rendering
 setApiService(USE_MOCK ? mockApiService : realApiService);
 
 /**
  * NotificationInitializer Component
- * Initializes push notifications after user is authenticated
+ * Must be inside AuthProvider to use useAuth
  */
 function NotificationInitializer() {
   const { token } = useAuth();
   const registerDeviceTokenMutation = useRegisterDeviceToken(token);
 
   useEffect(() => {
-    if (!token) return;
+    // Don't initialize if not logged in
+    if (!token) {
+      console.log('[App] No token, skipping notification init');
+      return;
+    }
+
+    let unsubscribeReceived: (() => void) | undefined;
+    let unsubscribeResponse: (() => void) | undefined;
 
     const initNotifications = async () => {
       try {
@@ -49,7 +57,7 @@ function NotificationInitializer() {
         const deviceToken = await initializeNotifications();
 
         if (!deviceToken) {
-          console.warn('[App] Failed to initialize notifications');
+          console.warn('[App] Failed to get device token (may not be available)');
           return;
         }
 
@@ -69,33 +77,64 @@ function NotificationInitializer() {
           }
         );
 
-        // Step 3: Set up notification listeners
-        // Listen for notifications when app is in foreground
-        const unsubscribeReceived = onNotificationReceived((notification) => {
-          console.log('[App] Notification received while app is open:', notification);
-          // You can update UI here based on notification data
-        });
+        // Step 3: Set up notification listeners (with safety checks)
+        try {
+          unsubscribeReceived = onNotificationReceived((notification) => {
+            console.log('[App] Notification received:', notification);
+          });
+        } catch (e) {
+          console.warn('[App] Could not set up notification received listener:', e);
+        }
 
-        // Listen for user tapping notification
-        const unsubscribeResponse = onNotificationResponse((response) => {
-          console.log('[App] User responded to notification:', response);
-          handleNotificationResponse(response);
-        });
+        try {
+          unsubscribeResponse = onNotificationResponse((response) => {
+            console.log('[App] User responded to notification:', response);
+            handleNotificationResponse(response);
+          });
+        } catch (e) {
+          console.warn('[App] Could not set up notification response listener:', e);
+        }
 
-        // Cleanup function
-        return () => {
-          unsubscribeReceived();
-          unsubscribeResponse();
-        };
       } catch (error) {
         console.error('[App] Error initializing notifications:', error);
       }
     };
 
     initNotifications();
-  }, [token, registerDeviceTokenMutation]);
+
+    // Cleanup
+    return () => {
+      if (unsubscribeReceived) unsubscribeReceived();
+      if (unsubscribeResponse) unsubscribeResponse();
+    };
+  }, [token]); // Remove registerDeviceTokenMutation from deps to avoid infinite loop
 
   return null;
+}
+
+/**
+ * Main App Content - Inside all providers
+ */
+function AppContent() {
+  const { restoreComplete } = useAuth();
+
+  // Show loading while restoring auth
+  if (!restoreComplete) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#4A90D9" />
+      </View>
+    );
+  }
+
+  return (
+    <>
+      <NotificationInitializer />
+      <NavigationContainer>
+        <AppNavigator />
+      </NavigationContainer>
+    </>
+  );
 }
 
 export default function App() {
@@ -103,10 +142,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <NotificationInitializer />
-          <NavigationContainer>
-            <AppNavigator />
-          </NavigationContainer>
+          <AppContent />
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

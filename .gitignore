@@ -37,3 +37,6 @@ yarn-error.*
 *.tsbuildinfo
 
 google-services.json
+@namrata.skapoor__my-mental-health-app.jks
+credentials.json
+credentials/android

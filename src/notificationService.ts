@@ -8,6 +8,13 @@ import { storage, STORAGE_KEYS } from '../src/utils/storage';
  * Handles notification permissions, device token management, and notification listeners
  */
 
+const isNotificationsAvailable = (): boolean => {
+  return (
+    Notifications &&
+    typeof Notifications.addNotificationResponseReceivedListener === 'function'
+  );
+};
+
 // Configure notification behavior when app is in foreground
 Notifications.setNotificationHandler({
   handleNotification: async (): Promise<Notifications.NotificationBehavior> => ({
@@ -125,6 +132,11 @@ export function onNotificationReceived(
 ): () => void {
   console.log('[NotificationService] Setting up notification received listener');
 
+  if (!isNotificationsAvailable()) {
+    console.warn('[NotificationService] Notifications not available');
+    return () => {}; // Return empty unsubscribe function
+  }
+
   const subscription = Notifications.addNotificationReceivedListener((notification) => {
     console.log('[NotificationService] Notification received:', notification);
     callback(notification);
@@ -145,6 +157,11 @@ export function onNotificationResponse(
   callback: (response: Notifications.NotificationResponse) => void
 ): () => void {
   console.log('[NotificationService] Setting up notification response listener');
+
+  if (!isNotificationsAvailable()) {
+    console.warn('[NotificationService] Notifications not available');
+    return () => {};
+  }
 
   const subscription = Notifications.addNotificationResponseListener((response) => {
     console.log('[NotificationService] Notification response received:', response);
@@ -167,6 +184,11 @@ export function onNotificationResponse(
 export async function initializeNotifications(): Promise<string | null> {
   try {
     console.log('[NotificationService] Initializing notifications...');
+
+    if (!isNotificationsAvailable()) {
+      console.warn('[NotificationService] Notifications module not available');
+      return null;
+    }
 
     // Step 1: Request permission
     const permissionGranted = await requestNotificationPermission();

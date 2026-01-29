@@ -34,10 +34,8 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
-  const { token, restoreComplete } = useAuth();
-
-  // Wait until token restore is done
-  if (!restoreComplete) return null;
+  const { token } = useAuth();
+  
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

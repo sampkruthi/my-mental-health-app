@@ -1,8 +1,8 @@
 // app.config.js
 module.exports = {
   expo: {
-    name: "my-mental-health-app",
-    slug: "my-mental-health-app",
+    name: "Bodhira",
+    slug: "Bodhira",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icon.png",
