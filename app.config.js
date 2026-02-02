@@ -24,7 +24,7 @@ module.exports = {
       softwareKeyboardLayoutMode: "pan",
       permissions: ["INTERNET"],
       adaptiveIcon: {
-        foregroundImage: "./assets/bodhira_adaptive_icon_foregroung.png",
+        foregroundImage: "./assets/bodhira_adaptive_icon_foreground.png",
         backgroundColor: "#ffffff"
       },
       package: "com.Bodhira.mentalhealthassistant",
