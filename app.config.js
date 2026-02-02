@@ -5,11 +5,11 @@ module.exports = {
     slug: "my-mental-health-app",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/icon.png",
+    icon: "./assets/MeditatingLogoTransparent.png",
     userInterfaceStyle: "light",
     newArchEnabled: true,
     splash: {
-      image: "./assets/splash-icon.png",
+      image: "./assets/MeditatingLogoTransparent.png",
       resizeMode: "contain",
       backgroundColor: "#ffffff"
     },
@@ -24,7 +24,7 @@ module.exports = {
       softwareKeyboardLayoutMode: "pan",
       permissions: ["INTERNET"],
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
+        foregroundImage: "./assets/MeditatingLogoTransparent.png",
         backgroundColor: "#ffffff"
       },
       package: "com.Bodhira.mentalhealthassistant",
