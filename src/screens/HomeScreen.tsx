@@ -1,6 +1,6 @@
 // src/screens/HomeScreen.tsx
 import React from "react";
-import { View, Text, Image, StyleSheet, Dimensions, ScrollView } from "react-native";
+import { View, Text, Image, StyleSheet, Dimensions, ScrollView, Alert, Button } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { useFetchMoodCount, useFetchReminderCount } from "../api/hooks";
 import Layout from "../components/UI/layout";
@@ -11,6 +11,7 @@ import Logo from "../images/MeditatingLogoTransparent.png";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { SPACING, TYPOGRAPHY, BORDER_RADIUS, SHADOWS } from "../constants/styles";
+import { initializeNotifications } from "../notificationService";
 
 const CARD_MARGIN = 12;
 
@@ -60,6 +61,14 @@ const HomeScreen = () => {
           Welcome, how are you feeling today?
         </Text>
         <Image source={Logo} style={styles.logo} resizeMode="contain" />
+        <Button 
+         title="Debug: Check Push Token" 
+        onPress={async () => {
+        const token = await initializeNotifications();
+        Alert.alert('Device Token', token || 'No token generated');
+        console.log('Device token:', token);
+          }} 
+        />
 
         {/* Cards Grid */}
         <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }}>

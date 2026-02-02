@@ -1,6 +1,6 @@
 // App.tsx
-import React, { useEffect } from "react";
-import { NavigationContainer } from "@react-navigation/native";
+import React, { useEffect, useRef } from "react";
+import { NavigationContainer, NavigationContainerRef } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { View, ActivityIndicator } from "react-native";
 import AppNavigator from "./src/navigation/AppNavigator";
@@ -21,7 +21,13 @@ import {
 } from "./src/notificationService";
 import { useRegisterDeviceToken } from "./src/api/hooks";
 
+// Import auth error handler
+import { registerAuthErrorHandlers } from "./src/utils/authErrorHandler";
+
 const queryClient = new QueryClient();
+
+// Navigation ref for redirecting to Login on auth errors
+const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
 // Toggle flag
 const USE_MOCK = false;
@@ -116,7 +122,25 @@ function NotificationInitializer() {
  * Main App Content - Inside all providers
  */
 function AppContent() {
-  const { restoreComplete } = useAuth();
+  const { restoreComplete, signOut } = useAuth();
+
+  // Register auth error handlers once on component mount
+  useEffect(() => {
+    const onUnauthorized = async () => {
+      console.log('[App] Unauthorized error - calling signOut');
+      await signOut();
+    };
+
+    const onNavigateToLogin = () => {
+      console.log('[App] Redirecting to Login screen');
+      navigationRef.current?.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    };
+
+    registerAuthErrorHandlers(onUnauthorized, onNavigateToLogin);
+  }, [signOut]);
 
   // Show loading while restoring auth
   if (!restoreComplete) {
@@ -130,7 +154,7 @@ function AppContent() {
   return (
     <>
       <NotificationInitializer />
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <AppNavigator />
       </NavigationContainer>
     </>

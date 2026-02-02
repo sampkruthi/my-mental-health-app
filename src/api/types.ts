@@ -24,6 +24,7 @@ export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
+  timezone?: string; // IANA timezone (e.g., "America/New_York")
 }
 
 export interface RegisterResponse {

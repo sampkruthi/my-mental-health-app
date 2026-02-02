@@ -7,6 +7,7 @@ import type { MoodTrendPoint, MoodLog, Reminder, ChatMessage, GuidedActivity,Jou
 import { Platform } from "react-native";
 import {storage, STORAGE_KEYS} from "../src/utils/storage";
 import * as SecureStore from 'expo-secure-store';
+import { handleUnauthorizedError } from "../src/utils/authErrorHandler";
 
 export interface LoginResponse {
   token: string;
@@ -17,7 +18,7 @@ export interface ApiService {
   login: (email: string, password: string) => Promise<LoginResponse>;
 
 // add register
-  register(name: string, email: string, password: string): Promise<Token & { userId?: string }>;
+  register(name: string, email: string, password: string, timezone?: string): Promise<Token & { userId?: string }>;
 
   //getMoodCount: () => Promise<MoodLog[]>;
   //getReminderCount: () => Promise<number>; invalid
@@ -228,11 +229,11 @@ apiClient.interceptors.response.use(
 
     if (error.response?.status === 401) {
       console.warn('401 Unauthorized - Token may be expired');
-      // Don't clear storage here - let AuthContext handle it
-      // Just reject so the app can handle it appropriately
+      // Handle unauthorized error (will trigger logout and redirect)
+      handleUnauthorizedError(error.response?.data?.detail || 'Session expired');
     }
-    
-    
+
+
     return Promise.reject(error);
   }
 );
@@ -387,18 +388,19 @@ export const realApiService: ApiService = {
     Commenting FormData due to issues with logging in in Android*/
   },
 
-  async register(name: string, email: string, password: string): Promise<Token & { userId?: string }> {
-    console.log('Registration attempt:', { name, email });
-    
+  async register(name: string, email: string, password: string, timezone?: string): Promise<Token & { userId?: string }> {
+    console.log('Registration attempt:', { name, email, timezone });
+
     const { data } = await apiClient.post("/api/auth/register", {
       username: email,
       password: password,
       name: name,
+      timezone: timezone, // Include user's timezone
     });
 
     console.log('Registration successful');
     console.log('Response from', API_BASE_URL);
-    
+
     // Return token and userId to be handled by AuthContext
     return {
       ...data,

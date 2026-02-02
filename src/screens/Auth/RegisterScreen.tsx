@@ -24,6 +24,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import { Token } from "../../api/types";
 import MeditatingLogo from "../../images/Meditating_logo.png";
+import { getUserTimezone } from "../../utils/timezoneUtils";
 
 const { width } = Dimensions.get("window");
 
@@ -67,10 +68,15 @@ const RegisterScreen: React.FC = () => {
     }
 
     try {
+      // Detect user's timezone
+      const timezone = getUserTimezone();
+      console.log("[RegisterScreen] Detected user timezone:", timezone);
+
       const res: Token = await registerMutation.mutateAsync({
         name,
         email,
         password,
+        timezone,
       });
       console.log("Registration token:", res.access_token);
 
@@ -87,7 +93,7 @@ const RegisterScreen: React.FC = () => {
         "Registration failed";
 
       showAlert("Error", message);
-      console.log("🔴 Final message:", message);
+      console.log("Final message:", message);
     }
   };
 
