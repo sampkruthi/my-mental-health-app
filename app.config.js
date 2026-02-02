@@ -5,11 +5,11 @@ module.exports = {
     slug: "my-mental-health-app",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/MeditatingLogoTransparent.png",
+    icon: "./assets/bodhira_app_icon_1024.png",
     userInterfaceStyle: "light",
     newArchEnabled: true,
     splash: {
-      image: "./assets/MeditatingLogoTransparent.png",
+      image: "./assets/bodhira_splash_screen.png",
       resizeMode: "contain",
       backgroundColor: "#ffffff"
     },
@@ -24,7 +24,7 @@ module.exports = {
       softwareKeyboardLayoutMode: "pan",
       permissions: ["INTERNET"],
       adaptiveIcon: {
-        foregroundImage: "./assets/MeditatingLogoTransparent.png",
+        foregroundImage: "./assets/bodhira_adaptive_icon_foregroung.png",
         backgroundColor: "#ffffff"
       },
       package: "com.Bodhira.mentalhealthassistant",
@@ -52,7 +52,8 @@ module.exports = {
             newArchEnabled: true
           }
         }
-      ]
+      ],
+      "expo-notifications",
     ],
     extra: {
       eas: {
