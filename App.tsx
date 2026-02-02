@@ -27,7 +27,7 @@ import { registerAuthErrorHandlers } from "./src/utils/authErrorHandler";
 const queryClient = new QueryClient();
 
 // Navigation ref for redirecting to Login on auth errors
-const navigationRef = useRef<NavigationContainerRef<any>>(null);
+//const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
 // Toggle flag
 const USE_MOCK = false;
@@ -121,7 +121,7 @@ function NotificationInitializer() {
 /**
  * Main App Content - Inside all providers
  */
-function AppContent() {
+function AppContent({ navigationRef }: { navigationRef: React.RefObject<NavigationContainerRef<any> | null> }) {
   const { restoreComplete, signOut } = useAuth();
 
   // Register auth error handlers once on component mount
@@ -140,7 +140,7 @@ function AppContent() {
     };
 
     registerAuthErrorHandlers(onUnauthorized, onNavigateToLogin);
-  }, [signOut]);
+  }, [signOut, navigationRef]);
 
   // Show loading while restoring auth
   if (!restoreComplete) {
@@ -162,11 +162,12 @@ function AppContent() {
 }
 
 export default function App() {
+  const navigationRef = useRef<NavigationContainerRef<any>>(null);
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <AppContent />
+          <AppContent navigationRef={navigationRef} />
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
