@@ -27,12 +27,14 @@ import { getApiService } from "../../../services/api";
 
 const { width } = Dimensions.get("window");
 
+
 const ChatScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { token } = useAuth();
   const { messages, addMessage, setMessages, prependMessages } = useChatStore();
   const { mutateAsync: sendChat } = useSendChatMessage(token);
   const { colors } = useTheme();
+  
 
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -178,14 +180,18 @@ const ChatScreen = () => {
           <View
             style={[
               styles.bubble,
-              { backgroundColor: isUser ? colors.userBubble : colors.aiBubble },
+              { backgroundColor: isUser ? colors.userBubble : colors.aiBubble,
+                // ADD: Different border radius for each side
+              borderBottomLeftRadius: isUser ? 20 : 6,
+              borderBottomRightRadius: isUser ? 6 : 20,
+               },
             ]}
           >
             <Text
               style={{
                 fontSize: 16,
                 color: colors.text,
-                textAlign: isUser ? 'right' : 'left',
+                //textAlign: isUser ? 'right' : 'left',
               }}
             >
               {item.text}
@@ -365,27 +371,43 @@ const styles = StyleSheet.create({
     flexShrink: 1
   },
   messageLeft: { 
-    alignSelf: "flex-start" 
+    alignSelf: "flex-start",
+    alignItems: 'flex-start', 
   },
   messageRight: { 
-    alignSelf: "flex-end" 
+    alignSelf: "flex-end",
+    alignItems: 'flex-end', 
   },
   bubble: { 
-    padding: 10, 
-    borderRadius: 16,
-    flexShrink: 1
+    padding: 16, //changed from 10 -> 16 for more padding
+    borderRadius: 20, //changed from 16 -> 20 for more rounded corners
+    flexShrink: 1,
+    //Add shadow for depth:
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+
   },
   timestamp: { 
-    fontSize: 10, 
-    marginTop: 2, 
-    textAlign: "right" 
+    fontSize: 11, // changed from 10 -> 11 for more readability
+    marginTop: 4, // changed from 2 -> 4 for more spacing
+    textAlign: "right",
+    fontWeight: '500', // changed from 'normal' -> 'medium' for more emphasis
   },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
+    padding: 10, //changed from 10 -> 16 for more padding
     borderTopWidth: 1,
-    paddingBottom: Platform.OS === 'ios' ? 10 : 10,
+    paddingBottom: Platform.OS === 'ios' ? 20 : 16, //more bottom padding
+    // Removing shadow to fix weirdness in text box, ADD shadow at top:
+    //shadowColor: '#000',
+    //shadowOffset: { width: 0, height: -2 },
+    //shadowOpacity: 0.05,
+    //shadowRadius: 8,
+    //elevation: 4,
   },
   emojiBtn: { 
     padding: 6 
@@ -398,17 +420,33 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
     maxHeight: 120,
     textAlignVertical: 'top',
+    fontSize: 15, //Add explicit font size
+    //backgroundColor: "#FAF8F5",
   },
   sendBtn: {
     backgroundColor: "#007AFF",
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 20,
+    /*
+    backgroundColor: "#66B6A3",
+    width: 44,  // ADD: explicit width
+    height: 44,  // ADD: explicit height
+    borderRadius: 22,  // HALF of width/height for perfect circle
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 4,  // ADD: space from input
+    // ADD shadow to make it pop:
+    shadowColor: "#66B6A3",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4, */
   },
   sendText: { 
     color: "#fff", 
     fontWeight: "bold",
-    fontSize: 18
+    fontSize: 20,
   },
   messageRow: {
     flexDirection: 'row',

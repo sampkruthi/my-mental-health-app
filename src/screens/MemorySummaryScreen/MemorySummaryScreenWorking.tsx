@@ -135,21 +135,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   card: {
-    borderRadius: 20,
-    padding: 24,
+    borderRadius: 16,
+    padding: 20,
     marginVertical: 12,
-    // ADD shadow:
-    shadowColor: "5B9EB3",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 16,
-    letterSpacing: -0.5,
+    marginBottom: 12,
   },
   summaryContainer: {
     maxHeight: screenWidth > 800 ? 400 : 250,
@@ -158,9 +151,8 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   summary: {
-    fontSize: 16,
-    lineHeight: 26,
-    letterSpacing: 0.2,
+    fontSize: 15,
+    lineHeight: 22,
   },
   themesContainer: {
     marginTop: 12,
@@ -177,20 +169,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   themeBadge: {
-    backgroundColor: `"E8B4A8"30`,// '#E8F5E9',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    //Add shadows
-    shadowColor: "E8B4A8",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 1,
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
   themeText: {
-    fontSize: 13,
-    color: '#5B9EB3',
+    fontSize: 12,
+    color: '#2E7D32',
     fontWeight: '600',
   },
   statsContainer: {
@@ -205,15 +191,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statNumber: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: 'bold',
-    letterSpacing: -1,
   },
   statLabel: {
-    fontSize: 13,
-    marginTop: 6,
+    fontSize: 12,
+    marginTop: 4,
     textAlign: 'center',
-    fontWeight: '500',
   },
   footer: {
     fontSize: 11,

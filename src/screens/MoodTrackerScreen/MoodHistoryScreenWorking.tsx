@@ -94,11 +94,10 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   header: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 20,
+    marginBottom: 16,
     textAlign: "center",
-    letterSpacing: -0.5,
   },
   centerContent: {
     flex: 1,
@@ -119,33 +118,23 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   entry: {
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 0,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
     marginBottom: 12,
-    // ADD shadow instead of border:
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
   },
   date: {
-    fontSize: 13,
-    marginBottom: 6,
-    fontWeight: '500',
+    fontSize: 14,
+    marginBottom: 4,
   },
   score: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 4,
+    fontSize: 16,
+    fontWeight: "600",
   },
   note: {
     fontSize: 14,
     fontStyle: "italic",
-    marginTop: 8,
-    lineHeight: 20,
-    opacity: 0.8,
+    marginTop: 4,
   },
 });
 

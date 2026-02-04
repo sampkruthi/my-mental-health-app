@@ -54,6 +54,7 @@ module.exports = {
         }
       ],
       "expo-notifications",
+      "expo-font",
     ],
     extra: {
       eas: {

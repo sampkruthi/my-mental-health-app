@@ -401,9 +401,10 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   cardTitle: {
-    fontSize: TYPOGRAPHY.sizes.xl,
+    fontSize: 22,
     fontWeight: TYPOGRAPHY.weights.bold,
     marginBottom: SPACING.lg,
+    letterSpacing: -0.5,
   },
   label: {
     fontSize: TYPOGRAPHY.sizes.md,
@@ -425,16 +426,28 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: SPACING.sm,
+    paddingVertical: 14,
     paddingHorizontal: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1.5,
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 2,
+    // ADD shadow when not active:
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   typeButtonActive: {
     borderWidth: 0,
+    // ADD stronger shadow when active:
+    shadowColor: "#5B9EB3",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   typeIcon: {
-    fontSize: 18,
+    fontSize: 20,
     marginRight: SPACING.xs,
   },
   typeButtonText: {
@@ -460,13 +473,13 @@ const styles = StyleSheet.create({
     flex: 0,
   },
   timeInput: {
-    width: 65,
-    height: 50,
-    borderRadius: BORDER_RADIUS.md,
+    width: 70,
+    height: 56,
+    borderRadius: BORDER_RADIUS.lg,
     paddingHorizontal: SPACING.sm,
-    fontSize: TYPOGRAPHY.sizes.md,
+    fontSize: 18,
     textAlign: "center",
-    borderWidth: 1,
+    borderWidth: 2,
     fontWeight: TYPOGRAPHY.weights.semibold,
   },
   timeSeparator: {
@@ -481,109 +494,113 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     width: 65,
   },
+  // Period Buttons
   periodButton: {
-    height: 50,
-    borderRadius: BORDER_RADIUS.md,
+    height: 56,  // Changed from 50 (match time input)
+    borderRadius: 16,  // Changed from BORDER_RADIUS.md
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1.5,
+    borderWidth: 2,  // Changed from 1.5
   },
+  
   periodButtonActive: {
     borderWidth: 0,
+    // ADD shadow:
+    shadowColor: "#5B9EB3",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  periodButtonText: {
-    fontSize: TYPOGRAPHY.sizes.md,
-    fontWeight: TYPOGRAPHY.weights.semibold,
-  },
-  periodButtonTextActive: {
-    color: "#fff",
-  },
-
+  
   // Message Input
   messageInput: {
-    height: 52,
-    borderRadius: BORDER_RADIUS.md,
+    height: 56,  // Changed from 52
+    borderRadius: 16,  // Changed from BORDER_RADIUS.md
     paddingHorizontal: SPACING.md,
     fontSize: TYPOGRAPHY.sizes.md,
     marginBottom: SPACING.lg,
-    borderWidth: 1,
+    borderWidth: 2,  // Changed from 1
   },
-
-  // Add Button
+  
+  // Add Button - make it stand out more
   addButton: {
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: 16,  // Changed from SPACING.md (12)
+    borderRadius: 16,  // Changed from BORDER_RADIUS.md
     alignItems: "center",
     justifyContent: "center",
+    // ADD shadow (note: SHADOWS.button should work if defined):
+    shadowColor: "#5B9EB3",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
+  
   addButtonText: {
     color: "#fff",
-    fontSize: TYPOGRAPHY.sizes.md,
+    fontSize: 17,  // Changed from TYPOGRAPHY.sizes.md (16)
     fontWeight: TYPOGRAPHY.weights.bold,
+    letterSpacing: 0.5,  // ADD
   },
-
+  
   // Section Title
   sectionTitle: {
-    fontSize: TYPOGRAPHY.sizes.lg,
+    fontSize: 20,  // Changed from TYPOGRAPHY.sizes.lg (18)
     fontWeight: TYPOGRAPHY.weights.bold,
     marginBottom: SPACING.md,
-    marginTop: SPACING.lg,
+    marginTop: SPACING.xl,  // Changed from lg
+    letterSpacing: -0.3,  // ADD
   },
-
-  // Reminders List
-  remindersList: {
-    gap: SPACING.md,
-    marginBottom: SPACING.lg,
-  },
-
-  // Reminder Card
+  
+  // Reminder Card - add visual depth
   reminderCard: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.md,
-    marginBottom: SPACING.xs,
+    borderRadius: 16,  // Changed from BORDER_RADIUS.lg
+    padding: SPACING.lg,  // Changed from md
+    marginBottom: SPACING.sm,  // Changed from xs
+    // ADD shadow (replace SHADOWS.none):
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  reminderContent: {
-    flex: 1,
-    marginRight: SPACING.md,
-  },
-  reminderHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: SPACING.xs,
-  },
+  
   reminderIcon: {
-    fontSize: 20,
+    fontSize: 24,  // Changed from 20
     marginRight: SPACING.sm,
   },
+  
   reminderTitle: {
-    fontSize: TYPOGRAPHY.sizes.md,
+    fontSize: 15,  // Changed from TYPOGRAPHY.sizes.md
     fontWeight: TYPOGRAPHY.weights.semibold,
   },
-  reminderMessage: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    marginTop: SPACING.xs,
-    marginLeft: 28,
-  },
-
-  // Delete Button
+  
+  // Delete Button - rounder
   deleteBtn: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FF4B4B",
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    borderRadius: BORDER_RADIUS.md,
+    paddingHorizontal: 12,  // Changed from SPACING.sm
+    paddingVertical: 8,  // Changed from 4
+    borderRadius: 12,  // Changed from BORDER_RADIUS.md
     gap: SPACING.xs,
+    // ADD shadow:
+    shadowColor: '#FF4B4B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
+  
   deleteText: {
     color: "#fff",
-    fontSize: TYPOGRAPHY.sizes.xs,
+    fontSize: 13,  // Changed from TYPOGRAPHY.sizes.xs (12)
     fontWeight: TYPOGRAPHY.weights.semibold,
   },
-
   // Empty State
   emptyContainer: {
     paddingVertical: SPACING.xl,

@@ -360,42 +360,59 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   header: {
-    fontSize: 24,
+    fontSize: 26,  // Changed from 24
     fontWeight: "bold",
-    marginBottom: 16,
+    marginBottom: 20,  // Changed from 16
     paddingHorizontal: 4,
+    letterSpacing: -0.5,  // ADD
   },
-  // NEW: Upgrading banner
+  
+  // Upgrading banner - make it more noticeable
   upgradingBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
+    padding: 14,  // Changed from 12
+    borderRadius: 12,  // Changed from 8
     marginBottom: 16,
+    // ADD border:
+    borderWidth: 1,
+    borderColor: 'rgba(102, 182, 163, 0.2)',
   },
+  
   upgradingText: {
     marginLeft: 10,
     fontSize: 14,
     fontStyle: 'italic',
+    fontWeight: '500',  // ADD
   },
+  
+  // Card - add visual depth
   card: {
     flexDirection: "row",
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,  // Changed from 12
+    padding: 18,  // Changed from 16
     marginBottom: 16,
     alignItems: "flex-start",
+    // ADD shadow:
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
+  
   thumbnailContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginRight: 12,
+    width: 90,  // Changed from 80
+    height: 90,  // Changed from 80
+    borderRadius: 12,  // Changed from 8
+    marginRight: 14,  // Changed from 12
     overflow: 'hidden',
     backgroundColor: '#E5E7EB',
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0,
   },
+
   thumbnail: {
     width: '100%',
     height: '100%',
@@ -405,23 +422,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 17,  // Changed from 16
     fontWeight: "bold",
-    marginBottom: 6,
+    marginBottom: 8,  // Changed from 6
+    lineHeight: 22,  // ADD
   },
+  
   cardBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: 10,  // Changed from 8
+    paddingVertical: 5,  // Changed from 4
+    borderRadius: 8,  // Changed from 6
     marginTop: 4,
     marginBottom: 8,
     alignSelf: "flex-start",
   },
+  
   badgeText: {
-    fontSize: 11,
+    fontSize: 12,  // Changed from 11
     fontWeight: '600',
     color: '#065f46',
   },
+
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -438,9 +459,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   score: {
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: 13,
+    marginTop: 6,
     fontStyle: 'italic',
+    fontWeight: '500',
   },
   cardDescription: {
     fontSize: 14,
@@ -450,20 +472,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: '#FFF9E6',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 12,  // Changed from 10
+    paddingVertical: 10,  // Changed from 8
+    borderRadius: 10,  // Changed from 8
     marginTop: 8,
     marginBottom: 8,
+    borderLeftWidth: 3,  // ADD
+    borderLeftColor: '#FFC107',  // ADD
   },
+  
   reasonIcon: {
-    fontSize: 14,
-    marginRight: 6,
+    fontSize: 16,  // Changed from 14
+    marginRight: 8,  // Changed from 6
   },
+  
   reasonText: {
-    fontSize: 12,
+    fontSize: 13,  // Changed from 12
     flex: 1,
-    lineHeight: 16,
+    lineHeight: 18,  // Changed from 16
     fontStyle: 'italic',
   },
   
@@ -511,9 +537,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   modalDescription: {
-    fontSize: 16,
-    marginBottom: 16,
-    lineHeight: 24,
+    fontSize: 17,
+    marginBottom: 20,
+    lineHeight: 26,
   },
   modalScore: {
     fontSize: 14,
@@ -521,46 +547,66 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   linkButton: {
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 16,
+    borderRadius: 16,
     alignItems: 'center',
     marginBottom: 12,
+    // ADD shadow:
+    shadowColor: "#5B9EB3",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   linkButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,  // Changed from 16
+    fontWeight: '700',  // Changed from 600
+    letterSpacing: 0.5,  // ADD
   },
+  
   closeButton: {
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 16,  // Changed from 14
+    borderRadius: 16,  // Changed from 12
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 2,  // Changed from 1
     marginBottom: 20,
   },
+  
   closeButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,  // Changed from 16
+    fontWeight: '700',  // Changed from 600
+    letterSpacing: 0.5,  // ADD
   },
-
-  // RAG Summary Box Styles
+  
+  // RAG Summary Box - make it stand out more
   summaryBox: {
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 8,
+    padding: 20,  // Changed from 16
+    borderRadius: 16,  // Changed from 12
+    marginTop: 12,  // Changed from 8
     marginBottom: 16,
     borderLeftWidth: 4,
-    borderLeftColor: '#5B9ACD',
+    borderLeftColor: "#5B9EB3",  // Use theme color instead of hardcoded
+    // ADD shadow:
+    shadowColor: "#5B9EB3",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
   },
+  
   summaryLabel: {
-    fontSize: 15,
+    fontSize: 17,  // Changed from 15
     fontWeight: '700',
-    marginBottom: 10,
+    marginBottom: 12,  // Changed from 10
+    letterSpacing: -0.3,  // ADD
   },
+  
   summaryText: {
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 15,  // Changed from 14
+    lineHeight: 24,  // Changed from 22
   },
+
 });
 
 export default ResourcesScreen;

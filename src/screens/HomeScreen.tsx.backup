@@ -1,14 +1,17 @@
 // src/screens/HomeScreen.tsx
 import React from "react";
-import { View, Text, Image, StyleSheet, Dimensions, ScrollView } from "react-native";
+import { View, Text, Image, StyleSheet, Dimensions, ScrollView, Alert, Button } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { useFetchMoodCount, useFetchReminderCount } from "../api/hooks";
 import Layout from "../components/UI/layout";
 import { useTheme } from "../context/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
-import Avatar from "../images/avatar.png";
+//import Logo from "../images/Meditating_logo.png";
+import Logo from "../images/MeditatingLogoTransparent.png";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
+import { SPACING, TYPOGRAPHY, BORDER_RADIUS, SHADOWS } from "../constants/styles";
+import { initializeNotifications } from "../notificationService";
 
 const CARD_MARGIN = 12;
 
@@ -27,9 +30,9 @@ const HomeScreen = () => {
     { key: "chat", title: "Chat", subtitle: "Start a conversation" },
     { key: "mood", title: "Mood", subtitle: moodLoading ? "Loading..." : `${moodCount} mood logs this week` },
     { key: "journal", title: "Journal", subtitle: "Write a new entry" },
-    { key: "activities", title: "Activities", subtitle: "Explore exercises" },
+    //{ key: "activities", title: "Activities", subtitle: "Explore exercises" },
     { key: "reminders", title: "Reminders", subtitle: reminderLoading ? "Loading..." : `${reminderCount} today` },
-    { key: "resources", title: "Resources", subtitle: "Read articles" },
+    { key: "resources", title: "Resources" },
     { key: "memorysummary", title: "Memory summary", subtitle: "Your journey so far" },
     { key: "progressdashboard", title: "Progress", subtitle: "Your progress stats"},
 
@@ -39,7 +42,11 @@ const HomeScreen = () => {
     <Layout title="Home" onNavigate={(screen) => navigation.navigate(screen as never)}>
       <ScrollView
         style={{ flex: 1, backgroundColor: colors.background }}
-        contentContainerStyle={{ paddingHorizontal: CARD_MARGIN, paddingTop: 16, paddingBottom: 20 }}
+        contentContainerStyle={{
+          paddingHorizontal: SPACING.md,
+          paddingTop: SPACING.md,
+          paddingBottom: SPACING.lg,
+        }}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
@@ -53,7 +60,15 @@ const HomeScreen = () => {
         <Text style={[styles.welcome, { color: colors.text }]}>
           Welcome, how are you feeling today?
         </Text>
-        <Image source={Avatar} style={styles.avatar} resizeMode="contain" />
+        <Image source={Logo} style={styles.logo} resizeMode="contain" />
+        <Button 
+         title="Debug: Check Push Token" 
+        onPress={async () => {
+        const token = await initializeNotifications();
+        Alert.alert('Device Token', token || 'No token generated');
+        console.log('Device token:', token);
+          }} 
+        />
 
         {/* Cards Grid */}
         <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }}>
@@ -69,6 +84,9 @@ const HomeScreen = () => {
                 marginBottom: CARD_MARGIN,
                 justifyContent: "center",
                 alignItems: "center",
+                backgroundColor: colors.cardBackground,
+                borderRadius: BORDER_RADIUS.lg,
+                ...SHADOWS.none,
               }}
             />
           ))}
@@ -80,20 +98,20 @@ const HomeScreen = () => {
 
 const styles = StyleSheet.create({
   date: {
-    fontSize: 14,
-    marginBottom: 6,
+    fontSize: TYPOGRAPHY.sizes.sm,
+    marginBottom: SPACING.sm,
     textAlign: "center",
   },
   welcome: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: TYPOGRAPHY.sizes.lg,
+    fontWeight: TYPOGRAPHY.weights.bold,
     textAlign: "center",
-    marginBottom: 16,
+    marginBottom: SPACING.lg,
   },
-  avatar: {
-    width: 100,
-    height: 100,
-    marginBottom: 20,
+  logo: {
+    width: 180,
+    height: 180,
+    marginBottom: SPACING.lg,
     alignSelf: "center",
   },
 });

@@ -245,14 +245,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    fontSize: TYPOGRAPHY.sizes.lg,
+    fontSize: TYPOGRAPHY.sizes.xl, //bigger
     fontWeight: TYPOGRAPHY.weights.bold,
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm, //bigger
+    letterSpacing: -0.5, //added for UX
   },
   subheader: {
-    fontSize: TYPOGRAPHY.sizes.sm,
+    fontSize: TYPOGRAPHY.sizes.md, //changed from small
     fontWeight: TYPOGRAPHY.weights.regular,
-    lineHeight: 20,
+    lineHeight: 22,
+    opacity: 0.8, //added for UX
   },
   sectionTitle: {
     fontSize: TYPOGRAPHY.sizes.md,
@@ -264,24 +266,36 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.lg,
   },
   textInput: {
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
-    minHeight: 100,
+    borderRadius: BORDER_RADIUS.lg, //bigger
+    padding: SPACING.lg, //bigger
+    minHeight: 120,
     fontSize: TYPOGRAPHY.sizes.md,
-    marginBottom: SPACING.xs,
-    borderWidth: 1,
+    marginBottom: SPACING.sm, //bigger
+    borderWidth: 2, //thicker
+    // ADD shadow:
+    shadowColor: "#5B9EB3", //added shadow color for UX
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   wordCount: {
     fontSize: TYPOGRAPHY.sizes.xs,
     marginBottom: SPACING.md,
   },
   card: {
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
     marginBottom: SPACING.md,
     marginHorizontal: 0,
     borderWidth: 0,              // ADD THIS
   borderColor: 'transparent',  // ADD THIS
+  // ADD shadow for UX
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.06,
+  shadowRadius: 12,
+  elevation: 3,
   },
   cardDate: {
     fontWeight: TYPOGRAPHY.weights.semibold,
@@ -307,13 +321,19 @@ const styles = StyleSheet.create({
 
   // Insights Card Styles
   insightsCard: {
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
+    borderRadius: 20, //changed for rounder BORDER_RADIUS.md,
+    padding: SPACING.lg,
     //marginTop: SPACING.lg,
     marginBottom: SPACING.md,
     marginHorizontal: 0,
     borderWidth: 0,           // Remove border
     borderColor: 'transparent', 
+    // ADD stronger shadow for emphasis:
+    shadowColor: "5B9EB3",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 5,
   },
   insightsHeader: {
     flexDirection: "row",
@@ -342,6 +362,7 @@ const styles = StyleSheet.create({
   insightValue: {
     fontSize: TYPOGRAPHY.sizes.xl,
     fontWeight: TYPOGRAPHY.weights.bold,
+    letterSpacing: -1,
   },
   insightDivider: {
     width: 1,

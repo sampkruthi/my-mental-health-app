@@ -82,11 +82,10 @@ const MoodTrackerScreen = () => {
               key={index}
               style={[
                 styles.emojiButton,
-                current === index + 1 && styles.emojiButtonSelected, //added this instead for UX testing
-                /*{ 
+                current === index + 1 && { 
                   backgroundColor: colors.primary,
                   borderColor: colors.primary,
-                }, */
+                },
               ]}
               onPress={() => setCurrent(index + 1)}
             >
@@ -189,10 +188,9 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   heading: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 12,
-    letterSpacing: -0.3, //changed for UX
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 8,
   },
   emojiRow: {
     flexDirection: "row",
@@ -201,64 +199,43 @@ const styles = StyleSheet.create({
   },
   emojiButton: {
     padding: 12,
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#E0E0E0", //lighter gray for UX "#ccc",
+    borderColor: "#ccc",
     backgroundColor: "#fff",
-    // ADD shadow:
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
   },
-  // ADD this style for selected emoji:
-  emojiButtonSelected: {
-    borderColor:"#5B9EB3",
-    backgroundColor: `"#5B9EB3"10`,  // 10% opacity of primary
-    transform: [{ scale: 1.05 }],  // Slightly bigger when selected
-  },
-
   emoji: {
-    fontSize: 28,
+    fontSize: 24,
   },
   input: {
-    borderWidth: 2,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
-    fontSize: 15,
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    fontSize: 16,
   },
   logButton: {
-    paddingVertical: 16,
-    borderRadius: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: "center",
     marginTop: 8,
-    // ADD shadow:
-    shadowColor: "#5B9EB3",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
   },
   logButtonDisabled: {
     opacity: 0.5,
   },
   logButtonText: {
-    fontSize: 17,
-    fontWeight: "700",
-    letterSpacing: 0.5,
+    fontSize: 16,
+    fontWeight: "600",
   },
   loadingContainer: {
     paddingVertical: 40,
     alignItems: 'center',
   },
   link: {
-    marginTop: 16,
+    marginTop: 12,
     textAlign: "center",
     fontWeight: "600",
-    fontSize: 15,
-    textDecorationLine: 'underline', //Add for UX to make it look clickable
+    fontSize: 16,
   },
 });
 

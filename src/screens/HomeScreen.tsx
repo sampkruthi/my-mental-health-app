@@ -32,8 +32,8 @@ const HomeScreen = () => {
     { key: "journal", title: "Journal", subtitle: "Write a new entry" },
     //{ key: "activities", title: "Activities", subtitle: "Explore exercises" },
     { key: "reminders", title: "Reminders", subtitle: reminderLoading ? "Loading..." : `${reminderCount} today` },
-    { key: "resources", title: "Resources" },
-    { key: "memorysummary", title: "Memory summary", subtitle: "Your journey so far" },
+    { key: "resources", title: "Resources", subtitle: " Recommended  Resources" },
+    { key: "memorysummary", title: "Summary", subtitle: "Your journey so far" },
     { key: "progressdashboard", title: "Progress", subtitle: "Your progress stats"},
 
   ];
@@ -61,14 +61,6 @@ const HomeScreen = () => {
           Welcome, how are you feeling today?
         </Text>
         <Image source={Logo} style={styles.logo} resizeMode="contain" />
-        <Button 
-         title="Debug: Check Push Token" 
-        onPress={async () => {
-        const token = await initializeNotifications();
-        Alert.alert('Device Token', token || 'No token generated');
-        console.log('Device token:', token);
-          }} 
-        />
 
         {/* Cards Grid */}
         <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }}>
@@ -81,12 +73,17 @@ const HomeScreen = () => {
               style={{
                 width: isLargeScreen ? "30%" : "48%", // responsive columns
                 aspectRatio: 1.2, // control height relative to width
-                marginBottom: CARD_MARGIN,
+                marginBottom: 16,  // Changed from CARD_MARGIN (12)
                 justifyContent: "center",
                 alignItems: "center",
                 backgroundColor: colors.cardBackground,
-                borderRadius: BORDER_RADIUS.lg,
-                ...SHADOWS.none,
+                borderRadius: 20,  // Changed from BORDER_RADIUS.lg -> rounder
+                // ADD these shadow properties:
+                shadowColor: '#000', // colors.primary,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1, // 0.08,
+                shadowRadius: 12,
+                elevation: 4, //3,
               }}
             />
           ))}
@@ -99,19 +96,21 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   date: {
     fontSize: TYPOGRAPHY.sizes.sm,
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
     textAlign: "center",
+    fontWeight: '500',  //Add medium weight
   },
   welcome: {
-    fontSize: TYPOGRAPHY.sizes.lg,
+    fontSize: TYPOGRAPHY.sizes.xl,
     fontWeight: TYPOGRAPHY.weights.bold,
     textAlign: "center",
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,// Changed from lg -> more space
+    letterSpacing: -0.5,  // ADD: Tighter letter spacing for elegance
   },
   logo: {
-    width: 180,
-    height: 180,
-    marginBottom: SPACING.lg,
+    width: 160,
+    height: 160,
+    marginBottom: SPACING.xl,
     alignSelf: "center",
   },
 });

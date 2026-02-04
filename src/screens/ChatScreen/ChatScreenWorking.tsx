@@ -5,13 +5,12 @@ import {
   FlatList,
   TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
   Platform,
   StyleSheet,
   Dimensions,
   ActivityIndicator,
-  SafeAreaView,
-  ScrollView,
+  Keyboard,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useChatStore } from "../../stores/chatStore";
 import { useAuth } from "../../context/AuthContext";
@@ -38,8 +37,9 @@ const ChatScreen = () => {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
   
-  // Pagination state
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -49,14 +49,39 @@ const ChatScreen = () => {
   
   const MESSAGES_PER_PAGE = 20;
 
-  // Initial load - get last 20 messages
   const { data: initialHistory, isLoading: isLoadingInitial } = useFetchChatHistory(
     token,
     MESSAGES_PER_PAGE,
     0
   );
 
-  // Load initial history
+  //keyboard listeners
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+        // Scroll to end when keyboard opens
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    );
+
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, []);
+
+  //Load initial history
   useEffect(() => {
     if (initialHistory && !initialLoadDone) {
       if (initialHistory.messages.length > 0) {
@@ -64,7 +89,6 @@ const ChatScreen = () => {
         setHasMore(initialHistory.has_more);
         setOffset(MESSAGES_PER_PAGE);
       } else {
-        // No history - show welcome message
         const welcomeMessage: ChatMessage = {
           id: 'welcome-' + Date.now(),
           sender: 'ai',
@@ -78,7 +102,7 @@ const ChatScreen = () => {
     }
   }, [initialHistory, initialLoadDone]);
 
-  // Scroll to bottom when messages change
+  //Scroll to bottom when messages change
   useEffect(() => {
     if (flatListRef.current && messages.length > 0 && initialLoadDone) {
       setTimeout(() => {
@@ -87,28 +111,22 @@ const ChatScreen = () => {
     }
   }, [messages.length, initialLoadDone]);
 
-  // Load more messages when scrolling up
   const loadMoreMessages = async () => {
     if (!hasMore || isLoadingMore || !token) return;
 
     setIsLoadingMore(true);
-    console.log(`[ChatScreen] Loading more messages: offset=${offset}`);
 
     try {
-      //const olderMessages = await getApiService().getChatHistory?.(MESSAGES_PER_PAGE, offset);
-
       const olderMessages = await getApiService().getChatHistory?.(MESSAGES_PER_PAGE, offset) ?? {
         messages: [],
         total_count: 0,
         has_more: false
       };
       
-      
       if (olderMessages && olderMessages.messages.length > 0) {
-        prependMessages(olderMessages.messages); // Add to beginning
+        prependMessages(olderMessages.messages);
         setOffset(offset + MESSAGES_PER_PAGE);
         setHasMore(olderMessages.has_more);
-        console.log(`[ChatScreen] Loaded ${olderMessages.messages.length} older messages`);
       } else {
         setHasMore(false);
       }
@@ -167,6 +185,7 @@ const ChatScreen = () => {
               style={{
                 fontSize: 16,
                 color: colors.text,
+                textAlign: isUser ? 'right' : 'left',
               }}
             >
               {item.text}
@@ -176,6 +195,8 @@ const ChatScreen = () => {
             {new Date(item.timestamp).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
+              hour12: true,
+              timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             })}
           </Text>
         </View>
@@ -183,7 +204,6 @@ const ChatScreen = () => {
     );
   };
 
-  // Header component - shows when loading older messages
   const renderListHeader = () => {
     if (!hasMore) return null;
     
@@ -202,6 +222,15 @@ const ChatScreen = () => {
     );
   };
 
+  const renderListFooter = () => {
+    return (
+      <View>
+        {isTyping && <TypingIndicator />}
+        <View style={{ height: 20 }} />
+      </View>
+    );
+  };
+
   if (isLoadingInitial) {
     return (
       <Layout title="Chat" onNavigate={(screen) => navigation.navigate(screen as never)}>
@@ -215,78 +244,97 @@ const ChatScreen = () => {
 
   return (
     <Layout
-    title="Chat"
-    onNavigate={(screen) => navigation.navigate(screen as never)}
-  >
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}  // Adjusted for header
+      title="Chat"
+      onNavigate={(screen) => navigation.navigate(screen as never)}
     >
-      <View style={styles.chatWrapper}>
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          renderItem={renderMessage}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.chatContainer}
-          ListHeaderComponent={renderListHeader}
-          ListFooterComponent={isTyping ? <TypingIndicator /> : null}
-          onScroll={(event) => {
-            const { contentOffset } = event.nativeEvent;
-            if (contentOffset.y < 100 && hasMore && !isLoadingMore) {
-              loadMoreMessages();
-            }
-          }}
-          scrollEventThrottle={400}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"  // ← ADD THIS
-        />
-
-        <View style={[styles.inputRow, { 
-          borderColor: colors.inputBorder,
-          backgroundColor: colors.background  // ← ADD THIS
-        }]}>
-          <TouchableOpacity
-            onPress={() => setShowEmoji(true)}
-            style={styles.emojiBtn}
-          >
-            <Text style={{ fontSize: 24 }}>😊</Text>
-          </TouchableOpacity>
-
-          <TextInput
-            style={[
-              styles.input,
-              { color: colors.text, borderColor: colors.inputBorder },
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 100}
+        >
+            { /* FlatList takes up all available space */}
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            renderItem={renderMessage}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={[
+              styles.chatContainer,
+              { paddingBottom: Platform.OS === 'android' ? 100 : 10 }
             ]}
-            placeholder="Type your message…"
-            placeholderTextColor={colors.subText}
-            value={input}
-            onChangeText={setInput}
-            multiline
-            blurOnSubmit={false}  // ← ADD THIS
-            autoFocus={false}
-            returnKeyType="default"
+            ListHeaderComponent={renderListHeader}
+            ListFooterComponent={renderListFooter}
+            onScroll={(event) => {
+              const { contentOffset } = event.nativeEvent;
+              if (contentOffset.y < 100 && hasMore && !isLoadingMore) {
+                loadMoreMessages();
+              }
+            }}
+            scrollEventThrottle={400}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            maintainVisibleContentPosition={{
+                minIndexForVisible: 0,
+                autoscrollToTopThreshold: 10,
+              }}
           />
 
-          <TouchableOpacity onPress={handleSend} style={styles.sendBtn}>
-            <Text style={styles.sendText}>➤</Text>
-          </TouchableOpacity>
-        </View>
+          {/* Input row - positioned at bottom */}
+          <View style={[
+            styles.inputRow, 
+            { 
+              borderColor: colors.inputBorder,
+              backgroundColor: colors.background,
+            }
+          ]}>
+            <TouchableOpacity
+              onPress={() => setShowEmoji(true)}
+              style={styles.emojiBtn}
+            >
+              <Text style={{ fontSize: 24 }}>😊</Text>
+            </TouchableOpacity>
 
-        <EmojiPicker
-          onEmojiSelected={(emoji) => setInput((prev) => prev + emoji.emoji)}
-          open={showEmoji}
-          onClose={() => setShowEmoji(false)}
-        />
+            <TextInput
+              style={[
+                styles.input,
+                { color: colors.text, borderColor: colors.inputBorder },
+              ]}
+              placeholder="Type your message"
+              placeholderTextColor={colors.subText}
+              value={input}
+              onChangeText={setInput}
+              multiline
+              blurOnSubmit={false}
+              autoFocus={false}
+              returnKeyType="default"
+              onFocus={() => {
+                setTimeout(() => {
+                  flatListRef.current?.scrollToEnd({ animated: true });
+                }, 300);
+              }}
+            />
+
+            <TouchableOpacity onPress={handleSend} style={styles.sendBtn}>
+              <Text style={styles.sendText}>→</Text>
+            </TouchableOpacity>
+          </View>
+
+          <EmojiPicker
+            onEmojiSelected={(emoji) => setInput((prev) => prev + emoji.emoji)}
+            open={showEmoji}
+            onClose={() => setShowEmoji(false)}
+          />
+        </KeyboardAvoidingView>
       </View>
-    </KeyboardAvoidingView>
-  </Layout>
+    </Layout>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { 
+    flex: 1 
+  },
   centerContent: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -295,15 +343,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
   },
-  chatWrapper: {
-    flex: 1,
-    width: width > 800 ? 900 : "100%",
-    alignSelf: "center",
+  chatContainer: { 
     padding: 10,
+    flexGrow: 1,
   },
-  chatContainer: { padding: 10,
-    paddingBottom: 20
-   },
   loadMoreContainer: {
     paddingVertical: 16,
     alignItems: 'center',
@@ -316,19 +359,37 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  messageContainer: { marginVertical: 4, maxWidth: "85%", flexShrink: 1 },
-  messageLeft: { alignSelf: "flex-start" },
-  messageRight: { alignSelf: "flex-end" },
-  bubble: { padding: 10, borderRadius: 16, flexShrink: 1 },
-  timestamp: { fontSize: 10, marginTop: 2, textAlign: "right" },
+  messageContainer: { 
+    marginVertical: 4, 
+    maxWidth: "85%",
+    flexShrink: 1
+  },
+  messageLeft: { 
+    alignSelf: "flex-start" 
+  },
+  messageRight: { 
+    alignSelf: "flex-end" 
+  },
+  bubble: { 
+    padding: 10, 
+    borderRadius: 16,
+    flexShrink: 1
+  },
+  timestamp: { 
+    fontSize: 10, 
+    marginTop: 2, 
+    textAlign: "right" 
+  },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
-    paddingBottom: Platform.OS === 'ios' ? 10 : 10,  
     borderTopWidth: 1,
+    paddingBottom: Platform.OS === 'ios' ? 10 : 10,
   },
-  emojiBtn: { padding: 6 },
+  emojiBtn: { 
+    padding: 6 
+  },
   input: {
     flex: 1,
     padding: 10,
@@ -336,7 +397,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginHorizontal: 6,
     maxHeight: 120,
-    textAlignVertical: 'center',
+    textAlignVertical: 'top',
   },
   sendBtn: {
     backgroundColor: "#007AFF",
@@ -344,7 +405,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 20,
   },
-  sendText: { color: "#fff", fontWeight: "bold" },
+  sendText: { 
+    color: "#fff", 
+    fontWeight: "bold",
+    fontSize: 18
+  },
   messageRow: {
     flexDirection: 'row',
     marginVertical: 4,
@@ -380,12 +445,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#5B7C99',
     marginHorizontal: 2,
   },
-  dot1: { opacity: 0.4 },
-  dot2: { opacity: 0.6 },
-  dot3: { opacity: 0.8 },
+  dot1: { 
+    opacity: 0.4 
+  },
+  dot2: { 
+    opacity: 0.6 
+  },
+  dot3: { 
+    opacity: 0.8 
+  },
 });
 
-// Bot avatar and typing indicator components (unchanged)
 const CuteBotAvatar = ({ size = 40 }: { size?: number }) => {
   return (
     <View style={[styles.botAvatar, { width: size, height: size, borderRadius: size / 2 }]}>
