@@ -1,9 +1,9 @@
 // src/services/api.ts
 import axios from "axios";
 import { mockApiService } from "./mockApi";
-import type { MoodTrendPoint, MoodLog, Reminder, ChatMessage, GuidedActivity,JournalEntry, JournalInsights, ResourceRec, 
-  Token, Reminder1, MemorySummary, ProgressDashboard, 
-  ResourceRecRAG} from "../src/api/types";
+import type { MoodTrendPoint, MoodLog, Reminder, ChatMessage, GuidedActivity,JournalEntry, JournalInsights, ResourceRec,
+  Token, Reminder1, MemorySummary, ProgressDashboard,
+  ResourceRecRAG, UserProfile, UserProfileUpdateRequest} from "../src/api/types";
 import { Platform } from "react-native";
 import {storage, STORAGE_KEYS} from "../src/utils/storage";
 import * as SecureStore from 'expo-secure-store';
@@ -64,6 +64,10 @@ export interface ApiService {
 
   //add logout function
   logout(): Promise<void>;
+
+  // ---------- User Profile ----------
+  getUserProfile(): Promise<UserProfile>;
+  updateUserProfile(data: UserProfileUpdateRequest): Promise<UserProfile>;
 }
 
 // Step 2: Global service
@@ -389,6 +393,15 @@ export const realApiService: ApiService = {
   },
 
   async register(name: string, email: string, password: string, timezone?: string): Promise<Token & { userId?: string }> {
+    
+    console.log("===========================================");
+    console.log("🔍 TIMEZONE DEBUG - API.TS");
+    console.log("===========================================");
+    console.log("1. register() received timezone:", timezone);
+    console.log("2. Type:", typeof timezone);
+    console.log("3. Is truthy?:", !!timezone);
+    
+
     console.log('Registration attempt:', { name, email, timezone });
 
     const { data } = await apiClient.post("/api/auth/register", {
@@ -414,67 +427,6 @@ export const realApiService: ApiService = {
     // You could add a server-side logout call here if needed
   },
 
-
-  /* testing for Unified Secure Store 11/14
-  async login(username, password) {
-    console.log('🔍 RealAPI called for this login attempt:', { username });
-    const formData = new FormData();
-    formData.append('username', username);
-    formData.append('password', password);
-
-    const { data } = await apiClient.post("/api/auth/token", formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      }
-     });
-     if (data.access_token) {
-      await setToken(data.access_token);
-      await setUserId(username);
-    }
-    return {token: data.access_token};
-  },
-
-  async register(name: string, email: string, password: string) {
-    console.log('🔍 RealAPI called for registration:', { name, email });
-    const { data } = await apiClient.post("/api/auth/register", {
-      username: email,
-      password: password,
-      // Add name if your backend expects it
-      name: name
-    });
-    console.log('🔍 Registration response:', data);
-
-    // Store both token and user ID
-    if (data.access_token) {
-      await setToken(data.access_token);
-      await setUserId(email); // Store email as user_id (email is used as username)
-    }
-
-    return data;
-  },
-
-  async logout() {
-    await clearUserSession();
-  },
-
-  Unified SecureStore 11/14 */
-
-  /* commenting for now
-  async getMoodCount() {
-    const { data } = await apiClient.get("/api/mood/history");
-    return data;
-  }, */
-  /* invalid
-  async getReminderCount() {
-    const { data } = await apiClient.get("/reminders/count");
-    return data;
-  }, */
-  /*async getUserProfile() {
-    const { data } = await apiClient.get("/me");
-    return data;
-  }, */
-
-  // Real endpoints if your backend has them
   async getMoodHistory() {
     // Updated to match OpenAPI - no user_id needed, extracted from JWT
     //NK adding userId extraction 10/31/2025
@@ -653,6 +605,22 @@ async getContentRecommendationsRag(params?: { limit?: number }) {
       enabled: enabled,
     });
     console.log('[API] Notifications toggled:', data);
+    return data;
+  },
+
+  // --- Get user profile ---
+  async getUserProfile() {
+    console.log('[API] Fetching user profile');
+    const { data } = await apiClient.get<UserProfile>("/api/profile/");
+    console.log('[API] User profile response:', data);
+    return data;
+  },
+
+  // --- Update user profile ---
+  async updateUserProfile(updateData: UserProfileUpdateRequest) {
+    console.log('[API] Updating user profile:', updateData);
+    const { data } = await apiClient.put<UserProfile>("/api/profile/", updateData);
+    console.log('[API] User profile updated:', data);
     return data;
   },
 

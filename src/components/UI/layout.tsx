@@ -94,6 +94,16 @@ function Layout({ children, title, onNavigate }: LayoutProps) {
         <TouchableOpacity
           style={styles.drawerItem}
           onPress={() => {
+            onNavigate("memorysummary");
+            toggleMenu();
+          }}
+        >
+          <Text style={{ color: colors.text }}>👤 Profile</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.drawerItem}
+          onPress={() => {
             toggleTheme();
             toggleMenu();
           }}

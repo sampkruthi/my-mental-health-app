@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { getApiService } from "../../services/api"; // adjust path if needed
-import type { Reminder,  ChatMessage, MoodLog, GuidedActivity, JournalEntry, 
-JournalInsights, ResourceRec, Reminder1, NewReminder, MemorySummary, Token, RegisterRequest, ProgressDashboard, ResourceRecRAG } from "./types";
+import type { Reminder,  ChatMessage, MoodLog, GuidedActivity, JournalEntry,
+JournalInsights, ResourceRec, Reminder1, NewReminder, MemorySummary, Token, RegisterRequest, ProgressDashboard, ResourceRecRAG, UserProfile, UserProfileUpdateRequest } from "./types";
 
 
 
@@ -499,6 +499,58 @@ export function useToggleNotifications(token?: string | null) {
     },
     onError: (error) => {
       console.error("[useToggleNotifications] Failed to toggle notifications:", error);
+    },
+  });
+}
+
+// =====================
+// User Profile Hooks
+// =====================
+
+/**
+ * Hook to fetch user profile (name and username/email)
+ */
+export function useFetchUserProfile(token?: string | null) {
+  return useQuery<UserProfile, Error>({
+    queryKey: ["user", "profile", token],
+    queryFn: async () => {
+      console.log("[useFetchUserProfile] Fetching user profile, token:", token);
+      if (!token) {
+        throw new Error("No authentication token available");
+      }
+
+      const data = await getApiService().getUserProfile();
+      console.log("[useFetchUserProfile] User profile received:", data);
+      return data;
+    },
+    enabled: Boolean(token),
+    staleTime: 60000, // Cache for 1 minute
+  });
+}
+
+/**
+ * Hook to update user profile (name only)
+ */
+export function useUpdateUserProfile(token?: string | null) {
+  const qc = useQueryClient();
+
+  return useMutation<UserProfile, Error, UserProfileUpdateRequest>({
+    mutationFn: async (updateData) => {
+      console.log("[useUpdateUserProfile] Updating profile:", updateData);
+      if (!token) throw new Error("No authentication token available");
+
+      const data = await getApiService().updateUserProfile(updateData);
+      console.log("[useUpdateUserProfile] Profile updated:", data);
+      return data;
+    },
+    onSuccess: (data) => {
+      console.log("[useUpdateUserProfile] Invalidating profile queries");
+      qc.invalidateQueries({ queryKey: ["user", "profile"] });
+      // Optionally set the data directly to avoid refetch
+      qc.setQueryData(["user", "profile", token], data);
+    },
+    onError: (error) => {
+      console.error("[useUpdateUserProfile] Failed to update profile:", error);
     },
   });
 }

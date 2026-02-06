@@ -191,6 +191,7 @@ const ChatScreen = () => {
               style={{
                 fontSize: 16,
                 color: colors.text,
+                lineHeight: 22,
                 //textAlign: isUser ? 'right' : 'left',
               }}
             >
@@ -366,7 +367,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   messageContainer: { 
-    marginVertical: 4, 
+    marginVertical: 2, 
     maxWidth: "85%",
     flexShrink: 1
   },
@@ -379,7 +380,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end', 
   },
   bubble: { 
-    padding: 16, //changed from 10 -> 16 for more padding
+    padding: 12, //changed from 10 -> 16 for more padding
     borderRadius: 20, //changed from 16 -> 20 for more rounded corners
     flexShrink: 1,
     //Add shadow for depth:

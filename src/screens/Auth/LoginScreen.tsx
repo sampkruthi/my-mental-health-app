@@ -25,6 +25,36 @@ import { Alert } from "react-native";
 import MeditatingLogo from "../../images/Meditating_logo.png";
 
 const { width } = Dimensions.get("window");
+import { initializeNotifications } from '../../services/notificationService';
+import { getApiService } from '../../services/api';
+
+
+async function registerDeviceForNotifications() {
+  try {
+    console.log('[LoginScreen] === DEVICE REGISTRATION START ===');
+    
+    const deviceToken = await initializeNotifications();
+    
+    if (!deviceToken) {
+      console.log('[LoginScreen]No device token obtained');
+      return;
+    }
+    
+    console.log('[LoginScreen] Device token obtained:', deviceToken.substring(0, 30) + '...');
+    
+    const platform = Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web';
+    console.log('[LoginScreen] Platform:', platform);
+    
+    const api = getApiService();
+    const result = await api.registerDeviceToken(deviceToken, platform);
+    
+    console.log('[LoginScreen]Device registered with backend:', result);
+    console.log('[LoginScreen] === DEVICE REGISTRATION COMPLETE ===');
+  } catch (error) {
+    console.error('[LoginScreen]Device registration error:', error);
+  }
+}
+
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
@@ -47,7 +77,9 @@ export default function LoginScreen() {
 
       if (result?.token) {
         await signIn(email, password, result.token);
+        await registerDeviceForNotifications();
         console.log("[LoginScreen] User signed in successfully");
+
       }
     } catch (e) {
       console.error("[LoginScreen] Login failed", e);

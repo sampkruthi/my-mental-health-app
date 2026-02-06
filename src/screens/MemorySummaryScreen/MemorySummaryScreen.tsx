@@ -1,15 +1,15 @@
 // src/screens/MemorySummaryScreen/MemorySummaryScreen.tsx
-import React from 'react';
-import { ScrollView, StyleSheet, View, Text, ActivityIndicator, Dimensions, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { ScrollView, StyleSheet, View, Text, ActivityIndicator, Dimensions, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import Layout from '../../components/UI/layout';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import { useFetchMemorySummary } from '../../api/hooks';
+import { useFetchMemorySummary, useFetchUserProfile, useUpdateUserProfile } from '../../api/hooks';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get('window');
 
 export const MemorySummaryScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -17,13 +17,51 @@ export const MemorySummaryScreen: React.FC = () => {
   const { token } = useAuth();
   const { data: memory, isLoading, isError } = useFetchMemorySummary(token);
 
-  console.log('🔍 MemorySummaryScreen - isLoading:', isLoading);
-  console.log('🔍 MemorySummaryScreen - isError:', isError);
-  console.log('🔍 MemorySummaryScreen - memory:', memory);
+  // Profile state and hooks
+  const { data: profile, isLoading: isProfileLoading, isError: isProfileError } = useFetchUserProfile(token);
+  const updateProfileMutation = useUpdateUserProfile(token);
+
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState('');
+
+  // Initialize edited name when profile loads
+  useEffect(() => {
+    if (profile?.name) {
+      setEditedName(profile.name);
+    }
+  }, [profile?.name]);
+
+  const handleEditName = () => {
+    setEditedName(profile?.name || '');
+    setIsEditingName(true);
+  };
+
+  const handleSaveName = async () => {
+    if (!editedName.trim()) {
+      Alert.alert('Error', 'Name cannot be empty');
+      return;
+    }
+
+    try {
+      await updateProfileMutation.mutateAsync({ name: editedName.trim() });
+      setIsEditingName(false);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update name. Please try again.');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditedName(profile?.name || '');
+    setIsEditingName(false);
+  };
+
+  console.log('MemorySummaryScreen - isLoading:', isLoading);
+  console.log('MemorySummaryScreen - isError:', isError);
+  console.log('MemorySummaryScreen - memory:', memory);
 
   return (
     <Layout
-      title="Memory Summary"
+      title="Profile"
       onNavigate={(screen) => navigation.navigate(screen as never)}
     >
       <ScrollView
@@ -34,26 +72,76 @@ export const MemorySummaryScreen: React.FC = () => {
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={[styles.loadingText, { color: colors.subText }]}>
-              Loading your journey...
+              Loading your profile...
             </Text>
           </View>
         ) : isError || !memory ? (
           <View style={styles.errorContainer}>
             <Text style={[styles.errorText, { color: 'red' }]}>
-              Unable to load memory summary
+              Unable to load profile
             </Text>
           </View>
         ) : (
           <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
-            <Text style={[styles.title, { color: colors.text }]}>
-               Your journey so far
-            </Text>
+            {/* Profile Section */}
+            <View style={styles.profileSection}>
+              {isProfileLoading ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : isProfileError ? (
+                <Text style={[styles.profileErrorText, { color: colors.subText }]}>
+                  Unable to load profile
+                </Text>
+              ) : profile ? (
+                <>
+                  {isEditingName ? (
+                    <View style={styles.editNameContainer}>
+                      <TextInput
+                        style={[styles.nameInput, { color: colors.text, borderColor: colors.primary }]}
+                        value={editedName}
+                        onChangeText={setEditedName}
+                        placeholder="Enter your name"
+                        placeholderTextColor={colors.subText}
+                        autoFocus
+                      />
+                      <View style={styles.editButtonsRow}>
+                        <TouchableOpacity
+                          style={[styles.saveButton, { backgroundColor: colors.primary }]}
+                          onPress={handleSaveName}
+                          disabled={updateProfileMutation.isPending}
+                        >
+                          {updateProfileMutation.isPending ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                          ) : (
+                            <Text style={styles.saveButtonText}>Save</Text>
+                          )}
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.cancelButton, { borderColor: colors.subText }]}
+                          onPress={handleCancelEdit}
+                        >
+                          <Text style={[styles.cancelButtonText, { color: colors.subText }]}>Cancel</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={styles.profileDisplayContainer}>
+                      <Text style={[styles.userName, { color: colors.text }]}>
+                        {profile.name || 'No name set'}
+                      </Text>
+                      <TouchableOpacity onPress={handleEditName} style={styles.editButton}>
+                        <Text style={[styles.editButtonText, { color: colors.primary }]}>Edit</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                  <Text style={[styles.userEmail, { color: colors.subText }]}>
+                    {profile.username}
+                  </Text>
+                </>
+              ) : null}
+            </View>
 
-            <ScrollView style={styles.summaryContainer} scrollEnabled={true} nestedScrollEnabled={true}>
-              <Text style={[styles.summary, { color: colors.text }]}>
-                {memory.summary.replace(/\*\*Recent conversation:\*\*\s*/gi, '').trim()}
-              </Text>
-            </ScrollView>
+            {/* Divider */}
+            <View style={[styles.divider, { backgroundColor: colors.subText + '30' }]} />
 
             {memory.key_themes && memory.key_themes.length > 0 && (
               <View style={styles.themesContainer}>
@@ -136,7 +224,8 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 20,
-    padding: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 32,
     marginVertical: 12,
     // ADD shadow:
     shadowColor: "5B9EB3",
@@ -145,41 +234,104 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 4,
   },
-  title: {
-    fontSize: 24,
+  profileSection: {
+    marginBottom: 28,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  profileDisplayContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  userName: {
+    fontSize: 26,
     fontWeight: 'bold',
-    marginBottom: 16,
     letterSpacing: -0.5,
   },
-  summaryContainer: {
-    maxHeight: screenWidth > 800 ? 400 : 250,
-    marginBottom: 16,
-    borderRadius: 8,
-    paddingRight: 8,
+  userEmail: {
+    fontSize: 15,
+    fontWeight: '500',
+    marginTop: 8,
   },
-  summary: {
-    fontSize: 16,
-    lineHeight: 26,
-    letterSpacing: 0.2,
+  profileErrorText: {
+    fontSize: 14,
+    fontStyle: 'italic',
   },
-  themesContainer: {
-    marginTop: 12,
-    marginBottom: 16,
+  editButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
   },
-  themesLabel: {
+  editButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 8,
+  },
+  editNameContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  nameInput: {
+    fontSize: 20,
+    fontWeight: '600',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    width: '100%',
+    textAlign: 'center',
+  },
+  editButtonsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+  },
+  saveButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  cancelButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  divider: {
+    height: 1,
+    width: '100%',
+    marginBottom: 24,
+  },
+  themesContainer: {
+    marginTop: 8,
+    marginBottom: 28,
+    paddingVertical: 8,
+  },
+  themesLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 12,
   },
   themesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
   themeBadge: {
     backgroundColor: `"E8B4A8"30`,// '#E8F5E9',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
     borderRadius: 20,
     //Add shadows
     shadowColor: "E8B4A8",
@@ -189,20 +341,23 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   themeText: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#5B9EB3',
     fontWeight: '600',
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 16,
-    paddingTop: 16,
+    marginTop: 20,
+    paddingTop: 20,
+    paddingBottom: 12,
+    marginRight: 12,
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },
   stat: {
     alignItems: 'center',
+    flex: 1,
   },
   statNumber: {
     fontSize: 32,
@@ -210,14 +365,14 @@ const styles = StyleSheet.create({
     letterSpacing: -1,
   },
   statLabel: {
-    fontSize: 13,
-    marginTop: 6,
+    fontSize: 12,
+    marginTop: 8,
     textAlign: 'center',
     fontWeight: '500',
   },
   footer: {
-    fontSize: 11,
-    marginTop: 12,
+    fontSize: 12,
+    marginTop: 20,
     textAlign: 'center',
     fontStyle: 'italic',
   },

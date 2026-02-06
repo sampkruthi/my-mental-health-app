@@ -1,5 +1,5 @@
 // src/screens/Auth/RegisterScreen.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -25,8 +25,62 @@ import { RootStackParamList } from "../../navigation/AppNavigator";
 import { Token } from "../../api/types";
 import MeditatingLogo from "../../images/Meditating_logo.png";
 import { getUserTimezone } from "../../utils/timezoneUtils";
+import { initializeNotifications } from '../../services/notificationService';
+import { getApiService } from '../../services/api';
+
 
 const { width } = Dimensions.get("window");
+
+
+const testTimezoneFlow = async () => {
+  const tz = getUserTimezone();
+  console.log("=== QUICK TIMEZONE TEST ===");
+  console.log("Timezone detected:", tz);
+  console.log("Is it UTC?:", tz === "UTC");
+  console.log("Is it your timezone?:", tz === "America/Los_Angeles"); // Change to your TZ
+  console.log("===========================");
+};
+
+
+useEffect(() => {
+  const tz = testTimezoneFlow();
+  console.log("=== TIMEZONE CHECK ===");
+  console.log("Detected:", tz);
+  console.log("=====================");
+}, []);
+
+
+
+async function registerDeviceForNotifications() {
+  try {
+    console.log('[RegisterScreen] === DEVICE REGISTRATION START ===');
+    
+    // Get device token using your existing notificationService
+    const deviceToken = await initializeNotifications();
+    
+    if (!deviceToken) {
+      console.log('[RegisterScreen]No device token obtained - user may have denied permissions');
+      return; // Don't block registration if notifications fail
+    }
+    
+    console.log('[RegisterScreen] Device token obtained:', deviceToken.substring(0, 30) + '...');
+    
+    // Determine platform
+    const platform = Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web';
+    console.log('[RegisterScreen] Platform:', platform);
+    
+    // Register with backend using your existing API
+    const api = getApiService();
+    const result = await api.registerDeviceToken(deviceToken, platform);
+    
+    console.log('[RegisterScreen]Device registered with backend:', result);
+    console.log('[RegisterScreen] === DEVICE REGISTRATION COMPLETE ===');
+  } catch (error) {
+    console.error('[RegisterScreen] Device registration error:', error);
+    // Don't throw - we don't want device registration failure to block signup
+  }
+}
+
 
 const RegisterScreen: React.FC = () => {
   const { colors } = useTheme();
@@ -70,6 +124,15 @@ const RegisterScreen: React.FC = () => {
     try {
       // Detect user's timezone
       const timezone = getUserTimezone();
+      console.log("===========================================");
+    console.log("🔍 TIMEZONE DEBUG - FRONTEND");
+    console.log("===========================================");
+    console.log("1. getUserTimezone() returned:", timezone);
+    console.log("2. Type:", typeof timezone);
+    console.log("3. Is truthy?:", !!timezone);
+    console.log("4. Length:", timezone?.length);
+    console.log("5. JSON stringified:", JSON.stringify(timezone));
+  
       console.log("[RegisterScreen] Detected user timezone:", timezone);
 
       const res: Token = await registerMutation.mutateAsync({
@@ -82,6 +145,7 @@ const RegisterScreen: React.FC = () => {
 
       // Store the token in AuthContext
       await signIn(email, password, res.access_token, email);
+      await registerDeviceForNotifications();
 
       Alert.alert("Success", "Registered successfully!");
     } catch (err: any) {

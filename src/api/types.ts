@@ -223,3 +223,16 @@ export interface ProgressDashboard {
   total_entries: number;
   avg_sentiment: number | null;
 }
+
+// =====================
+// User Profile
+// =====================
+
+export interface UserProfile {
+  name: string | null;  // User's display name (can be null)
+  username: string;     // Email/username (read-only)
+}
+
+export interface UserProfileUpdateRequest {
+  name: string;  // New display name
+}
