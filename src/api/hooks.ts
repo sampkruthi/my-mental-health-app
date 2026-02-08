@@ -40,9 +40,9 @@ export function useRegister(): UseMutationResult<Token, Error, RegisterRequest, 
   const qc = useQueryClient();
 
   return useMutation<Token, Error, RegisterRequest>({
-    mutationFn: async ({ name, email, password }) => {
+    mutationFn: async ({ name, email, password, timezone }) => {
       console.log("[useRegister] registering:", { name, email });
-      const data: Token = await getApiService().register(name, email, password);
+      const data: Token = await getApiService().register(name, email, password, timezone);
       console.log("[useRegister] token received:", data);
       return data;
     },

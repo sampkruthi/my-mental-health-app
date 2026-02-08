@@ -25,8 +25,8 @@ import { Alert } from "react-native";
 import MeditatingLogo from "../../images/Meditating_logo.png";
 
 const { width } = Dimensions.get("window");
-import { initializeNotifications } from '../../services/notificationService';
-import { getApiService } from '../../services/api';
+import { initializeNotifications } from '../../notificationService';
+import { getApiService } from '../../../services/api';
 
 
 async function registerDeviceForNotifications() {

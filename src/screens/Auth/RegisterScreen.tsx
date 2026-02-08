@@ -1,5 +1,5 @@
 // src/screens/Auth/RegisterScreen.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -25,8 +25,8 @@ import { RootStackParamList } from "../../navigation/AppNavigator";
 import { Token } from "../../api/types";
 import MeditatingLogo from "../../images/Meditating_logo.png";
 import { getUserTimezone } from "../../utils/timezoneUtils";
-import { initializeNotifications } from '../../services/notificationService';
-import { getApiService } from '../../services/api';
+import { initializeNotifications } from '../../notificationService';
+import { getApiService } from '../../../services/api';
 
 
 const { width } = Dimensions.get("window");
@@ -40,15 +40,6 @@ const testTimezoneFlow = async () => {
   console.log("Is it your timezone?:", tz === "America/Los_Angeles"); // Change to your TZ
   console.log("===========================");
 };
-
-
-useEffect(() => {
-  const tz = testTimezoneFlow();
-  console.log("=== TIMEZONE CHECK ===");
-  console.log("Detected:", tz);
-  console.log("=====================");
-}, []);
-
 
 
 async function registerDeviceForNotifications() {

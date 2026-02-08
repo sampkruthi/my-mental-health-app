@@ -5,15 +5,14 @@
 // 3. No blank screen, perceived as much faster!
 
 import React, { useState } from "react";
-import { 
-  View, 
-  Text, 
-  Image, 
-  FlatList, 
-  Modal, 
-  ScrollView, 
-  Dimensions, 
-  StyleSheet, 
+import {
+  View,
+  Text,
+  FlatList,
+  Modal,
+  ScrollView,
+  Dimensions,
+  StyleSheet,
   Linking,
   ActivityIndicator,
   TouchableOpacity
@@ -100,18 +99,8 @@ const ResourcesScreen = () => {
     return colorMap[type.toUpperCase()] || '#E5E7EB';
   };
 
-  const getDefaultThumbnail = (contentType: string) => {
-    const placeholders: Record<string, string> = {
-      'article': 'https://via.placeholder.com/200/4CAF50/FFFFFF?text=Article',
-      'video': 'https://via.placeholder.com/200/F44336/FFFFFF?text=Video',
-      'podcast': 'https://via.placeholder.com/200/FFC107/FFFFFF?text=Podcast',
-    };
-    return placeholders[contentType.toLowerCase()] || 'https://via.placeholder.com/200/9E9E9E/FFFFFF?text=Resource';
-  };
-
   const renderCard = ({ item }: { item: any }) => {
     const resourceType = getResourceType(item);
-    const thumbnailUrl = item.thumbnail || getDefaultThumbnail(item.content_type);
 
     // Determine if this is RAG or quick rec
     const isRAGRec = 'relevance_score' in item;
@@ -119,14 +108,6 @@ const ResourcesScreen = () => {
 
     return (
       <View style={[styles.card, { backgroundColor: colors.cardBackground || "#f0f4ff" }]}>
-        <View style={styles.thumbnailContainer}>
-          <Image
-            source={{ uri: thumbnailUrl }}
-            style={styles.thumbnail}
-            onError={() => console.log('Failed to load image:', thumbnailUrl)}
-          />
-        </View>
-
         <View style={styles.cardContent}>
           <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
             {item.title}
@@ -257,12 +238,7 @@ const ResourcesScreen = () => {
           <ScrollView>
             {selectedResource && (
               <>
-                <Image 
-                  source={{ uri: selectedResource.thumbnail || getDefaultThumbnail(selectedResource.content_type) }} 
-                  style={styles.modalThumbnail}
-                />
-
-                <Text style={[styles.modalTitle, { color: colors.text }]}>
+                <Text style={[styles.modalTitle, { color: colors.text, marginTop: 40 }]}>
                   {selectedResource.title}
                 </Text>
                 
@@ -388,11 +364,9 @@ const styles = StyleSheet.create({
   
   // Card - add visual depth
   card: {
-    flexDirection: "row",
-    borderRadius: 16,  // Changed from 12
-    padding: 18,  // Changed from 16
+    borderRadius: 16,
+    padding: 18,
     marginBottom: 16,
-    alignItems: "flex-start",
     // ADD shadow:
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
@@ -401,23 +375,6 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   
-  thumbnailContainer: {
-    width: 90,  // Changed from 80
-    height: 90,  // Changed from 80
-    borderRadius: 12,  // Changed from 8
-    marginRight: 14,  // Changed from 12
-    overflow: 'hidden',
-    backgroundColor: '#E5E7EB',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexShrink: 0,
-  },
-
-  thumbnail: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
   cardContent: {
     flex: 1,
   },
@@ -497,13 +454,6 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     padding: 20,
-  },
-  modalThumbnail: {
-    width: '100%',
-    height: 200,
-    borderRadius: 12,
-    marginTop: 40,
-    marginBottom: 16,
   },
   modalTitle: {
     fontSize: 24,
