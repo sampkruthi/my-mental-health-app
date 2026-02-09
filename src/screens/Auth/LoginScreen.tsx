@@ -23,7 +23,7 @@ import { RootStackParamList } from "../../navigation/AppNavigator";
 import { Button } from "../../components/UI/Button";
 import { Alert } from "react-native";
 import MeditatingLogo from "../../images/Meditating_logo.png";
-import * as Google from "expo-auth-session/providers/google";
+import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { getUserTimezone } from "../../utils/timezoneUtils";
 import jwtDecode from "jwt-decode";
@@ -31,8 +31,6 @@ import jwtDecode from "jwt-decode";
 WebBrowser.maybeCompleteAuthSession();
 
 const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || "";
-const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS || "";
-const GOOGLE_CLIENT_ID_ANDROID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID || "";
 const { width } = Dimensions.get("window");
 import { initializeNotifications } from '../../notificationService';
 import { getApiService } from '../../../services/api';
@@ -78,28 +76,47 @@ export default function LoginScreen() {
   const loginMutation = useLogin();
   const googleLoginMutation = useGoogleLogin();
 
-  // Google Auth Session — uses platform-specific client IDs with code exchange
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: GOOGLE_CLIENT_ID_WEB,
-    iosClientId: GOOGLE_CLIENT_ID_IOS,
-    androidClientId: GOOGLE_CLIENT_ID_ANDROID,
-  });
+  // Google OAuth — manual flow using WebBrowser.openAuthSessionAsync
+  // This avoids expo-auth-session's Google provider issues with Android client IDs.
+  // Uses the Web Client ID + implicit flow to get id_token directly.
+  const redirectUri = AuthSession.makeRedirectUri({ scheme: "bodhira" });
 
-  useEffect(() => {
-    if (response?.type === "success") {
-      // On native (Android/iOS), the library auto-exchanges the code for tokens
-      const idToken = response.authentication?.idToken || response.params?.id_token;
-      if (idToken) {
-        handleGoogleSignIn(idToken);
-      } else {
-        console.error("[LoginScreen] Google auth success but no idToken found", JSON.stringify(response));
+  const handleGooglePress = async () => {
+    try {
+      const authUrl =
+        `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID_WEB)}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&response_type=id_token` +
+        `&scope=${encodeURIComponent("openid email profile")}` +
+        `&nonce=${Math.random().toString(36).substring(2)}`;
+
+      console.log("[LoginScreen] Google OAuth redirect URI:", redirectUri);
+      console.log("[LoginScreen] Opening Google sign-in...");
+
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
+
+      if (result.type === "success" && result.url) {
+        // Extract id_token from the URL fragment (#id_token=...)
+        const fragment = result.url.split("#")[1];
+        if (fragment) {
+          const params = new URLSearchParams(fragment);
+          const idToken = params.get("id_token");
+          if (idToken) {
+            handleGoogleSignIn(idToken);
+            return;
+          }
+        }
+        console.error("[LoginScreen] No id_token in response URL:", result.url);
         Alert.alert("Error", "Google sign-in did not return the expected token.");
+      } else if (result.type === "cancel") {
+        console.log("[LoginScreen] Google sign-in cancelled by user");
       }
-    } else if (response?.type === "error") {
-      console.error("[LoginScreen] Google auth error:", response.error);
+    } catch (e) {
+      console.error("[LoginScreen] Google auth error:", e);
       Alert.alert("Error", "Google sign-in failed. Please try again.");
     }
-  }, [response]);
+  };
 
   const handleGoogleSignIn = async (idToken: string) => {
     try {
@@ -280,11 +297,11 @@ export default function LoginScreen() {
 
           {/* Google Sign In Button */}
           <TouchableOpacity
-            onPress={() => promptAsync()}
-            disabled={!request || googleLoading}
+            onPress={handleGooglePress}
+            disabled={googleLoading}
             style={[
               styles.googleButton,
-              (!request || googleLoading) && styles.googleButtonDisabled,
+              googleLoading && styles.googleButtonDisabled,
             ]}
           >
             {googleLoading ? (

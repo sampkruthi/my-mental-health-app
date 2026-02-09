@@ -27,15 +27,13 @@ import MeditatingLogo from "../../images/Meditating_logo.png";
 import { getUserTimezone } from "../../utils/timezoneUtils";
 import { initializeNotifications } from '../../notificationService';
 import { getApiService } from '../../../services/api';
-import * as Google from "expo-auth-session/providers/google";
+import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import jwtDecode from "jwt-decode";
 
 WebBrowser.maybeCompleteAuthSession();
 
 const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || "";
-const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS || "";
-const GOOGLE_CLIENT_ID_ANDROID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID || "";
 
 
 const { width } = Dimensions.get("window");
@@ -100,28 +98,44 @@ const RegisterScreen: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
-  // Google Auth Session — uses platform-specific client IDs with code exchange
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: GOOGLE_CLIENT_ID_WEB,
-    iosClientId: GOOGLE_CLIENT_ID_IOS,
-    androidClientId: GOOGLE_CLIENT_ID_ANDROID,
-  });
+  // Google OAuth — manual flow using WebBrowser.openAuthSessionAsync
+  const redirectUri = AuthSession.makeRedirectUri({ scheme: "bodhira" });
 
-  useEffect(() => {
-    if (response?.type === "success") {
-      // On native (Android/iOS), the library auto-exchanges the code for tokens
-      const idToken = response.authentication?.idToken || response.params?.id_token;
-      if (idToken) {
-        handleGoogleSignUp(idToken);
-      } else {
-        console.error("[RegisterScreen] Google auth success but no idToken found", JSON.stringify(response));
+  const handleGooglePress = async () => {
+    try {
+      const authUrl =
+        `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID_WEB)}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&response_type=id_token` +
+        `&scope=${encodeURIComponent("openid email profile")}` +
+        `&nonce=${Math.random().toString(36).substring(2)}`;
+
+      console.log("[RegisterScreen] Google OAuth redirect URI:", redirectUri);
+      console.log("[RegisterScreen] Opening Google sign-up...");
+
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
+
+      if (result.type === "success" && result.url) {
+        const fragment = result.url.split("#")[1];
+        if (fragment) {
+          const params = new URLSearchParams(fragment);
+          const idToken = params.get("id_token");
+          if (idToken) {
+            handleGoogleSignUp(idToken);
+            return;
+          }
+        }
+        console.error("[RegisterScreen] No id_token in response URL:", result.url);
         showAlert("Error", "Google sign-up did not return the expected token.");
+      } else if (result.type === "cancel") {
+        console.log("[RegisterScreen] Google sign-up cancelled by user");
       }
-    } else if (response?.type === "error") {
-      console.error("[RegisterScreen] Google auth error:", response.error);
+    } catch (e) {
+      console.error("[RegisterScreen] Google auth error:", e);
       showAlert("Error", "Google sign-up failed. Please try again.");
     }
-  }, [response]);
+  };
 
   const handleGoogleSignUp = async (idToken: string) => {
     try {
@@ -378,11 +392,11 @@ const RegisterScreen: React.FC = () => {
 
           {/* Google Sign Up Button */}
           <TouchableOpacity
-            onPress={() => promptAsync()}
-            disabled={!request || googleLoading}
+            onPress={handleGooglePress}
+            disabled={googleLoading}
             style={[
               styles.googleButton,
-              (!request || googleLoading) && styles.googleButtonDisabled,
+              googleLoading && styles.googleButtonDisabled,
             ]}
           >
             {googleLoading ? (
