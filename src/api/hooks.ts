@@ -53,6 +53,23 @@ export const useGoogleLogin = () => {
   });
 };
 
+// =====================
+// Google Code Exchange mutation hook
+// =====================
+type GoogleCodePayload = { code: string; codeVerifier: string; redirectUri: string; timezone?: string };
+
+export const useGoogleCodeExchange = () => {
+  return useMutation({
+    mutationFn: async ({ code, codeVerifier, redirectUri, timezone }: GoogleCodePayload) => {
+      if (!getApiService) throw new Error("API Service not initialized");
+      console.log("[useGoogleCodeExchange] Exchanging code for token");
+      const { token, userId } = await getApiService().googleCodeExchange(code, codeVerifier, redirectUri, timezone);
+      console.log("[useGoogleCodeExchange] Token received");
+      return { token, userId };
+    },
+  });
+};
+
 
 export function useRegister(): UseMutationResult<Token, Error, RegisterRequest, unknown> {
   const qc = useQueryClient();

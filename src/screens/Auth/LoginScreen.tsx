@@ -16,14 +16,18 @@ import {
   SafeAreaView,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
-import { useLogin, useGoogleLogin } from "../../api/hooks";
+import { useLogin, useGoogleCodeExchange } from "../../api/hooks";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import { Button } from "../../components/UI/Button";
 import { Alert } from "react-native";
 import MeditatingLogo from "../../images/Meditating_logo.png";
-import * as AuthSession from "expo-auth-session";
+import {
+  makeRedirectUri,
+  useAuthRequest,
+  ResponseType,
+} from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { getUserTimezone } from "../../utils/timezoneUtils";
 import jwtDecode from "jwt-decode";
@@ -31,6 +35,13 @@ import jwtDecode from "jwt-decode";
 WebBrowser.maybeCompleteAuthSession();
 
 const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || "";
+
+// Google OAuth discovery document
+const googleDiscovery = {
+  authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
+  tokenEndpoint: "https://oauth2.googleapis.com/token",
+  revocationEndpoint: "https://oauth2.googleapis.com/revoke",
+};
 const { width } = Dimensions.get("window");
 import { initializeNotifications } from '../../notificationService';
 import { getApiService } from '../../../services/api';
@@ -74,58 +85,51 @@ export default function LoginScreen() {
 
   // Use login mutation hook
   const loginMutation = useLogin();
-  const googleLoginMutation = useGoogleLogin();
+  const googleCodeMutation = useGoogleCodeExchange();
 
-  // Google OAuth — manual flow using WebBrowser.openAuthSessionAsync
-  // This avoids expo-auth-session's Google provider issues with Android client IDs.
-  // Uses the Web Client ID + implicit flow to get id_token directly.
-  const redirectUri = AuthSession.makeRedirectUri({ scheme: "bodhira" });
+  // Google OAuth — PKCE authorization code flow
+  // Uses Web Client ID on all platforms. The backend exchanges the code for tokens.
+  const redirectUri = makeRedirectUri({ scheme: "bodhira" });
 
-  const handleGooglePress = async () => {
-    try {
-      const authUrl =
-        `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID_WEB)}` +
-        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&response_type=id_token` +
-        `&scope=${encodeURIComponent("openid email profile")}` +
-        `&nonce=${Math.random().toString(36).substring(2)}`;
+  const [request, response, promptAsync] = useAuthRequest(
+    {
+      clientId: GOOGLE_CLIENT_ID_WEB,
+      redirectUri,
+      responseType: ResponseType.Code,
+      scopes: ["openid", "email", "profile"],
+      usePKCE: true,
+    },
+    googleDiscovery
+  );
 
-      console.log("[LoginScreen] Google OAuth redirect URI:", redirectUri);
-      console.log("[LoginScreen] Opening Google sign-in...");
-
-      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
-
-      if (result.type === "success" && result.url) {
-        // Extract id_token from the URL fragment (#id_token=...)
-        const fragment = result.url.split("#")[1];
-        if (fragment) {
-          const params = new URLSearchParams(fragment);
-          const idToken = params.get("id_token");
-          if (idToken) {
-            handleGoogleSignIn(idToken);
-            return;
-          }
-        }
-        console.error("[LoginScreen] No id_token in response URL:", result.url);
-        Alert.alert("Error", "Google sign-in did not return the expected token.");
-      } else if (result.type === "cancel") {
-        console.log("[LoginScreen] Google sign-in cancelled by user");
+  useEffect(() => {
+    if (response?.type === "success" && response.params?.code) {
+      const code = response.params.code;
+      const codeVerifier = request?.codeVerifier;
+      if (codeVerifier) {
+        handleGoogleCode(code, codeVerifier);
+      } else {
+        console.error("[LoginScreen] No code_verifier found");
+        Alert.alert("Error", "Google sign-in failed (missing verifier).");
       }
-    } catch (e) {
-      console.error("[LoginScreen] Google auth error:", e);
+    } else if (response?.type === "error") {
+      console.error("[LoginScreen] Google auth error:", response.error);
       Alert.alert("Error", "Google sign-in failed. Please try again.");
     }
-  };
+  }, [response]);
 
-  const handleGoogleSignIn = async (idToken: string) => {
+  const handleGoogleCode = async (code: string, codeVerifier: string) => {
     try {
-      console.log("[LoginScreen] Sending Google ID token to backend");
+      console.log("[LoginScreen] Sending Google auth code to backend for exchange");
       const timezone = getUserTimezone();
-      const result = await googleLoginMutation.mutateAsync({ idToken, timezone });
+      const result = await googleCodeMutation.mutateAsync({
+        code,
+        codeVerifier,
+        redirectUri,
+        timezone,
+      });
 
       if (result?.token) {
-        // Extract userId from JWT
         const decoded: any = jwtDecode(result.token);
         const userId = decoded.user_id || decoded.sub || "";
         await signInWithToken(result.token, userId);
@@ -156,9 +160,9 @@ export default function LoginScreen() {
   };
 
   const loading = loginMutation.status === "pending";
-  const googleLoading = googleLoginMutation.status === "pending";
-  const hasError = loginMutation.status === "error" || googleLoginMutation.status === "error";
-  const error = loginMutation.error || googleLoginMutation.error;
+  const googleLoading = googleCodeMutation.status === "pending";
+  const hasError = loginMutation.status === "error" || googleCodeMutation.status === "error";
+  const error = loginMutation.error || googleCodeMutation.error;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4DB" }}>
@@ -297,11 +301,11 @@ export default function LoginScreen() {
 
           {/* Google Sign In Button */}
           <TouchableOpacity
-            onPress={handleGooglePress}
-            disabled={googleLoading}
+            onPress={() => promptAsync()}
+            disabled={!request || googleLoading}
             style={[
               styles.googleButton,
-              googleLoading && styles.googleButtonDisabled,
+              (!request || googleLoading) && styles.googleButtonDisabled,
             ]}
           >
             {googleLoading ? (

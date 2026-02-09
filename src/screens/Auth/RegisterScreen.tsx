@@ -16,7 +16,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
-import { useRegister, useGoogleLogin } from "../../api/hooks";
+import { useRegister, useGoogleCodeExchange } from "../../api/hooks";
 import { useAuth } from "../../context/AuthContext";
 import { showAlert } from "../../utils/alert";
 import { useNavigation } from "@react-navigation/native";
@@ -27,13 +27,24 @@ import MeditatingLogo from "../../images/Meditating_logo.png";
 import { getUserTimezone } from "../../utils/timezoneUtils";
 import { initializeNotifications } from '../../notificationService';
 import { getApiService } from '../../../services/api';
-import * as AuthSession from "expo-auth-session";
+import {
+  makeRedirectUri,
+  useAuthRequest,
+  ResponseType,
+} from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import jwtDecode from "jwt-decode";
 
 WebBrowser.maybeCompleteAuthSession();
 
 const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || "";
+
+// Google OAuth discovery document
+const googleDiscovery = {
+  authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
+  tokenEndpoint: "https://oauth2.googleapis.com/token",
+  revocationEndpoint: "https://oauth2.googleapis.com/revoke",
+};
 
 
 const { width } = Dimensions.get("window");
@@ -86,9 +97,9 @@ const RegisterScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const registerMutation = useRegister();
-  const googleLoginMutation = useGoogleLogin();
+  const googleCodeMutation = useGoogleCodeExchange();
   const loading = registerMutation.status === "pending";
-  const googleLoading = googleLoginMutation.status === "pending";
+  const googleLoading = googleCodeMutation.status === "pending";
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -98,50 +109,47 @@ const RegisterScreen: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
-  // Google OAuth — manual flow using WebBrowser.openAuthSessionAsync
-  const redirectUri = AuthSession.makeRedirectUri({ scheme: "bodhira" });
+  // Google OAuth — PKCE authorization code flow
+  // Uses Web Client ID on all platforms. The backend exchanges the code for tokens.
+  const redirectUri = makeRedirectUri({ scheme: "bodhira" });
 
-  const handleGooglePress = async () => {
-    try {
-      const authUrl =
-        `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID_WEB)}` +
-        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&response_type=id_token` +
-        `&scope=${encodeURIComponent("openid email profile")}` +
-        `&nonce=${Math.random().toString(36).substring(2)}`;
+  const [request, response, promptAsync] = useAuthRequest(
+    {
+      clientId: GOOGLE_CLIENT_ID_WEB,
+      redirectUri,
+      responseType: ResponseType.Code,
+      scopes: ["openid", "email", "profile"],
+      usePKCE: true,
+    },
+    googleDiscovery
+  );
 
-      console.log("[RegisterScreen] Google OAuth redirect URI:", redirectUri);
-      console.log("[RegisterScreen] Opening Google sign-up...");
-
-      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
-
-      if (result.type === "success" && result.url) {
-        const fragment = result.url.split("#")[1];
-        if (fragment) {
-          const params = new URLSearchParams(fragment);
-          const idToken = params.get("id_token");
-          if (idToken) {
-            handleGoogleSignUp(idToken);
-            return;
-          }
-        }
-        console.error("[RegisterScreen] No id_token in response URL:", result.url);
-        showAlert("Error", "Google sign-up did not return the expected token.");
-      } else if (result.type === "cancel") {
-        console.log("[RegisterScreen] Google sign-up cancelled by user");
+  useEffect(() => {
+    if (response?.type === "success" && response.params?.code) {
+      const code = response.params.code;
+      const codeVerifier = request?.codeVerifier;
+      if (codeVerifier) {
+        handleGoogleCode(code, codeVerifier);
+      } else {
+        console.error("[RegisterScreen] No code_verifier found");
+        showAlert("Error", "Google sign-up failed (missing verifier).");
       }
-    } catch (e) {
-      console.error("[RegisterScreen] Google auth error:", e);
+    } else if (response?.type === "error") {
+      console.error("[RegisterScreen] Google auth error:", response.error);
       showAlert("Error", "Google sign-up failed. Please try again.");
     }
-  };
+  }, [response]);
 
-  const handleGoogleSignUp = async (idToken: string) => {
+  const handleGoogleCode = async (code: string, codeVerifier: string) => {
     try {
-      console.log("[RegisterScreen] Sending Google ID token to backend");
+      console.log("[RegisterScreen] Sending Google auth code to backend for exchange");
       const timezone = getUserTimezone();
-      const result = await googleLoginMutation.mutateAsync({ idToken, timezone });
+      const result = await googleCodeMutation.mutateAsync({
+        code,
+        codeVerifier,
+        redirectUri,
+        timezone,
+      });
 
       if (result?.token) {
         const decoded: any = jwtDecode(result.token);
@@ -392,11 +400,11 @@ const RegisterScreen: React.FC = () => {
 
           {/* Google Sign Up Button */}
           <TouchableOpacity
-            onPress={handleGooglePress}
-            disabled={googleLoading}
+            onPress={() => promptAsync()}
+            disabled={!request || googleLoading}
             style={[
               styles.googleButton,
-              googleLoading && styles.googleButtonDisabled,
+              (!request || googleLoading) && styles.googleButtonDisabled,
             ]}
           >
             {googleLoading ? (

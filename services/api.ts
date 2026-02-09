@@ -64,6 +64,7 @@ export interface ApiService {
 
   // ---------- Google OAuth ----------
   googleAuth(idToken: string, timezone?: string): Promise<LoginResponse>;
+  googleCodeExchange(code: string, codeVerifier: string, redirectUri: string, timezone?: string): Promise<LoginResponse>;
 
   //add logout function
   logout(): Promise<void>;
@@ -433,7 +434,22 @@ export const realApiService: ApiService = {
     console.log('[API] Google auth successful');
     return {
       token: data.access_token,
-      userId: "", // Will be extracted from JWT by AuthContext
+      userId: "",
+    };
+  },
+
+  async googleCodeExchange(code: string, codeVerifier: string, redirectUri: string, timezone?: string): Promise<LoginResponse> {
+    console.log('[API] Google code exchange attempt');
+    const { data } = await apiClient.post("/api/auth/google/code", {
+      code,
+      code_verifier: codeVerifier,
+      redirect_uri: redirectUri,
+      timezone: timezone || "UTC",
+    });
+    console.log('[API] Google code exchange successful');
+    return {
+      token: data.access_token,
+      userId: "",
     };
   },
 
