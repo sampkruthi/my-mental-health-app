@@ -33,7 +33,6 @@ WebBrowser.maybeCompleteAuthSession();
 const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || "";
 const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS || "";
 const GOOGLE_CLIENT_ID_ANDROID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID || "";
-
 const { width } = Dimensions.get("window");
 import { initializeNotifications } from '../../notificationService';
 import { getApiService } from '../../../services/api';
@@ -79,19 +78,21 @@ export default function LoginScreen() {
   const loginMutation = useLogin();
   const googleLoginMutation = useGoogleLogin();
 
-  // Google Auth Session — uses Web Client ID on all platforms with Expo proxy redirect
+  // Google Auth Session — uses platform-specific client IDs with code exchange
   const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: GOOGLE_CLIENT_ID_WEB,
-    redirectUri: "https://auth.expo.io/@namrata.skapoor/my-mental-health-app",
+    webClientId: GOOGLE_CLIENT_ID_WEB,
+    iosClientId: GOOGLE_CLIENT_ID_IOS,
+    androidClientId: GOOGLE_CLIENT_ID_ANDROID,
   });
 
   useEffect(() => {
     if (response?.type === "success") {
-      const { authentication } = response;
-      if (authentication?.idToken) {
-        handleGoogleSignIn(authentication.idToken);
+      // On native (Android/iOS), the library auto-exchanges the code for tokens
+      const idToken = response.authentication?.idToken || response.params?.id_token;
+      if (idToken) {
+        handleGoogleSignIn(idToken);
       } else {
-        console.error("[LoginScreen] Google auth success but no idToken");
+        console.error("[LoginScreen] Google auth success but no idToken found", JSON.stringify(response));
         Alert.alert("Error", "Google sign-in did not return the expected token.");
       }
     } else if (response?.type === "error") {

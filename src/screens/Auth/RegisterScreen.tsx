@@ -100,19 +100,21 @@ const RegisterScreen: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
-  // Google Auth Session — uses Web Client ID on all platforms with Expo proxy redirect
+  // Google Auth Session — uses platform-specific client IDs with code exchange
   const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: GOOGLE_CLIENT_ID_WEB,
-    redirectUri: "https://auth.expo.io/@namrata.skapoor/my-mental-health-app",
+    webClientId: GOOGLE_CLIENT_ID_WEB,
+    iosClientId: GOOGLE_CLIENT_ID_IOS,
+    androidClientId: GOOGLE_CLIENT_ID_ANDROID,
   });
 
   useEffect(() => {
     if (response?.type === "success") {
-      const { authentication } = response;
-      if (authentication?.idToken) {
-        handleGoogleSignUp(authentication.idToken);
+      // On native (Android/iOS), the library auto-exchanges the code for tokens
+      const idToken = response.authentication?.idToken || response.params?.id_token;
+      if (idToken) {
+        handleGoogleSignUp(idToken);
       } else {
-        console.error("[RegisterScreen] Google auth success but no idToken");
+        console.error("[RegisterScreen] Google auth success but no idToken found", JSON.stringify(response));
         showAlert("Error", "Google sign-up did not return the expected token.");
       }
     } else if (response?.type === "error") {
