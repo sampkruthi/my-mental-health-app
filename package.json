@@ -16,6 +16,7 @@
     "@expo/metro-runtime": "^6.1.2",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/slider": "5.0.1",
+    "@react-native-google-signin/google-signin": "^16.1.1",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/native-stack": "^6.11.0",
     "@tanstack/react-query": "^5.87.1",

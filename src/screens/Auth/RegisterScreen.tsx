@@ -1,5 +1,5 @@
 // src/screens/Auth/RegisterScreen.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
-import { useRegister, useGoogleCodeExchange } from "../../api/hooks";
+import { useRegister, useGoogleLogin } from "../../api/hooks";
 import { useAuth } from "../../context/AuthContext";
 import { showAlert } from "../../utils/alert";
 import { useNavigation } from "@react-navigation/native";
@@ -28,23 +28,20 @@ import { getUserTimezone } from "../../utils/timezoneUtils";
 import { initializeNotifications } from '../../notificationService';
 import { getApiService } from '../../../services/api';
 import {
-  makeRedirectUri,
-  useAuthRequest,
-  ResponseType,
-} from "expo-auth-session";
-import * as WebBrowser from "expo-web-browser";
+  GoogleSignin,
+  isSuccessResponse,
+  isErrorWithCode,
+  statusCodes,
+} from "@react-native-google-signin/google-signin";
 import jwtDecode from "jwt-decode";
-
-WebBrowser.maybeCompleteAuthSession();
 
 const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || "";
 
-// Google OAuth discovery document
-const googleDiscovery = {
-  authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
-  tokenEndpoint: "https://oauth2.googleapis.com/token",
-  revocationEndpoint: "https://oauth2.googleapis.com/revoke",
-};
+// Configure Google Sign-In once at module level
+GoogleSignin.configure({
+  webClientId: GOOGLE_CLIENT_ID_WEB,
+  offlineAccess: false,
+});
 
 
 const { width } = Dimensions.get("window");
@@ -97,9 +94,9 @@ const RegisterScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const registerMutation = useRegister();
-  const googleCodeMutation = useGoogleCodeExchange();
+  const googleLoginMutation = useGoogleLogin();
   const loading = registerMutation.status === "pending";
-  const googleLoading = googleCodeMutation.status === "pending";
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -109,59 +106,61 @@ const RegisterScreen: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
-  // Google OAuth — PKCE authorization code flow
-  // Uses Web Client ID on all platforms. The backend exchanges the code for tokens.
-  const redirectUri = makeRedirectUri({ scheme: "bodhira" });
-
-  const [request, response, promptAsync] = useAuthRequest(
-    {
-      clientId: GOOGLE_CLIENT_ID_WEB,
-      redirectUri,
-      responseType: ResponseType.Code,
-      scopes: ["openid", "email", "profile"],
-      usePKCE: true,
-    },
-    googleDiscovery
-  );
-
-  useEffect(() => {
-    if (response?.type === "success" && response.params?.code) {
-      const code = response.params.code;
-      const codeVerifier = request?.codeVerifier;
-      if (codeVerifier) {
-        handleGoogleCode(code, codeVerifier);
-      } else {
-        console.error("[RegisterScreen] No code_verifier found");
-        showAlert("Error", "Google sign-up failed (missing verifier).");
-      }
-    } else if (response?.type === "error") {
-      console.error("[RegisterScreen] Google auth error:", response.error);
-      showAlert("Error", "Google sign-up failed. Please try again.");
-    }
-  }, [response]);
-
-  const handleGoogleCode = async (code: string, codeVerifier: string) => {
+  // Native Google Sign-In using Google Identity Services SDK
+  const handleGoogleSignUp = async () => {
     try {
-      console.log("[RegisterScreen] Sending Google auth code to backend for exchange");
-      const timezone = getUserTimezone();
-      const result = await googleCodeMutation.mutateAsync({
-        code,
-        codeVerifier,
-        redirectUri,
-        timezone,
-      });
+      setGoogleLoading(true);
+      console.log("[RegisterScreen] Starting native Google Sign-In");
 
-      if (result?.token) {
-        const decoded: any = jwtDecode(result.token);
-        const userId = decoded.user_id || decoded.sub || "";
-        await signInWithToken(result.token, userId);
-        await registerDeviceForNotifications();
-        console.log("[RegisterScreen] Google sign-up successful");
-        Alert.alert("Success", "Signed in with Google successfully!");
+      // Check if Play Services are available (Android)
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+      // Trigger native Google sign-in
+      const response = await GoogleSignin.signIn();
+
+      if (isSuccessResponse(response)) {
+        const idToken = response.data.idToken;
+        if (!idToken) {
+          console.error("[RegisterScreen] No idToken returned from Google");
+          showAlert("Error", "Google sign-up failed (no token).");
+          return;
+        }
+
+        console.log("[RegisterScreen] Got Google ID token, sending to backend");
+        const timezone = getUserTimezone();
+        const result = await googleLoginMutation.mutateAsync({ idToken, timezone });
+
+        if (result?.token) {
+          const decoded: any = jwtDecode(result.token);
+          const userId = decoded.user_id || decoded.sub || "";
+          await signInWithToken(result.token, userId);
+          await registerDeviceForNotifications();
+          console.log("[RegisterScreen] Google sign-up successful");
+          Alert.alert("Success", "Signed in with Google successfully!");
+        }
       }
-    } catch (e) {
-      console.error("[RegisterScreen] Google sign-up failed", e);
-      showAlert("Error", "Google sign-up failed. Please try again.");
+    } catch (error: any) {
+      if (isErrorWithCode(error)) {
+        switch (error.code) {
+          case statusCodes.SIGN_IN_CANCELLED:
+            console.log("[RegisterScreen] Google sign-up cancelled by user");
+            break;
+          case statusCodes.IN_PROGRESS:
+            console.log("[RegisterScreen] Google sign-up already in progress");
+            break;
+          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+            showAlert("Error", "Google Play Services are not available on this device.");
+            break;
+          default:
+            console.error("[RegisterScreen] Google sign-up error:", error);
+            showAlert("Error", "Google sign-up failed. Please try again.");
+        }
+      } else {
+        console.error("[RegisterScreen] Google sign-up error:", error);
+        showAlert("Error", "Google sign-up failed. Please try again.");
+      }
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -400,11 +399,11 @@ const RegisterScreen: React.FC = () => {
 
           {/* Google Sign Up Button */}
           <TouchableOpacity
-            onPress={() => promptAsync()}
-            disabled={!request || googleLoading}
+            onPress={handleGoogleSignUp}
+            disabled={googleLoading}
             style={[
               styles.googleButton,
-              (!request || googleLoading) && styles.googleButtonDisabled,
+              googleLoading && styles.googleButtonDisabled,
             ]}
           >
             {googleLoading ? (

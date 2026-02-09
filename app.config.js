@@ -56,6 +56,7 @@ module.exports = {
       ],
       "expo-notifications",
       "expo-font",
+      "@react-native-google-signin/google-signin",
     ],
     extra: {
       eas: {
