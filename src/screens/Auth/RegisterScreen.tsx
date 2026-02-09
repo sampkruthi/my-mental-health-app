@@ -1,5 +1,5 @@
 // src/screens/Auth/RegisterScreen.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
-import { useRegister } from "../../api/hooks";
+import { useRegister, useGoogleLogin } from "../../api/hooks";
 import { useAuth } from "../../context/AuthContext";
 import { showAlert } from "../../utils/alert";
 import { useNavigation } from "@react-navigation/native";
@@ -27,6 +27,15 @@ import MeditatingLogo from "../../images/Meditating_logo.png";
 import { getUserTimezone } from "../../utils/timezoneUtils";
 import { initializeNotifications } from '../../notificationService';
 import { getApiService } from '../../../services/api';
+import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
+import jwtDecode from "jwt-decode";
+
+WebBrowser.maybeCompleteAuthSession();
+
+const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || "";
+const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS || "";
+const GOOGLE_CLIENT_ID_ANDROID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID || "";
 
 
 const { width } = Dimensions.get("window");
@@ -75,11 +84,13 @@ async function registerDeviceForNotifications() {
 
 const RegisterScreen: React.FC = () => {
   const { colors } = useTheme();
-  const { signIn } = useAuth();
+  const { signIn, signInWithToken } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const registerMutation = useRegister();
+  const googleLoginMutation = useGoogleLogin();
   const loading = registerMutation.status === "pending";
+  const googleLoading = googleLoginMutation.status === "pending";
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -88,6 +99,48 @@ const RegisterScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+
+  // Google Auth Session
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: GOOGLE_CLIENT_ID_WEB,
+    iosClientId: GOOGLE_CLIENT_ID_IOS,
+    androidClientId: GOOGLE_CLIENT_ID_ANDROID,
+  });
+
+  useEffect(() => {
+    if (response?.type === "success") {
+      const { authentication } = response;
+      if (authentication?.idToken) {
+        handleGoogleSignUp(authentication.idToken);
+      } else {
+        console.error("[RegisterScreen] Google auth success but no idToken");
+        showAlert("Error", "Google sign-up did not return the expected token.");
+      }
+    } else if (response?.type === "error") {
+      console.error("[RegisterScreen] Google auth error:", response.error);
+      showAlert("Error", "Google sign-up failed. Please try again.");
+    }
+  }, [response]);
+
+  const handleGoogleSignUp = async (idToken: string) => {
+    try {
+      console.log("[RegisterScreen] Sending Google ID token to backend");
+      const timezone = getUserTimezone();
+      const result = await googleLoginMutation.mutateAsync({ idToken, timezone });
+
+      if (result?.token) {
+        const decoded: any = jwtDecode(result.token);
+        const userId = decoded.user_id || decoded.sub || "";
+        await signInWithToken(result.token, userId);
+        await registerDeviceForNotifications();
+        console.log("[RegisterScreen] Google sign-up successful");
+        Alert.alert("Success", "Signed in with Google successfully!");
+      }
+    } catch (e) {
+      console.error("[RegisterScreen] Google sign-up failed", e);
+      showAlert("Error", "Google sign-up failed. Please try again.");
+    }
+  };
 
   const handleRegister = async () => {
     // Validation
@@ -315,6 +368,38 @@ const RegisterScreen: React.FC = () => {
             )}
           </TouchableOpacity>
 
+          {/* Divider */}
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* Google Sign Up Button */}
+          <TouchableOpacity
+            onPress={() => promptAsync()}
+            disabled={!request || googleLoading}
+            style={[
+              styles.googleButton,
+              (!request || googleLoading) && styles.googleButtonDisabled,
+            ]}
+          >
+            {googleLoading ? (
+              <ActivityIndicator
+                size={Platform.OS === "ios" ? 20 : "small"}
+                color="#333"
+              />
+            ) : (
+              <View style={styles.googleButtonContent}>
+                <Image
+                  source={{ uri: "https://developers.google.com/identity/images/g-logo.png" }}
+                  style={styles.googleIcon}
+                />
+                <Text style={styles.googleButtonText}>Sign up with Google</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
           {/* Sign In Link */}
           <View style={styles.signInLinkContainer}>
             <Text style={styles.signInLinkText}>Already have an account? </Text>
@@ -483,6 +568,50 @@ const styles = StyleSheet.create({
   createButtonText: {
     color: "#FFFFFF",
     fontWeight: "700",
+    fontSize: 16,
+  },
+  dividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#E0E0E0",
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    fontSize: 14,
+    color: "#999",
+    fontWeight: "500",
+  },
+  googleButton: {
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  googleButtonDisabled: {
+    opacity: 0.6,
+  },
+  googleButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  googleIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+  },
+  googleButtonText: {
+    color: "#333",
+    fontWeight: "600",
     fontSize: 16,
   },
   signInLinkContainer: {

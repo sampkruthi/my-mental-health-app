@@ -62,6 +62,9 @@ export interface ApiService {
   registerDeviceToken(deviceToken: string, platform: string): Promise<{ status: string; message: string }>;
   toggleNotifications(enabled: boolean): Promise<{ status: string; notifications_enabled: boolean }>;
 
+  // ---------- Google OAuth ----------
+  googleAuth(idToken: string, timezone?: string): Promise<LoginResponse>;
+
   //add logout function
   logout(): Promise<void>;
 
@@ -418,6 +421,19 @@ export const realApiService: ApiService = {
     return {
       ...data,
       userId: email, // Using email as userId
+    };
+  },
+
+  async googleAuth(idToken: string, timezone?: string): Promise<LoginResponse> {
+    console.log('[API] Google auth attempt');
+    const { data } = await apiClient.post("/api/auth/google", {
+      id_token: idToken,
+      timezone: timezone || "UTC",
+    });
+    console.log('[API] Google auth successful');
+    return {
+      token: data.access_token,
+      userId: "", // Will be extracted from JWT by AuthContext
     };
   },
 

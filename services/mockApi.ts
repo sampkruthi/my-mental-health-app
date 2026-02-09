@@ -273,6 +273,12 @@ export const mockApiService: ApiService = {
     return dummyReminders1.length;
   },
 
+  async googleAuth(idToken: string, timezone?: string): Promise<{ token: string; userId?: string }> {
+    console.log("[mockApi] Google auth (mock)");
+    await delay(500);
+    return { token: "mock-google-token", userId: "google-user@example.com" };
+  },
+
   async logout(): Promise<void> {
     console.log("[mockApi] logout");
     await delay(200);

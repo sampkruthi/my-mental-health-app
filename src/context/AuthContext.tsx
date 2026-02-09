@@ -14,6 +14,7 @@ type AuthContextType = {
   error: string | null;
   setToken: (token: string | null, userId?: string | null) => Promise<void>;
   signIn: (email: string, password: string, token: string, userId?: string) => Promise<void>;
+  signInWithToken: (token: string, userId: string) => Promise<void>;
   signOut: () => Promise<void>;
   restoreComplete: boolean;
 };
@@ -167,6 +168,42 @@ const isTokenValid = (token: string): boolean => {
     [queryClient]
   );
 
+  // Sign in with token only (for OAuth flows like Google Sign-In)
+  const signInWithToken = useCallback(
+    async (tokenFromServer: string, userIdFromServer: string) => {
+      try {
+        setLoading(true);
+
+        if (!tokenFromServer) {
+          throw new Error('No token provided from server');
+        }
+
+        console.log(' Signing in with token (OAuth):', { userId: userIdFromServer });
+
+        await Promise.all([
+          storage.setItem(STORAGE_KEYS.TOKEN, tokenFromServer),
+          storage.setItem(STORAGE_KEYS.USER_ID, userIdFromServer),
+        ]);
+
+        setTokenState(tokenFromServer);
+        setUserIdState(userIdFromServer);
+        setError(null);
+
+        queryClient.invalidateQueries();
+
+        console.log(' OAuth sign in successful');
+      } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+        console.error(' signInWithToken failed:', errorMessage);
+        setError(errorMessage);
+        throw e;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [queryClient]
+  );
+
   // Sign out - clears everything
   const signOut = useCallback(async () => {
     try {
@@ -206,6 +243,7 @@ const isTokenValid = (token: string): boolean => {
         error,
         setToken,
         signIn,
+        signInWithToken,
         signOut,
         restoreComplete,
       }}

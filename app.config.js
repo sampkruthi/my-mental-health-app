@@ -7,6 +7,7 @@ module.exports = {
     orientation: "portrait",
     icon: "./assets/bodhira_app_icon_1024.png",
     userInterfaceStyle: "light",
+    scheme: "bodhira",
     newArchEnabled: true,
     splash: {
       image: "./assets/bodhira_splash_screen.png",

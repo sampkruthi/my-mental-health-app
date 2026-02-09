@@ -36,6 +36,24 @@ export const useLogin = () => {
 };
 
 
+// =====================
+// Google Login mutation hook
+// =====================
+type GoogleLoginPayload = { idToken: string; timezone?: string };
+
+export const useGoogleLogin = () => {
+  return useMutation({
+    mutationFn: async ({ idToken, timezone }: GoogleLoginPayload) => {
+      if (!getApiService) throw new Error("API Service not initialized");
+      console.log("[useGoogleLogin] Attempting Google auth");
+      const { token, userId } = await getApiService().googleAuth(idToken, timezone);
+      console.log("[useGoogleLogin] Google auth response received");
+      return { token, userId };
+    },
+  });
+};
+
+
 export function useRegister(): UseMutationResult<Token, Error, RegisterRequest, unknown> {
   const qc = useQueryClient();
 
