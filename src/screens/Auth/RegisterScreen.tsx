@@ -100,11 +100,10 @@ const RegisterScreen: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
-  // Google Auth Session
+  // Google Auth Session — uses Web Client ID on all platforms with Expo proxy redirect
   const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: GOOGLE_CLIENT_ID_WEB,
-    iosClientId: GOOGLE_CLIENT_ID_IOS,
-    androidClientId: GOOGLE_CLIENT_ID_ANDROID,
+    clientId: GOOGLE_CLIENT_ID_WEB,
+    redirectUri: "https://auth.expo.io/@namrata.skapoor/my-mental-health-app",
   });
 
   useEffect(() => {
