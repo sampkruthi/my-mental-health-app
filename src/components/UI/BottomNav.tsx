@@ -1,6 +1,6 @@
 // src/components/BottomNav.tsx
 import React from "react";
-import { View, TouchableOpacity, Text, StyleSheet, ScrollView } from "react-native";
+import { View, TouchableOpacity, Text, StyleSheet, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { useNavigationState, useNavigation } from "@react-navigation/native";
@@ -16,13 +16,13 @@ const tabs: { name: NavKeys; label: string; icon: keyof typeof Ionicons.glyphMap
   { name: "mood", label: "Mood", icon: "happy-outline" },
   { name: "journal", label: "Journal", icon: "book-outline" },
   { name: "resources", label: "Resources", icon: "layers-outline" },
- // { name: "activities", label: "Activities", icon: "checkmark-done-outline" },
   { name: "reminders", label: "Reminders", icon: "notifications-outline" },
   { name: "progressdashboard", label: "Progress", icon: "trending-up-outline" },
 ];
 
 const BottomNav: React.FC = () => {
   const { colors } = useTheme();
+  const { width } = useWindowDimensions();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   // Get the currently active route name
@@ -40,50 +40,49 @@ const BottomNav: React.FC = () => {
     return route.name as NavKeys;
   });
 
+  const tabWidth = width / tabs.length;
+
   return (
     <View style={[styles.container, { backgroundColor: colors.cardBackground }]}>
-      <ScrollView
-        horizontal={true}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {tabs.map((tab) => {
-          const isActive = activeRouteName === tab.name;
-          const color = isActive ? colors.primary : colors.text;
+      {tabs.map((tab) => {
+        const isActive = activeRouteName === tab.name;
+        const color = isActive ? colors.primary : colors.text;
 
-          return (
-            <TouchableOpacity
-              key={tab.name}
-              style={styles.button}
-              onPress={() => navigation.navigate(tab.name)}
-              accessibilityLabel={`${tab.label} tab`}
+        return (
+          <TouchableOpacity
+            key={tab.name}
+            style={[styles.button, { width: tabWidth }]}
+            onPress={() => navigation.navigate(tab.name)}
+            accessibilityLabel={`${tab.label} tab`}
+          >
+            <Ionicons name={tab.icon} size={22} color={color} />
+            <Text
+              style={[styles.label, { color }]}
+              numberOfLines={1}
             >
-              <Ionicons name={tab.icon} size={22} color={color} />
-              <Text style={[styles.label, { color }]}>{tab.label}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flexDirection: "row",
     borderTopWidth: 1,
     borderTopColor: "#ddd",
     paddingVertical: 8,
   },
-  scrollContent: {
-    paddingHorizontal: 4,
-  },
   button: {
-    width: 70,
     alignItems: "center",
     justifyContent: "center",
+    paddingVertical: 4,
   },
   label: {
-    fontSize: 12,
+    fontSize: 10,
     marginTop: 2,
   },
 });

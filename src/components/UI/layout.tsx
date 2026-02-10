@@ -7,7 +7,7 @@ import {
   Animated,
   StyleSheet,
   Image,
-  Dimensions,
+  useWindowDimensions,
   StatusBar,
   Platform,
 } from "react-native";
@@ -24,8 +24,6 @@ import { Button } from "../UI/Button";
 import { Card } from "../UI/Card";
 import Input from "../UI/Input";
 
-const { width } = Dimensions.get("window");
-
 type LayoutProps = {
   title: string;
   children: React.ReactNode;
@@ -34,6 +32,7 @@ type LayoutProps = {
 
 function Layout({ children, title, onNavigate }: LayoutProps) {
   const { colors, toggleTheme } = useTheme();
+  const { width } = useWindowDimensions();
   const [menuOpen, setMenuOpen] = useState(false);
   const slideAnim = useState(new Animated.Value(-250))[0];
 
@@ -127,7 +126,10 @@ function Layout({ children, title, onNavigate }: LayoutProps) {
       <View
         style={[
           styles.container,
-          { backgroundColor: colors.background },
+          {
+            backgroundColor: colors.background,
+            width: width > 800 ? 900 : "100%",
+          },
         ]}
       >
         {children}
@@ -193,7 +195,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    width: width > 800 ? 900 : "100%",
     alignSelf: "center",
     padding: 16,
   },
