@@ -33,12 +33,6 @@ import { getUserTimezone } from "../../utils/timezoneUtils";
 import jwtDecode from "jwt-decode";
 
 const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || "";
-
-// Configure Google Sign-In once at module level
-GoogleSignin.configure({
-  webClientId: GOOGLE_CLIENT_ID_WEB,
-  offlineAccess: false,
-});
 const { width } = Dimensions.get("window");
 import { initializeNotifications } from '../../notificationService';
 import { getApiService } from '../../../services/api';
@@ -90,34 +84,55 @@ export default function LoginScreen() {
     try {
       setGoogleLoading(true);
       console.log("[LoginScreen] Starting native Google Sign-In");
+      console.log("[LoginScreen] webClientId:", GOOGLE_CLIENT_ID_WEB ? "SET" : "EMPTY");
+
+      // Configure before each sign-in to ensure env vars are loaded
+      GoogleSignin.configure({
+        webClientId: GOOGLE_CLIENT_ID_WEB,
+      });
 
       // Check if Play Services are available (Android)
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
       // Trigger native Google sign-in
-      const response = await GoogleSignin.signIn();
+      const signInResponse = await GoogleSignin.signIn();
+      console.log("[LoginScreen] signIn response type:", signInResponse?.type);
 
-      if (isSuccessResponse(response)) {
-        const idToken = response.data.idToken;
-        if (!idToken) {
-          console.error("[LoginScreen] No idToken returned from Google");
-          Alert.alert("Error", "Google sign-in failed (no token).");
-          return;
-        }
-
-        console.log("[LoginScreen] Got Google ID token, sending to backend");
-        const timezone = getUserTimezone();
-        const result = await googleLoginMutation.mutateAsync({ idToken, timezone });
-
-        if (result?.token) {
-          const decoded: any = jwtDecode(result.token);
-          const userId = decoded.user_id || decoded.sub || "";
-          await signInWithToken(result.token, userId);
-          await registerDeviceForNotifications();
-          console.log("[LoginScreen] Google sign-in successful");
-        }
+      if (!isSuccessResponse(signInResponse)) {
+        console.log("[LoginScreen] Google sign-in was not successful, response:", JSON.stringify(signInResponse));
+        return;
       }
+
+      const idToken = signInResponse.data.idToken;
+      console.log("[LoginScreen] idToken present:", !!idToken);
+      if (!idToken) {
+        Alert.alert("Error", "Google sign-in failed (no token).");
+        return;
+      }
+
+      console.log("[LoginScreen] Sending to backend...");
+      const timezone = getUserTimezone();
+      const result = await googleLoginMutation.mutateAsync({ idToken, timezone });
+      console.log("[LoginScreen] Backend result:", JSON.stringify(result));
+
+      if (!result?.token) {
+        Alert.alert("Error", "Sign-in succeeded but no token was returned.");
+        return;
+      }
+
+      const decoded: any = jwtDecode(result.token);
+      console.log("[LoginScreen] Decoded JWT keys:", Object.keys(decoded));
+      const userId = decoded.user_id || decoded.sub || "";
+
+      await signInWithToken(result.token, userId);
+      console.log("[LoginScreen] Google sign-in complete!");
+
+      // Non-critical: register for notifications (don't let this fail sign-in)
+      registerDeviceForNotifications().catch((e) =>
+        console.warn("[LoginScreen] Notification registration failed:", e)
+      );
     } catch (error: any) {
+      console.error("[LoginScreen] Full error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
       if (isErrorWithCode(error)) {
         switch (error.code) {
           case statusCodes.SIGN_IN_CANCELLED:
@@ -130,12 +145,10 @@ export default function LoginScreen() {
             Alert.alert("Error", "Google Play Services are not available on this device.");
             break;
           default:
-            console.error("[LoginScreen] Google sign-in error:", error);
-            Alert.alert("Error", "Google sign-in failed. Please try again.");
+            Alert.alert("Error", `Google sign-in failed: ${error.message || error.code}`);
         }
       } else {
-        console.error("[LoginScreen] Google sign-in error:", error);
-        Alert.alert("Error", "Google sign-in failed. Please try again.");
+        Alert.alert("Error", `Sign-in failed: ${error?.message || "Unknown error"}`);
       }
     } finally {
       setGoogleLoading(false);

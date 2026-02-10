@@ -37,12 +37,6 @@ import jwtDecode from "jwt-decode";
 
 const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || "";
 
-// Configure Google Sign-In once at module level
-GoogleSignin.configure({
-  webClientId: GOOGLE_CLIENT_ID_WEB,
-  offlineAccess: false,
-});
-
 
 const { width } = Dimensions.get("window");
 
@@ -111,35 +105,56 @@ const RegisterScreen: React.FC = () => {
     try {
       setGoogleLoading(true);
       console.log("[RegisterScreen] Starting native Google Sign-In");
+      console.log("[RegisterScreen] webClientId:", GOOGLE_CLIENT_ID_WEB ? "SET" : "EMPTY");
+
+      // Configure before each sign-in to ensure env vars are loaded
+      GoogleSignin.configure({
+        webClientId: GOOGLE_CLIENT_ID_WEB,
+      });
 
       // Check if Play Services are available (Android)
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
       // Trigger native Google sign-in
-      const response = await GoogleSignin.signIn();
+      const signInResponse = await GoogleSignin.signIn();
+      console.log("[RegisterScreen] signIn response type:", signInResponse?.type);
 
-      if (isSuccessResponse(response)) {
-        const idToken = response.data.idToken;
-        if (!idToken) {
-          console.error("[RegisterScreen] No idToken returned from Google");
-          showAlert("Error", "Google sign-up failed (no token).");
-          return;
-        }
-
-        console.log("[RegisterScreen] Got Google ID token, sending to backend");
-        const timezone = getUserTimezone();
-        const result = await googleLoginMutation.mutateAsync({ idToken, timezone });
-
-        if (result?.token) {
-          const decoded: any = jwtDecode(result.token);
-          const userId = decoded.user_id || decoded.sub || "";
-          await signInWithToken(result.token, userId);
-          await registerDeviceForNotifications();
-          console.log("[RegisterScreen] Google sign-up successful");
-          Alert.alert("Success", "Signed in with Google successfully!");
-        }
+      if (!isSuccessResponse(signInResponse)) {
+        console.log("[RegisterScreen] Google sign-up was not successful, response:", JSON.stringify(signInResponse));
+        return;
       }
+
+      const idToken = signInResponse.data.idToken;
+      console.log("[RegisterScreen] idToken present:", !!idToken);
+      if (!idToken) {
+        showAlert("Error", "Google sign-up failed (no token).");
+        return;
+      }
+
+      console.log("[RegisterScreen] Sending to backend...");
+      const timezone = getUserTimezone();
+      const result = await googleLoginMutation.mutateAsync({ idToken, timezone });
+      console.log("[RegisterScreen] Backend result:", JSON.stringify(result));
+
+      if (!result?.token) {
+        showAlert("Error", "Sign-up succeeded but no token was returned.");
+        return;
+      }
+
+      const decoded: any = jwtDecode(result.token);
+      console.log("[RegisterScreen] Decoded JWT keys:", Object.keys(decoded));
+      const userId = decoded.user_id || decoded.sub || "";
+
+      await signInWithToken(result.token, userId);
+      console.log("[RegisterScreen] Google sign-up complete!");
+      Alert.alert("Success", "Signed in with Google successfully!");
+
+      // Non-critical: register for notifications (don't let this fail sign-in)
+      registerDeviceForNotifications().catch((e) =>
+        console.warn("[RegisterScreen] Notification registration failed:", e)
+      );
     } catch (error: any) {
+      console.error("[RegisterScreen] Full error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
       if (isErrorWithCode(error)) {
         switch (error.code) {
           case statusCodes.SIGN_IN_CANCELLED:
@@ -152,12 +167,10 @@ const RegisterScreen: React.FC = () => {
             showAlert("Error", "Google Play Services are not available on this device.");
             break;
           default:
-            console.error("[RegisterScreen] Google sign-up error:", error);
-            showAlert("Error", "Google sign-up failed. Please try again.");
+            showAlert("Error", `Google sign-up failed: ${error.message || error.code}`);
         }
       } else {
-        console.error("[RegisterScreen] Google sign-up error:", error);
-        showAlert("Error", "Google sign-up failed. Please try again.");
+        showAlert("Error", `Sign-up failed: ${error?.message || "Unknown error"}`);
       }
     } finally {
       setGoogleLoading(false);
