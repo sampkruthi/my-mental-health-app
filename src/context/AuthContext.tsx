@@ -2,8 +2,9 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { storage, STORAGE_KEYS } from "../utils/storage";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
-import jwtDecode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 
 
@@ -209,6 +210,28 @@ const isTokenValid = (token: string): boolean => {
     try {
       setLoading(true);
       console.log(' Signing out...');
+      
+      // Sign out from Google Sign-In - use both revokeAccess and signOut
+      try {
+        // Revoke access (more aggressive - revokes the access token)
+        try {
+          await GoogleSignin.revokeAccess();
+          console.log(' Revoked Google access');
+        } catch (revokeError) {
+          console.log(' Revoke access skipped:', revokeError);
+        }
+        
+        // Sign out (clears the session)
+        try {
+          await GoogleSignin.signOut();
+          console.log(' Signed out from Google');
+        } catch (signOutError) {
+          console.log(' Sign out skipped:', signOutError);
+        }
+      } catch (googleError) {
+        // Ignore Google sign-out errors (user might not have signed in with Google)
+        console.log(' Google cleanup completed with errors:', googleError);
+      }
       
       // Clear stored credentials
       await Promise.all([

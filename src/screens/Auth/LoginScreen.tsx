@@ -30,7 +30,7 @@ import {
   statusCodes,
 } from "@react-native-google-signin/google-signin";
 import { getUserTimezone } from "../../utils/timezoneUtils";
-import jwtDecode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 
 const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || "";
 const { width } = Dimensions.get("window");
@@ -89,13 +89,46 @@ export default function LoginScreen() {
       // Configure before each sign-in to ensure env vars are loaded
       GoogleSignin.configure({
         webClientId: GOOGLE_CLIENT_ID_WEB,
+        // Force account selection by always showing the account picker
+        offlineAccess: false, // Don't request offline access
       });
+
+      // ALWAYS revoke access and sign out from Google to force account selection
+      // This ensures the user sees the Google Sign-In UI/account picker every time
+      try {
+        // First, try to revoke access (more aggressive - revokes the access token)
+        try {
+          await GoogleSignin.revokeAccess();
+          console.log("[LoginScreen] Revoked Google access");
+        } catch (revokeError) {
+          console.log("[LoginScreen] Revoke access skipped (may not be needed):", revokeError);
+        }
+        
+        // Then sign out (clears the session)
+        try {
+          await GoogleSignin.signOut();
+          console.log("[LoginScreen] Signed out from Google");
+        } catch (signOutError) {
+          console.log("[LoginScreen] Sign out skipped (may not be needed):", signOutError);
+        }
+        
+        // Small delay to ensure operations complete
+        await new Promise(resolve => setTimeout(resolve, 200));
+        console.log("[LoginScreen] Google session cleared - account picker will be shown");
+      } catch (error) {
+        // Continue even if there are errors - we'll still try to sign in
+        console.log("[LoginScreen] Google cleanup completed with errors:", error);
+      }
 
       // Check if Play Services are available (Android)
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
       // Trigger native Google sign-in
+      // This will ALWAYS show the Google Sign-In UI/account picker
+      // because we signed out above, ensuring proper authentication
+      console.log("[LoginScreen] Calling GoogleSignin.signIn() - this will show Google Sign-In UI");
       const signInResponse = await GoogleSignin.signIn();
+      console.log("[LoginScreen] Google Sign-In UI completed");
       console.log("[LoginScreen] signIn response type:", signInResponse?.type);
 
       if (!isSuccessResponse(signInResponse)) {
