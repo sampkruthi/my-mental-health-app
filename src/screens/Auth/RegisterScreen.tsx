@@ -36,6 +36,7 @@ import {
 import jwtDecode from "jwt-decode";
 
 const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || "";
+const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS || "";
 
 
 const { width } = Dimensions.get("window");
@@ -110,6 +111,7 @@ const RegisterScreen: React.FC = () => {
       // Configure before each sign-in to ensure env vars are loaded
       GoogleSignin.configure({
         webClientId: GOOGLE_CLIENT_ID_WEB,
+        iosClientId: GOOGLE_CLIENT_ID_IOS,
       });
 
       // Check if Play Services are available (Android)
