@@ -18,6 +18,7 @@ const tabs: { name: NavKeys; label: string; icon: keyof typeof Ionicons.glyphMap
   { name: "resources", label: "Resources", icon: "layers-outline" },
   { name: "reminders", label: "Reminders", icon: "notifications-outline" },
   { name: "progressdashboard", label: "Progress", icon: "trending-up-outline" },
+  { name: "activities", label: "Activites", icon: "trending-up-outline" },
 ];
 
 // Minimum width per tab to ensure labels like "Reminders" fit
