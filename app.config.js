@@ -18,14 +18,7 @@ module.exports = {
       bundleIdentifier: "com.Bodhira.mentalhealthassistant",
       supportsTablet: true,
       infoPlist: {
-        ITSAppUsesNonExemptEncryption: false,
-        CFBundleURLTypes: [
-          {
-            CFBundleURLSchemes: [
-              "com.googleusercontent.apps.499568966110-lmlt1q27tucbc1jfe8r903lerec6u6uu"
-            ]
-          }
-        ]
+        ITSAppUsesNonExemptEncryption: false
       }
     },
     android: {
@@ -63,7 +56,12 @@ module.exports = {
       ],
       "expo-notifications",
       "expo-font",
-      "@react-native-google-signin/google-signin",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          iosUrlScheme: "com.googleusercontent.apps.499568966110-lmlt1q27tucbc1jfe8r903lerec6u6uu"
+        }
+      ],
     ],
     extra: {
       eas: {
