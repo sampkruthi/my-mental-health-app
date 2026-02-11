@@ -18,7 +18,14 @@ module.exports = {
       bundleIdentifier: "com.Bodhira.mentalhealthassistant",
       supportsTablet: true,
       infoPlist: {
-        ITSAppUsesNonExemptEncryption: false
+        ITSAppUsesNonExemptEncryption: false,
+        CFBundleURLTypes: [
+          {
+            CFBundleURLSchemes: [
+              "com.googleusercontent.apps.499568966110-lmlt1q27tucbc1jfe8r903lerec6u6uu"
+            ]
+          }
+        ]
       }
     },
     android: {
