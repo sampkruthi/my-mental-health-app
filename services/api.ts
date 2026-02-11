@@ -121,7 +121,7 @@ const getApiBaseUrl = () => {
     // Local development
     if (Platform.OS === 'android') {
       const url = 'http://192.168.86.25:8000'; // Local machine for Android
-      console.log('🌐 Android Dev API URL:', url);
+      console.log('Android Dev API URL:', url);
       return url;
     }
     return 'http://127.0.0.1:8000'; // iOS simulator, web, or local machine
@@ -134,6 +134,8 @@ const getApiBaseUrl = () => {
   } */ else {
     // Production
     return 'https://mental-health-assistant-app-production.up.railway.app';
+    //Or use subdomain after setting it up:
+    //return 'https://web.bodhira.ai';
   }
 };
 

@@ -5,10 +5,11 @@
   "scripts": {
     "start": "expo start",
     "start:https": "expo start --https",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "lint": "eslint --ext=.js,.jsx,.ts,.tsx .",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build:web": "expo export:web"
   },
   "dependencies": {
     "@expo-google-fonts/dm-sans": "^0.4.2",
