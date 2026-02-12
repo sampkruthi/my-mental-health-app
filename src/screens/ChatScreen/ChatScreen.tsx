@@ -11,6 +11,8 @@ import {
   ActivityIndicator,
   Keyboard,
   KeyboardAvoidingView,
+  ScrollView,
+  Linking,
 } from "react-native";
 import { useChatStore } from "../../stores/chatStore";
 import { useAuth } from "../../context/AuthContext";
@@ -36,6 +38,7 @@ const ChatScreen = () => {
   const { colors } = useTheme();
   
 
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
@@ -237,6 +240,73 @@ const ChatScreen = () => {
       </View>
     );
   };
+
+  if (!disclaimerAccepted) {
+    return (
+      <Layout title="Chat" onNavigate={(screen) => navigation.navigate(screen as never)}>
+        <ScrollView
+          style={{ flex: 1, backgroundColor: colors.background }}
+          contentContainerStyle={disclaimerStyles.container}
+        >
+          <Text style={[disclaimerStyles.icon]}>⚠️</Text>
+          <Text style={[disclaimerStyles.heading, { color: colors.text }]}>
+            Important Information
+          </Text>
+
+          <View style={[disclaimerStyles.card, { backgroundColor: colors.cardBackground }]}>
+            <Text style={[disclaimerStyles.cardTitle, { color: colors.text }]}>
+              Not a Replacement for Professional Care
+            </Text>
+            <Text style={[disclaimerStyles.cardText, { color: colors.subText }]}>
+              This is an AI tool. It is not a licensed therapist and is not a replacement for human care. If you are having a hard time, please contact:
+            </Text>
+            <View style={disclaimerStyles.resourceList}>
+              <TouchableOpacity onPress={() => Linking.openURL("tel:911")}>
+                <Text style={[disclaimerStyles.resourceItem, { color: colors.text }]}>
+                  🚨 <Text style={disclaimerStyles.resourceBold}>Emergency Services:</Text> 911
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => Linking.openURL("tel:988")}>
+                <Text style={[disclaimerStyles.resourceItem, { color: colors.text }]}>
+                  📞 <Text style={disclaimerStyles.resourceBold}>Crisis Lifeline:</Text> 988 (Suicide & Crisis Lifeline)
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => Linking.openURL("sms:741741?body=HOME")}>
+                <Text style={[disclaimerStyles.resourceItem, { color: colors.text }]}>
+                  💬 <Text style={disclaimerStyles.resourceBold}>Crisis Text Line:</Text> Text HOME to 741741
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={[disclaimerStyles.card, { backgroundColor: colors.cardBackground }]}>
+            <Text style={[disclaimerStyles.cardTitle, { color: colors.text }]}>
+              Your Privacy & Data
+            </Text>
+            <Text style={[disclaimerStyles.cardText, { color: colors.subText }]}>
+              🔒 Your data is encrypted and no personal information is shared with anyone.
+            </Text>
+          </View>
+
+          <View style={[disclaimerStyles.card, { backgroundColor: colors.cardBackground }]}>
+            <Text style={[disclaimerStyles.cardTitle, { color: colors.text }]}>
+              Usage Notice
+            </Text>
+            <Text style={[disclaimerStyles.cardText, { color: colors.subText }]}>
+              This is an AI tool and can make mistakes. You must be 18 years or older to use it.
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={[disclaimerStyles.continueButton, { backgroundColor: colors.primary }]}
+            onPress={() => setDisclaimerAccepted(true)}
+          >
+            <Text style={disclaimerStyles.continueButtonText}>I Understand, Continue</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </Layout>
+    );
+  }
 
   if (isLoadingInitial) {
     return (
@@ -523,5 +593,68 @@ const TypingIndicator = () => (
     </View>
   </View>
 );
+
+const disclaimerStyles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    padding: 24,
+    alignItems: "center",
+  },
+  icon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  heading: {
+    fontSize: 22,
+    fontWeight: "700",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  card: {
+    width: "100%",
+    maxWidth: 500,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  cardText: {
+    fontSize: 14,
+    lineHeight: 22,
+  },
+  resourceList: {
+    marginTop: 12,
+  },
+  resourceItem: {
+    fontSize: 14,
+    lineHeight: 28,
+  },
+  resourceBold: {
+    fontWeight: "700",
+  },
+  continueButton: {
+    width: "100%",
+    maxWidth: 500,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 32,
+  },
+  continueButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+});
 
 export default ChatScreen;
