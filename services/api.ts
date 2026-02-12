@@ -519,16 +519,28 @@ export const realApiService: ApiService = {
   //  Get activities
   async getActivities() {
     const { data } = await apiClient.get("/api/activities/suggest");
-    return data; // must match GuidedActivity[]
+    const typeMap: Record<string, string> = {
+      breathing: "Breathing",
+      meditation: "Meditation",
+      mindfulness: "Meditation",
+      grounding: "Exercise",
+    };
+    return data.map((activity: any) => ({
+      ...activity,
+      id: String(activity.id),
+      type: typeMap[activity.type?.toLowerCase()] || activity.type,
+      steps: activity.script
+        .split(/\n/)
+        .map((s: string) => s.replace(/^\d+\)\s*/, "").trim())
+        .filter((s: string) => s.length > 0),
+    }));
   },
 
-  /*
-  // Log completion
+  // Log activity completion (backend endpoint not yet implemented)
   async logActivity(id: string) {
-    const { data } = await apiClient.post("/activities/log", { id });
+    const { data } = await apiClient.post("/api/activities/log", { id });
     return data; // e.g. { id: string, completedAt: string }
   },
-*/
 
   // ---------- Journaling ----------
 async getJournalInsights() {

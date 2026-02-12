@@ -6,7 +6,7 @@ import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { GuidedActivity } from "../../api/types";
-import { useFetchActivities, useLogActivity } from "../../api/hooks";
+import { useFetchActivities } from "../../api/hooks";
 import { Button } from "../../components/UI/Button";
 import Layout from "../../components/UI/layout";
 
@@ -16,7 +16,6 @@ const GuidedActivitiesScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { data: activities = [], isLoading } = useFetchActivities("token"); // replace with real token
-  const logMutation = useLogActivity("token");
 
   const [selectedActivity, setSelectedActivity] = useState<GuidedActivity | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -26,12 +25,9 @@ const GuidedActivitiesScreen = () => {
     setModalVisible(true);
   };
 
-  const handleDone = async () => {
-    if (selectedActivity) {
-      await logMutation.mutateAsync({ id: selectedActivity.id });
-      setModalVisible(false);
-      setSelectedActivity(null);
-    }
+  const handleDone = () => {
+    setModalVisible(false);
+    setSelectedActivity(null);
   };
 
   const renderCard = ({ item }: { item: GuidedActivity }) => (
