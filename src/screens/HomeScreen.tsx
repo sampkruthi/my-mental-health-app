@@ -1,6 +1,6 @@
 // src/screens/HomeScreen.tsx
 import React from "react";
-import { View, Text, Image, StyleSheet, ScrollView } from "react-native";
+import { View, Text, Image, StyleSheet, ScrollView, Platform, useWindowDimensions } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { useFetchMoodCount, useFetchReminderCount } from "../api/hooks";
 import Layout from "../components/UI/layout";
@@ -19,6 +19,8 @@ const HomeScreen = () => {
 
   const { data: moodCount = 0, isLoading: moodLoading } = useFetchMoodCount(token);
   const { data: reminderCount = 0, isLoading: reminderLoading } = useFetchReminderCount(token);
+  const { width } = useWindowDimensions();
+  const useGrid = Platform.OS === "web" && width > 600;
 
   const cards = [
     { key: "chat", title: "Chat", subtitle: "Start a conversation" },
@@ -56,7 +58,7 @@ const HomeScreen = () => {
         <Image source={Logo} style={styles.logo} resizeMode="contain" />
 
         {/* Cards Grid */}
-        <View style={{ alignItems: "center" }}>
+        <View style={useGrid ? styles.gridContainer : styles.listContainer}>
           {cards.map((item) => (
             <Layout.Card
               key={item.key}
@@ -66,8 +68,8 @@ const HomeScreen = () => {
               titleColor="#FFFFFF"
               subtitleColor="#FFFFFF"
               style={{
-                width: "90%", // Slightly smaller width
-                aspectRatio: 2.2, // Taller cards (smaller ratio = taller)
+                width: useGrid ? "47%" : "90%",
+                aspectRatio: useGrid ? 2 : 2.2,
                 marginBottom: 16,
                 justifyContent: "center",
                 alignItems: "center",
@@ -106,6 +108,14 @@ const styles = StyleSheet.create({
     height: 160,
     marginBottom: SPACING.lg,
     alignSelf: "center",
+  },
+  gridContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+  listContainer: {
+    alignItems: "center",
   },
 });
 

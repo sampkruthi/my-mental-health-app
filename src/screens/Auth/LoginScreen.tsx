@@ -339,37 +339,40 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
-          {/* Divider */}
-          <View style={styles.dividerContainer}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          {/* Google Sign In Button */}
-          <TouchableOpacity
-            onPress={handleGoogleSignIn}
-            disabled={googleLoading}
-            style={[
-              styles.googleButton,
-              googleLoading && styles.googleButtonDisabled,
-            ]}
-          >
-            {googleLoading ? (
-              <ActivityIndicator
-                size={Platform.OS === "ios" ? 20 : "small"}
-                color="#333"
-              />
-            ) : (
-              <View style={styles.googleButtonContent}>
-                <Image
-                  source={{ uri: "https://developers.google.com/identity/images/g-logo.png" }}
-                  style={styles.googleIcon}
-                />
-                <Text style={styles.googleButtonText}>Sign in with Google</Text>
+          {/* Google Sign In - not available on web */}
+          {Platform.OS !== "web" && (
+            <>
+              <View style={styles.dividerContainer}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.dividerLine} />
               </View>
-            )}
-          </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleGoogleSignIn}
+                disabled={googleLoading}
+                style={[
+                  styles.googleButton,
+                  googleLoading && styles.googleButtonDisabled,
+                ]}
+              >
+                {googleLoading ? (
+                  <ActivityIndicator
+                    size={Platform.OS === "ios" ? 20 : "small"}
+                    color="#333"
+                  />
+                ) : (
+                  <View style={styles.googleButtonContent}>
+                    <Image
+                      source={{ uri: "https://developers.google.com/identity/images/g-logo.png" }}
+                      style={styles.googleIcon}
+                    />
+                    <Text style={styles.googleButtonText}>Sign in with Google</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
 
           {/* Privacy Notice */}
           <Text style={styles.privacyText}>
