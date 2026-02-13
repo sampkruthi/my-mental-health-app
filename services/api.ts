@@ -640,7 +640,7 @@ async getContentRecommendationsRag(params?: { limit?: number }) {
       device_token: deviceToken,
       platform: platform,
     });
-    console.log('[API] Device token registered:', data);
+    console.log('[API] Device token registered');
     return data;
   },
 

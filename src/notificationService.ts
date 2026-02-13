@@ -67,7 +67,7 @@ export async function getExpoNotificationToken(): Promise<string | null> {
     console.log('[NotificationService] Getting Expo notification token');
 
     const token = await Notifications.getExpoPushTokenAsync();
-    console.log('[NotificationService] Expo token obtained:', token.data);
+    console.log('[NotificationService] Expo token obtained');
 
     return token.data;
   } catch (error) {

@@ -67,15 +67,15 @@ function NotificationInitializer() {
           return;
         }
 
-        console.log('[App] Device token obtained:', deviceToken);
+        console.log('[App] Device token obtained');
 
         // Step 2: Register device token with backend
         const platform = getPlatform();
         registerDeviceTokenMutation.mutate(
           { deviceToken, platform },
           {
-            onSuccess: (response) => {
-              console.log('[App] Device token registered successfully:', response);
+            onSuccess: () => {
+              console.log('[App] Device token registered successfully');
             },
             onError: (error) => {
               console.error('[App] Failed to register device token:', error);

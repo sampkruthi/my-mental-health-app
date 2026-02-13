@@ -25,7 +25,7 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: async ({ email, password }: LoginPayload) => {
       if (!getApiService) throw new Error("API Service not initialized");
-      console.log("[useLogin] Attempting login with:", email, password);
+      console.log("[useLogin] Attempting login with:", email);
 
       //const data: LoginResponse = await getApiService().login(email, password);
       const { token, userId} : LoginResponse = await getApiService().login(email, password);
@@ -83,7 +83,7 @@ export function useRegister(): UseMutationResult<Token, Error, RegisterRequest, 
     },
     onSuccess: (data) => {
       qc.invalidateQueries(); // optional: refresh other queries
-      console.log("[useRegister] registration successful, token:", data.access_token);
+      console.log("[useRegister] registration successful");
     },
     onError: (error) => {
       console.error("[useRegister] registration failed:", error);
@@ -100,7 +100,7 @@ export function useFetchMoodCount(token?: string | null) {
   return useQuery<number, Error>({
     queryKey: ["mood", "count", token],
     queryFn: async () => {
-      console.log("[useFetchMoodCount] Fetching mood count, token:", token);
+      console.log("[useFetchMoodCount] Fetching mood count");
       if (!token) return 0;
 
       const data: MoodLog[] = await getApiService().getMoodHistory?.() ?? [];
@@ -122,7 +122,7 @@ export function useFetchReminderCount(token?: string | null) {
   return useQuery<number, Error>({
     queryKey: ["reminders", "count", token],
     queryFn: async () => {
-      console.log("[useFetchReminderCount] Fetching reminders, token:", token);
+      console.log("[useFetchReminderCount] Fetching reminders");
       if (!token) return 0;
 
       const data: Reminder[] = await getApiService().getReminders1?. () ?? [];
@@ -170,7 +170,7 @@ export function useFetchChatHistory(
 export function useSendChatMessage(token?: string | null) {
   return useMutation<ChatMessage, Error, { text: string }>({
     mutationFn: async ({ text }) => {
-      console.log("[useSendChatMessage] Sending message:", text, "token:", token);
+      console.log("[useSendChatMessage] Sending message:", text);
       if (!token) throw new Error("No token available");
 
       const data: ChatMessage = await getApiService().sendChatMessage?.(text) as ChatMessage;
@@ -187,7 +187,7 @@ export function useFetchMoodHistory(token?: string | null) {
   return useQuery<MoodLog[], Error>({
     queryKey: ["mood", "history", token],
     queryFn: async () => {
-      console.log("[useFetchMoodHistory] Fetching mood history, token:", token);
+      console.log("[useFetchMoodHistory] Fetching mood history");
       if (!token) return [];
 
       const data: MoodLog[] = await getApiService().getMoodHistory?.() ?? [];
@@ -205,7 +205,7 @@ export function useFetchMoodHistory(token?: string | null) {
 export function useLogMood(token?: string | null) {
   return useMutation<MoodLog, Error, { score: number; note?: string }>({
     mutationFn: async ({ score, note }) => {
-      console.log("[useLogMood] Logging mood:", { score, note }, "token:", token);
+      console.log("[useLogMood] Logging mood:", { score, note });
       if (!token) throw new Error("No token available");
 
       const data: MoodLog = await getApiService().logMood?.({ score, note }) as MoodLog;
@@ -257,7 +257,7 @@ export function useFetchJournalHistory(token?: string | null) {
   return useQuery<JournalEntry[], Error>({
     queryKey: ["journal", "history", token],
     queryFn: async () => {
-      console.log("[useFetchJournalHistory] Fetching journal history, token:", token);
+      console.log("[useFetchJournalHistory] Fetching journal history");
       if (!token) return [];
 
       const data: JournalEntry[] = await getApiService().getJournalHistory?.() ?? [];
@@ -274,7 +274,7 @@ export function useFetchJournalInsights(token?: string | null) {
   return useQuery<JournalInsights | null, Error>({
     queryKey: ["journal", "insights", token],
     queryFn: async () => {
-      console.log("[useFetchJournalInsights] Fetching journal insights, token:", token);
+      console.log("[useFetchJournalInsights] Fetching journal insights");
       if (!token) return null;
 
       const data: JournalInsights = await getApiService().getJournalInsights?.() ?? {
@@ -297,7 +297,7 @@ export function useLogJournal(token?: string | null) {
 
   return useMutation<JournalEntry, Error, { content: string }>({
     mutationFn: async ({ content }) => {
-      console.log("[useLogJournal] Logging journal entry:", content, "token:", token);
+      console.log("[useLogJournal] Logging journal entry:", content);
       if (!token) throw new Error("No token available");
 
       const data: JournalEntry = await getApiService().logJournal?.({ content }) as JournalEntry;
@@ -369,7 +369,7 @@ export function useFetchReminders(token?: string | null) {
   return useQuery<Reminder1[], Error>({
     queryKey: ["reminders", "list", token],
     queryFn: async () => {
-      console.log("[useFetchReminders] Fetching reminders, token:", token);
+      console.log("[useFetchReminders] Fetching reminders");
       if (!token) return [];
 
       const data: Reminder1[] = await getApiService().getReminders1?.() ?? [];
@@ -389,7 +389,7 @@ export function useAddReminder(token?: string | null) {
 
   return useMutation<Reminder1, Error, NewReminder>({
     mutationFn: async (input) => {
-      console.log("[useAddReminder] Adding reminder:", input, "token:", token);
+      console.log("[useAddReminder] Adding reminder:", input);
       if (!token) throw new Error("No token provided");
 
       const data: Reminder1 = await getApiService().addReminder?.(input) as Reminder1;
@@ -410,7 +410,7 @@ export function useDeleteReminder(token?: string | null) {
 
   return useMutation<string, Error, string>({
     mutationFn: async (id) => {
-      console.log("[useDeleteReminder] Deleting reminder:", id, "token:", token);
+      console.log("[useDeleteReminder] Deleting reminder:", id);
       if (!token) throw new Error("No token provided");
 
       await getApiService().deleteReminder?.(id);
@@ -435,7 +435,7 @@ export function useToggleReminder(token?: string | null) {
 
   return useMutation<Reminder1, Error, { id: string; enabled: boolean }>({
     mutationFn: async ({ id, enabled }) => {
-      console.log("[useToggleReminder] Toggling reminder:", id, "to:", enabled, "token:", token);
+      console.log("[useToggleReminder] Toggling reminder:", id, "to:", enabled);
       if (!token) throw new Error("No token provided");
 
       const data: Reminder1 = await getApiService().toggleReminder?.(id) as Reminder1;
@@ -452,7 +452,7 @@ export function useFetchMemorySummary(token?: string | null) {
   return useQuery<MemorySummary, Error>({
     queryKey: ["memory", "summary", token],
     queryFn: async () => {
-      console.log("[useFetchMemorySummary] Fetching memory summary, token:", token);
+      console.log("[useFetchMemorySummary] Fetching memory summary");
       
       if (!token) {
         throw new Error("No authentication token available");
@@ -478,7 +478,7 @@ export function useFetchProgressDashboard(token?: string | null) {
   return useQuery<ProgressDashboard, Error>({
     queryKey: ["progress", "dashboard", token],
     queryFn: async () => {
-      console.log("[useFetchProgressDashboard] Fetching progress, token:", token);
+      console.log("[useFetchProgressDashboard] Fetching progress");
       if (!token) return null;
 
       const data = await getApiService().getProgressDashboard?.();
@@ -549,7 +549,7 @@ export function useFetchUserProfile(token?: string | null) {
   return useQuery<UserProfile, Error>({
     queryKey: ["user", "profile", token],
     queryFn: async () => {
-      console.log("[useFetchUserProfile] Fetching user profile, token:", token);
+      console.log("[useFetchUserProfile] Fetching user profile");
       if (!token) {
         throw new Error("No authentication token available");
       }
@@ -589,4 +589,3 @@ export function useUpdateUserProfile(token?: string | null) {
     },
   });
 }
-
