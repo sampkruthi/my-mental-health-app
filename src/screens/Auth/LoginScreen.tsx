@@ -86,49 +86,31 @@ export default function LoginScreen() {
       setGoogleLoading(true);
       console.log("[LoginScreen] Starting native Google Sign-In");
       console.log("[LoginScreen] webClientId:", GOOGLE_CLIENT_ID_WEB ? "SET" : "EMPTY");
+      if (!GOOGLE_CLIENT_ID_WEB) {
+        Alert.alert("Error", "Google sign-in is not configured (missing web client ID).");
+        return;
+      }
 
       // Configure before each sign-in to ensure env vars are loaded
       GoogleSignin.configure({
         webClientId: GOOGLE_CLIENT_ID_WEB,
         iosClientId: GOOGLE_CLIENT_ID_IOS,
-        // Force account selection by always showing the account picker
-        offlineAccess: false, // Don't request offline access
+        offlineAccess: false,
       });
-
-      // ALWAYS revoke access and sign out from Google to force account selection
-      // This ensures the user sees the Google Sign-In UI/account picker every time
-      try {
-        // First, try to revoke access (more aggressive - revokes the access token)
-        try {
-          await GoogleSignin.revokeAccess();
-          console.log("[LoginScreen] Revoked Google access");
-        } catch (revokeError) {
-          console.log("[LoginScreen] Revoke access skipped (may not be needed):", revokeError);
-        }
-        
-        // Then sign out (clears the session)
-        try {
-          await GoogleSignin.signOut();
-          console.log("[LoginScreen] Signed out from Google");
-        } catch (signOutError) {
-          console.log("[LoginScreen] Sign out skipped (may not be needed):", signOutError);
-        }
-        
-        // Small delay to ensure operations complete
-        await new Promise(resolve => setTimeout(resolve, 200));
-        console.log("[LoginScreen] Google session cleared - account picker will be shown");
-      } catch (error) {
-        // Continue even if there are errors - we'll still try to sign in
-        console.log("[LoginScreen] Google cleanup completed with errors:", error);
-      }
 
       // Check if Play Services are available (Android)
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
-      // Trigger native Google sign-in
-      // This will ALWAYS show the Google Sign-In UI/account picker
-      // because we signed out above, ensuring proper authentication
-      console.log("[LoginScreen] Calling GoogleSignin.signIn() - this will show Google Sign-In UI");
+      // Clear cached local session only when needed.
+      if (await GoogleSignin.hasPreviousSignIn()) {
+        try {
+          await GoogleSignin.signOut();
+        } catch (signOutError) {
+          console.log("[LoginScreen] Previous Google session sign-out skipped:", signOutError);
+        }
+      }
+
+      console.log("[LoginScreen] Calling GoogleSignin.signIn()");
       const signInResponse = await GoogleSignin.signIn();
       console.log("[LoginScreen] Google Sign-In UI completed");
       console.log("[LoginScreen] signIn response type:", signInResponse?.type);
@@ -138,10 +120,22 @@ export default function LoginScreen() {
         return;
       }
 
-      const idToken = signInResponse.data.idToken;
+      let idToken = signInResponse.data.idToken;
+      if (!idToken) {
+        try {
+          const tokens = await GoogleSignin.getTokens();
+          idToken = tokens?.idToken;
+        } catch (tokenError) {
+          console.log("[LoginScreen] getTokens failed:", tokenError);
+        }
+      }
+
       console.log("[LoginScreen] idToken present:", !!idToken);
       if (!idToken) {
-        Alert.alert("Error", "Google sign-in failed (no token).");
+        Alert.alert(
+          "Error",
+          "Google sign-in failed (no ID token). Verify Web Client ID and Google console SHA/package setup."
+        );
         return;
       }
 

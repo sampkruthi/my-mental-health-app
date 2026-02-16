@@ -10,6 +10,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -90,6 +91,7 @@ const ReminderScreen = () => {
         setPeriod("AM");
         setMessage("");
         queryClient.invalidateQueries({ queryKey: ["reminders", "list", token] });
+        Alert.alert("Success", "Reminder added successfully");
       },
     });
   };
@@ -99,6 +101,7 @@ const ReminderScreen = () => {
     deleteMutation.mutate(id.toString(), {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["reminders", "list", token] });
+        Alert.alert("Success", "Reminder deleted successfully");
       },
     });
   };
