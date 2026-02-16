@@ -298,6 +298,7 @@ const ChatScreen = () => {
           </View>
 
           <TouchableOpacity
+            testID="chat_disclaimer_continue"
             style={[disclaimerStyles.continueButton, { backgroundColor: colors.primary }]}
             onPress={() => setDisclaimerAccepted(true)}
           >
@@ -373,6 +374,7 @@ const ChatScreen = () => {
             </TouchableOpacity>
 
             <TextInput
+              testID="chat_input"
               style={[
                 styles.input,
                 { color: colors.text, borderColor: colors.inputBorder },
@@ -392,7 +394,7 @@ const ChatScreen = () => {
               }}
             />
 
-            <TouchableOpacity onPress={handleSend} style={styles.sendBtn}>
+            <TouchableOpacity testID="chat_send" onPress={handleSend} style={styles.sendBtn}>
               <Text style={styles.sendText}>→</Text>
             </TouchableOpacity>
           </View>

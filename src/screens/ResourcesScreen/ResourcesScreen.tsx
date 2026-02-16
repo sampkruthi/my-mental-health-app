@@ -210,23 +210,22 @@ const ResourcesScreen = () => {
             </View>
           ) : (
             <View>
+              {/* Show RAG personalized summary at the top when available */}
+              {ragSummary && (
+                <View style={[styles.summaryBox, { backgroundColor: colors.cardBackground || "#f0f4ff" }]}>
+                  <Text style={[styles.summaryLabel, { color: colors.text }]}>
+                    ✨ Personalized for You
+                  </Text>
+                  <Text style={[styles.summaryText, { color: colors.subText }]}>
+                    {ragSummary}
+                  </Text>
+                </View>
+              )}
               {resources.map((item, index) => (
                 <View key={`resource-${item.id || `temp-${index}`}`}>
                   {renderCard({ item })}
                 </View>
               ))}
-            </View>
-          )}
-
-          {/* Show RAG personalized summary when available (smooth fade-in) */}
-          {ragSummary && resources.length > 0 && (
-            <View style={[styles.summaryBox, { backgroundColor: colors.cardBackground || "#f0f4ff" }]}>
-              <Text style={[styles.summaryLabel, { color: colors.text }]}>
-                ✨ Personalized for You
-              </Text>
-              <Text style={[styles.summaryText, { color: colors.subText }]}>
-                {ragSummary}
-              </Text>
             </View>
           )}
         </View>

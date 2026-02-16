@@ -15,7 +15,8 @@ export const MemorySummaryScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { colors } = useTheme();
   const { token } = useAuth();
-  const { data: memory, isLoading, isError } = useFetchMemorySummary(token);
+
+  const { data: memory, isLoading: isMemoryLoading, isError: isMemoryError } = useFetchMemorySummary(token);
 
   // Profile state and hooks
   const { data: profile, isLoading: isProfileLoading, isError: isProfileError } = useFetchUserProfile(token);
@@ -55,9 +56,16 @@ export const MemorySummaryScreen: React.FC = () => {
     setIsEditingName(false);
   };
 
-  console.log('MemorySummaryScreen - isLoading:', isLoading);
-  console.log('MemorySummaryScreen - isError:', isError);
+
+  console.log('MemorySummaryScreen - isMemoryLoading:', isMemoryLoading);
+  console.log('MemorySummaryScreen - isMemoryError:', isMemoryError);
   console.log('MemorySummaryScreen - memory:', memory);
+  console.log('MemorySummaryScreen - isProfileLoading:', isProfileLoading);
+  console.log('MemorySummaryScreen - profile:', profile);
+
+  const isLoading = isMemoryLoading && isProfileLoading;
+  
+  const hasError = isProfileError;
 
   return (
     <Layout
@@ -75,7 +83,7 @@ export const MemorySummaryScreen: React.FC = () => {
               Loading your profile...
             </Text>
           </View>
-        ) : isError || !memory ? (
+        ) : hasError ? (
           <View style={styles.errorContainer}>
             <Text style={[styles.errorText, { color: 'red' }]}>
               Unable to load profile
@@ -140,6 +148,8 @@ export const MemorySummaryScreen: React.FC = () => {
               ) : null}
             </View>
 
+            {memory && (
+            <>
             {/* Divider */}
             <View style={[styles.divider, { backgroundColor: colors.subText + '30' }]} />
 
@@ -188,12 +198,37 @@ export const MemorySummaryScreen: React.FC = () => {
             <Text style={[styles.footer, { color: colors.subText }]}>
               Last updated: {new Date(memory.last_updated).toLocaleDateString()}
             </Text>
+          </>
+            )}
+            {/* ✅ ADD: Show message for new users with no activity yet */}
+            {!memory && !isMemoryLoading && (
+              <View style={styles.noDataContainer}>
+                <Text style={[styles.noDataTitle, { color: colors.text }]}>
+                  Welcome to Bodhira! 🌱
+                </Text>
+                <Text style={[styles.noDataText, { color: colors.subText }]}>
+                  Start your wellness journey by:
+                </Text>
+                <View style={styles.noDataList}>
+                  <Text style={[styles.noDataItem, { color: colors.subText }]}>
+                    • Tracking your mood
+                  </Text>
+                  <Text style={[styles.noDataItem, { color: colors.subText }]}>
+                    • Writing in your journal
+                  </Text>
+                  <Text style={[styles.noDataItem, { color: colors.subText }]}>
+                    • Chatting with your AI assistant
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
         )}
       </ScrollView>
     </Layout>
   );
 };
+          
 
 const styles = StyleSheet.create({
   container: {
@@ -376,4 +411,29 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
   },
+  noDataContainer: {
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  noDataTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  noDataText: {
+    fontSize: 16,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  noDataList: {
+    marginTop: 12,
+    alignItems: 'flex-start',
+  },
+  noDataItem: {
+    fontSize: 15,
+    marginVertical: 6,
+    lineHeight: 22,
+  }
 });

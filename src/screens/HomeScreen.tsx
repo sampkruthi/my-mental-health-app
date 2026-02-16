@@ -65,6 +65,7 @@ const HomeScreen = () => {
               title={item.title}
               subtitle={item.subtitle}
               onPress={() => navigation.navigate(item.key as never)}
+              testID={`home_card_${item.key}`}
               titleColor="#FFFFFF"
               subtitleColor="#FFFFFF"
               style={{

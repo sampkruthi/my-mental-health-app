@@ -256,6 +256,7 @@ export default function LoginScreen() {
             <View style={styles.inputContainer}>
               <Text style={styles.inputIcon}>✉️</Text>
               <TextInput
+                testID="login_email"
                 placeholder="you@example.com"
                 value={email}
                 onChangeText={setEmail}
@@ -276,6 +277,7 @@ export default function LoginScreen() {
             <View style={styles.inputContainer}>
               <Text style={styles.inputIcon}>🔒</Text>
               <TextInput
+                testID="login_password"
                 placeholder="••••••••"
                 value={password}
                 onChangeText={setPassword}
@@ -322,6 +324,7 @@ export default function LoginScreen() {
 
           {/* Sign In Button */}
           <TouchableOpacity
+            testID="login_submit"
             onPress={handleSubmit}
             disabled={loading}
             style={[
@@ -349,6 +352,7 @@ export default function LoginScreen() {
               </View>
 
               <TouchableOpacity
+                testID="login_google"
                 onPress={handleGoogleSignIn}
                 disabled={googleLoading}
                 style={[

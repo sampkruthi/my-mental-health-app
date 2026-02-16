@@ -10,17 +10,25 @@ export type CardProps = {
   style?: object;
   titleColor?: string;
   subtitleColor?: string;
+  testID?: string;
 };
 
-export const Card: React.FC<CardProps> = ({ title, subtitle, onPress, style, titleColor, subtitleColor }) => {
+export const Card: React.FC<CardProps> = ({ title, subtitle, onPress, style, titleColor, subtitleColor, testID }) => {
   const { colors } = useTheme();
+  const titleTestId = testID ? `${testID}_title` : undefined;
 
   return (
     <TouchableOpacity
+      testID={testID}
+      accessible={true}
+      accessibilityLabel={testID}
+      accessibilityRole="button"
       onPress={onPress}
       style={[styles.card, { backgroundColor: colors.cardBackground }, style]} // <-- apply passed style
     >
-      <Text style={[styles.title, { color: titleColor || colors.text }]}>{title}</Text>
+      <Text testID={titleTestId} style={[styles.title, { color: titleColor || colors.text }]}>
+        {title}
+      </Text>
       {subtitle && <Text style={[styles.subtitle, { color: subtitleColor || colors.subText }]}>{subtitle}</Text>}
     </TouchableOpacity>
   );
