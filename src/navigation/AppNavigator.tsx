@@ -3,6 +3,7 @@ import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import LoginScreen from "../screens/Auth/LoginScreen";
+import ResetPasswordScreen from "../screens/Auth/ResetPasswordScreen";
 import HomeScreen from "../screens/HomeScreen";
 import ChatScreen from "../screens/ChatScreen/ChatScreen";
 import MoodTrackerScreen from "../screens/MoodTrackerScreen/MoodTrackerScreen";
@@ -26,6 +27,7 @@ export type RootStackParamList = {
   journal:undefined;
   resources : undefined;
   Register:undefined;
+  ResetPassword: { token?: string } | undefined;
   reminders:undefined;
   memorysummary: undefined
   progressdashboard: undefined
@@ -43,6 +45,7 @@ export default function AppNavigator() {
         <>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
         </>
       ) : (
         <>

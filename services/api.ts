@@ -65,6 +65,8 @@ export interface ApiService {
   // ---------- Google OAuth ----------
   googleAuth(idToken: string, timezone?: string): Promise<LoginResponse>;
   googleCodeExchange(code: string, codeVerifier: string, redirectUri: string, timezone?: string): Promise<LoginResponse>;
+  requestPasswordReset(email: string): Promise<{ status: string; message: string; dev_reset_token?: string }>;
+  resetPassword(token: string, newPassword: string): Promise<{ status: string; message: string }>;
 
   //add logout function
   logout(): Promise<void>;
@@ -453,6 +455,21 @@ export const realApiService: ApiService = {
       token: data.access_token,
       userId: "",
     };
+  },
+
+  async requestPasswordReset(email: string): Promise<{ status: string; message: string; dev_reset_token?: string }> {
+    const { data } = await apiClient.post("/api/auth/forgot-password", {
+      username: email,
+    });
+    return data;
+  },
+
+  async resetPassword(token: string, newPassword: string): Promise<{ status: string; message: string }> {
+    const { data } = await apiClient.post("/api/auth/reset-password", {
+      token,
+      new_password: newPassword,
+    });
+    return data;
   },
 
   async logout(): Promise<void> {

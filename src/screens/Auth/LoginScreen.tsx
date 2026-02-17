@@ -316,7 +316,7 @@ export default function LoginScreen() {
               </View>
               <Text style={styles.rememberMeText}>Remember me</Text>
             </TouchableOpacity>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate("ResetPassword")}>
               <Text style={styles.forgotPasswordText}>Forgot password?</Text>
             </TouchableOpacity>
           </View>

@@ -15,6 +15,8 @@ import {  UseMutationResult } from "@tanstack/react-query";
 // =====================
 type LoginPayload = { email: string; password: string };
 type LoginResponse = { token: string, userId?: string };
+type ForgotPasswordPayload = { email: string };
+type ResetPasswordPayload = { token: string; newPassword: string };
 
 
 
@@ -66,6 +68,22 @@ export const useGoogleCodeExchange = () => {
       const { token, userId } = await getApiService().googleCodeExchange(code, codeVerifier, redirectUri, timezone);
       console.log("[useGoogleCodeExchange] Token received");
       return { token, userId };
+    },
+  });
+};
+
+export const useForgotPassword = () => {
+  return useMutation({
+    mutationFn: async ({ email }: ForgotPasswordPayload) => {
+      return getApiService().requestPasswordReset(email);
+    },
+  });
+};
+
+export const useResetPassword = () => {
+  return useMutation({
+    mutationFn: async ({ token, newPassword }: ResetPasswordPayload) => {
+      return getApiService().resetPassword(token, newPassword);
     },
   });
 };

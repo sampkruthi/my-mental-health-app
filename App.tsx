@@ -1,9 +1,10 @@
 // App.tsx
 import React, { useEffect, useRef } from "react";
-import { NavigationContainer, NavigationContainerRef } from "@react-navigation/native";
+import { NavigationContainer, NavigationContainerRef, LinkingOptions } from "@react-navigation/native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { View, ActivityIndicator } from "react-native";
 import AppNavigator from "./src/navigation/AppNavigator";
+import type { RootStackParamList } from "./src/navigation/AppNavigator";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { ThemeProvider } from "./src/context/ThemeContext";
 
@@ -25,6 +26,20 @@ import { useRegisterDeviceToken } from "./src/api/hooks";
 import { registerAuthErrorHandlers } from "./src/utils/authErrorHandler";
 
 const queryClient = new QueryClient();
+
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: ["bodhira://", "https://bodhira.ai", "https://web.bodhira.ai"],
+  config: {
+    screens: {
+      ResetPassword: {
+        path: "reset-password",
+        parse: {
+          token: (token: string) => token,
+        },
+      },
+    },
+  },
+};
 
 // Navigation ref for redirecting to Login on auth errors
 //const navigationRef = useRef<NavigationContainerRef<any>>(null);
@@ -154,7 +169,7 @@ function AppContent({ navigationRef }: { navigationRef: React.RefObject<Navigati
   return (
     <>
       <NotificationInitializer />
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer ref={navigationRef} linking={linking}>
         <AppNavigator />
       </NavigationContainer>
     </>
