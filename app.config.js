@@ -17,7 +17,7 @@ module.exports = {
     ios: {
       bundleIdentifier: "com.Bodhira.mentalhealthassistant",
       supportsTablet: true,
-      googleServicesFile: process.env.GOOGLE_SERVICE_INFO_PLIST || "./GoogleService-Info.plist",
+      googleServicesFile: process.env.GOOGLE_SERVICE_INFO_PLIST || "./ios/GoogleService-Info.plist",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false
       }
@@ -30,7 +30,7 @@ module.exports = {
         backgroundColor: "#ffffff"
       },
       package: "com.Bodhira.mentalhealthassistant",
-      googleServicesFile: process.env.GOOGLE_SERVICES_JSON,
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? "./android/app/src/google-services.json"
     },
     web: {
       favicon: "./assets/favicon.png"

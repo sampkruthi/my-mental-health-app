@@ -12,12 +12,14 @@
       }
     },
     "preview": {
+      "environment": "preview",
       "distribution": "internal",
       "env": {
         "NODE_ENV": "production"
       }
     },
     "production": {
+      "environment": "production",
       "autoIncrement": true,
       "env": {
         "NODE_ENV": "production"
