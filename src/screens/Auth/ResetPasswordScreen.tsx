@@ -16,6 +16,8 @@ export default function ResetPasswordScreen() {
   const [resetToken, setResetToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (route.params?.token) {
@@ -108,22 +110,40 @@ export default function ResetPasswordScreen() {
         />
 
         <Text style={styles.label}>New Password</Text>
-        <TextInput
-          style={styles.input}
-          value={newPassword}
-          onChangeText={setNewPassword}
-          secureTextEntry
-          placeholder="At least 8 characters"
-        />
+        <View style={styles.passwordInputContainer}>
+          <TextInput
+            style={[styles.input, styles.passwordInput]}
+            value={newPassword}
+            onChangeText={setNewPassword}
+            secureTextEntry={!showNewPassword}
+            placeholder="At least 8 characters"
+            placeholderTextColor="#8E9AA0"
+          />
+          <TouchableOpacity
+            onPress={() => setShowNewPassword((prev) => !prev)}
+            style={styles.eyeIcon}
+          >
+            <Text>{showNewPassword ? "👁️" : "👁️‍🗨️"}</Text>
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.label}>Confirm Password</Text>
-        <TextInput
-          style={styles.input}
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-          placeholder="Re-enter new password"
-        />
+        <View style={styles.passwordInputContainer}>
+          <TextInput
+            style={[styles.input, styles.passwordInput]}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry={!showConfirmPassword}
+            placeholder="Re-enter new password"
+            placeholderTextColor="#8E9AA0"
+          />
+          <TouchableOpacity
+            onPress={() => setShowConfirmPassword((prev) => !prev)}
+            style={styles.eyeIcon}
+          >
+            <Text>{showConfirmPassword ? "👁️" : "👁️‍🗨️"}</Text>
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity
           style={styles.primaryButton}
@@ -181,10 +201,24 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: "#D5DBDB",
+    color: "#2C2C2C",
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 10,
+    backgroundColor: "#FFFFFF",
+  },
+  passwordInputContainer: {
+    position: "relative",
+  },
+  passwordInput: {
+    paddingRight: 46,
+  },
+  eyeIcon: {
+    position: "absolute",
+    right: 12,
+    top: 10,
+    padding: 4,
   },
   secondaryButton: {
     backgroundColor: "#ECF0F1",

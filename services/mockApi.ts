@@ -285,6 +285,18 @@ export const mockApiService: ApiService = {
     return { token: "mock-google-token", userId: "google-user@example.com" };
   },
 
+  async requestPasswordReset(email: string): Promise<{ status: string; message: string; dev_reset_token?: string }> {
+    console.log("[mockApi] request password reset:", email);
+    await delay(300);
+    return { status: "ok", message: "If the account exists, a reset link has been sent.", dev_reset_token: "mock-reset-token" };
+  },
+
+  async resetPassword(token: string, newPassword: string): Promise<{ status: string; message: string }> {
+    console.log("[mockApi] reset password:", { tokenPresent: !!token, length: newPassword.length });
+    await delay(300);
+    return { status: "ok", message: "Password updated successfully" };
+  },
+
   async logout(): Promise<void> {
     console.log("[mockApi] logout");
     await delay(200);
@@ -512,7 +524,6 @@ async getJournalHistory(): Promise<JournalEntry[]> {
   },
 
 };
-
 
 
 
