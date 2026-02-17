@@ -101,6 +101,17 @@ export default function LoginScreen() {
       // Check if Play Services are available (Android)
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
+      // ALWAYS sign out before sign-in to show account picker (privacy-friendly)
+      // This ensures users can choose which account to use each time
+      try {
+        await GoogleSignin.signOut();
+        console.log("[LoginScreen] Signed out from Google - account picker will show");
+      } catch (signOutError) {
+        // This is fine - might not have been signed in before
+        console.log("[LoginScreen] Sign out skipped (not previously signed in):", signOutError);
+      }
+
+      /*
       // Clear cached local session only when needed.
       if (await GoogleSignin.hasPreviousSignIn()) {
         try {
@@ -109,6 +120,7 @@ export default function LoginScreen() {
           console.log("[LoginScreen] Previous Google session sign-out skipped:", signOutError);
         }
       }
+        */
 
       console.log("[LoginScreen] Calling GoogleSignin.signIn()");
       const signInResponse = await GoogleSignin.signIn();
@@ -122,9 +134,11 @@ export default function LoginScreen() {
 
       let idToken = signInResponse.data.idToken;
       if (!idToken) {
+        console.log("[LoginScreen] idToken not in signInResponse, trying getTokens()...");
         try {
           const tokens = await GoogleSignin.getTokens();
           idToken = tokens?.idToken;
+          console.log("[LoginScreen] getTokens() result - idToken present:", !!idToken);
         } catch (tokenError) {
           console.log("[LoginScreen] getTokens failed:", tokenError);
         }
