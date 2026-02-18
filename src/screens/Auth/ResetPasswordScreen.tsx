@@ -5,12 +5,14 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import { useForgotPassword, useResetPassword } from "../../api/hooks";
+import { useCustomAlert } from "../../components/UI/CustomAlert";
 
 export default function ResetPasswordScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, "ResetPassword">>();
   const forgotPasswordMutation = useForgotPassword();
   const resetPasswordMutation = useResetPassword();
+  const { alert, alertComponent } = useCustomAlert();
 
   const [email, setEmail] = useState("");
   const [resetToken, setResetToken] = useState("");
@@ -27,7 +29,7 @@ export default function ResetPasswordScreen() {
 
   const handleRequestReset = async () => {
     if (!email.trim()) {
-      Alert.alert("Error", "Please enter your email.");
+      alert("Error", "Please enter your email.");
       return;
     }
     try {
@@ -39,23 +41,23 @@ export default function ResetPasswordScreen() {
         message += `\n\nDev token: ${response.dev_reset_token}`;
         setResetToken(response.dev_reset_token);
       }
-      Alert.alert("Reset requested", message);
+      alert("Reset requested", message);
     } catch (err: any) {
-      Alert.alert("Error", err?.message || "Unable to send reset link.");
+      alert("Error", err?.message || "Unable to send reset link.");
     }
   };
 
   const handleResetPassword = async () => {
     if (!resetToken.trim()) {
-      Alert.alert("Error", "Please enter the reset token.");
+      alert("Error", "Please enter the reset token.");
       return;
     }
     if (newPassword.length < 8) {
-      Alert.alert("Error", "Password must be at least 8 characters.");
+      alert("Error", "Password must be at least 8 characters.");
       return;
     }
     if (newPassword !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match.");
+      alert("Error", "Passwords do not match.");
       return;
     }
 
@@ -64,16 +66,17 @@ export default function ResetPasswordScreen() {
         token: resetToken.trim(),
         newPassword,
       });
-      Alert.alert("Success", response.message || "Password reset successful.", [
+      alert("Success", response.message || "Password reset successful.", [
         { text: "Back to Login", onPress: () => navigation.navigate("Login") },
       ]);
     } catch (err: any) {
-      Alert.alert("Error", err?.message || "Unable to reset password.");
+      alert("Error", err?.message || "Unable to reset password.");
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      {alertComponent}
       <View style={styles.card}>
         <Text style={styles.title}>Reset Password</Text>
         <Text style={styles.subtitle}>

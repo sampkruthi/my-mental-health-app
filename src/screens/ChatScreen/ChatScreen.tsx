@@ -22,6 +22,7 @@ import EmojiPicker from "rn-emoji-keyboard";
 import type { ChatMessage } from "../../api/types";
 import Layout from "../../components/UI/layout";
 import { useTheme } from "../../context/ThemeContext";
+import { useCustomAlert } from "../../components/UI/CustomAlert";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/AppNavigator";
@@ -38,6 +39,7 @@ const ChatScreen = () => {
   const { messages, addMessage, setMessages, prependMessages } = useChatStore();
   const { mutateAsync: sendChat } = useSendChatMessage(token);
   const { colors } = useTheme();
+  const { alert, alertComponent } = useCustomAlert();
   
 
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
@@ -169,13 +171,13 @@ const ChatScreen = () => {
   };
 
   const handleClearChat = async () => {
-    Alert.alert(
+    alert(
       "Clear Chat History",
       "This will permanently delete all your conversations. This cannot be undone.\n\nContinue?",
       [
-        { 
-          text: "Cancel", 
-          style: "cancel" 
+        {
+          text: "Cancel",
+          style: "cancel"
         },
         {
           text: "Clear All",
@@ -184,12 +186,12 @@ const ChatScreen = () => {
             try {
               const api = getApiService();
               await api.clearChatHistory();
-              
+
               // Clear local state
               setMessages([]);
               setOffset(0);
               setHasMore(false);
-              
+
               // Add welcome message back
               const welcomeMessage: ChatMessage = {
                 id: 'welcome-' + Date.now(),
@@ -198,11 +200,11 @@ const ChatScreen = () => {
                 timestamp: new Date().toISOString(),
               };
               addMessage(welcomeMessage);
-              
-              Alert.alert("Success", "Chat history cleared");
+
+              alert("Success", "Chat history cleared");
             } catch (error) {
               console.error('Clear chat error:', error);
-              Alert.alert("Error", "Failed to clear chat history. Please try again.");
+              alert("Error", "Failed to clear chat history. Please try again.");
             }
           }
         }
@@ -478,6 +480,7 @@ const ChatScreen = () => {
         </KeyboardAvoidingView>
       </View>
     </Layout>
+    {alertComponent}
     </MenuProvider>
   );
 };

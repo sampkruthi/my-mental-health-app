@@ -9,6 +9,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useFetchMemorySummary, useFetchUserProfile, useUpdateUserProfile } from '../../api/hooks';
 import { getApiService } from '../../../services/api';
+import { useCustomAlert } from '../../components/UI/CustomAlert';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -16,6 +17,7 @@ export const MemorySummaryScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { colors } = useTheme();
   const { token, signOut } = useAuth();
+  const { alert, alertComponent } = useCustomAlert();
 
   const { data: memory, isLoading: isMemoryLoading, isError: isMemoryError } = useFetchMemorySummary(token);
 
@@ -40,7 +42,7 @@ export const MemorySummaryScreen: React.FC = () => {
 
   const handleSaveName = async () => {
     if (!editedName.trim()) {
-      Alert.alert('Error', 'Name cannot be empty');
+      alert('Error', 'Name cannot be empty');
       return;
     }
 
@@ -48,7 +50,7 @@ export const MemorySummaryScreen: React.FC = () => {
       await updateProfileMutation.mutateAsync({ name: editedName.trim() });
       setIsEditingName(false);
     } catch (error) {
-      Alert.alert('Error', 'Failed to update name. Please try again.');
+      alert('Error', 'Failed to update name. Please try again.');
     }
   };
 
@@ -58,20 +60,20 @@ export const MemorySummaryScreen: React.FC = () => {
   };
 
   const handleDeleteAccount = async () => {
-    Alert.alert(
+    alert(
       "Delete Account",
       "⚠️ WARNING: This will permanently delete:\n\n• All chat conversations\n• All journal entries\n• All mood logs\n• All reminders\n• Your entire account\n\nThis action CANNOT be undone!\n\nAre you absolutely sure?",
       [
-        { 
-          text: "Cancel", 
-          style: "cancel" 
+        {
+          text: "Cancel",
+          style: "cancel"
         },
         {
           text: "Delete Forever",
           style: "destructive",
           onPress: () => {
             // Double confirmation
-            Alert.alert(
+            alert(
               "Final Confirmation",
               "Last chance! Delete your account permanently?",
               [
@@ -87,7 +89,7 @@ export const MemorySummaryScreen: React.FC = () => {
                       // User is automatically navigated to login screen
                     } catch (error) {
                       console.error('Delete account error:', error);
-                      Alert.alert("Error", "Failed to delete account. Please try again or contact support.");
+                      alert("Error", "Failed to delete account. Please try again or contact support.");
                     }
                   }
                 }
@@ -277,6 +279,7 @@ export const MemorySummaryScreen: React.FC = () => {
           </TouchableOpacity>
         )}
       </ScrollView>
+      {alertComponent}
     </Layout>
   );
 };
