@@ -8,13 +8,14 @@ import Layout from '../../components/UI/layout';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useFetchMemorySummary, useFetchUserProfile, useUpdateUserProfile } from '../../api/hooks';
+import { getApiService } from '../../../services/api';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export const MemorySummaryScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { colors } = useTheme();
-  const { token } = useAuth();
+  const { token, signOut } = useAuth();
 
   const { data: memory, isLoading: isMemoryLoading, isError: isMemoryError } = useFetchMemorySummary(token);
 
@@ -55,6 +56,49 @@ export const MemorySummaryScreen: React.FC = () => {
     setEditedName(profile?.name || '');
     setIsEditingName(false);
   };
+
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      "Delete Account",
+      "⚠️ WARNING: This will permanently delete:\n\n• All chat conversations\n• All journal entries\n• All mood logs\n• All reminders\n• Your entire account\n\nThis action CANNOT be undone!\n\nAre you absolutely sure?",
+      [
+        { 
+          text: "Cancel", 
+          style: "cancel" 
+        },
+        {
+          text: "Delete Forever",
+          style: "destructive",
+          onPress: () => {
+            // Double confirmation
+            Alert.alert(
+              "Final Confirmation",
+              "Last chance! Delete your account permanently?",
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Yes, Delete Everything",
+                  style: "destructive",
+                  onPress: async () => {
+                    try {
+                      const api = getApiService();
+                      await api.deleteAccount();
+                      await signOut();
+                      // User is automatically navigated to login screen
+                    } catch (error) {
+                      console.error('Delete account error:', error);
+                      Alert.alert("Error", "Failed to delete account. Please try again or contact support.");
+                    }
+                  }
+                }
+              ]
+            );
+          }
+        }
+      ]
+    );
+  };
+
 
 
   console.log('MemorySummaryScreen - isMemoryLoading:', isMemoryLoading);
@@ -223,6 +267,14 @@ export const MemorySummaryScreen: React.FC = () => {
               </View>
             )}
           </View>
+        )}
+        {!isLoading && !hasError && (
+          <TouchableOpacity 
+            style={styles.deleteAccountButton} 
+            onPress={handleDeleteAccount}
+          >
+            <Text style={styles.deleteAccountText}>Delete Account</Text>
+          </TouchableOpacity>
         )}
       </ScrollView>
     </Layout>
@@ -435,5 +487,24 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginVertical: 6,
     lineHeight: 22,
-  }
+  },
+  deleteAccountButton: {
+    marginTop: 24,
+    marginHorizontal: 16,
+    marginBottom: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderWidth: 1.5,
+    borderColor: '#FF6B6B',
+    borderRadius: 12,
+    alignSelf: 'center',
+    backgroundColor: 'transparent',
+  },
+  deleteAccountText: {
+    color: '#FF6B6B',
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
 });

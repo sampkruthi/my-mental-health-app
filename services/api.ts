@@ -74,6 +74,9 @@ export interface ApiService {
   // ---------- User Profile ----------
   getUserProfile(): Promise<UserProfile>;
   updateUserProfile(data: UserProfileUpdateRequest): Promise<UserProfile>;
+  clearChatHistory(): Promise<{ message: string }>;
+  deleteAccount(): Promise<{ message: string }>;
+
 }
 
 // Step 2: Global service
@@ -687,6 +690,15 @@ async getContentRecommendationsRag(params?: { limit?: number }) {
     return data;
   },
 
+  async clearChatHistory() {
+    const { data } = await apiClient.delete("/api/chat/history");
+    return data;
+  },
+  
+  async deleteAccount() {
+    const { data } = await apiClient.delete("/api/auth/account");
+    return data;
+  },  
 };
 
 // Step 4: Export mock too

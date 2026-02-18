@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Linking,
+  Alert
 } from "react-native";
 import { useChatStore } from "../../stores/chatStore";
 import { useAuth } from "../../context/AuthContext";
@@ -26,6 +27,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import Svg, { Line, Circle, Path } from "react-native-svg";
 import { getApiService } from "../../../services/api";
+import { Menu, MenuOptions, MenuOption, MenuTrigger, MenuProvider } from 'react-native-popup-menu';
 
 const { width } = Dimensions.get("window");
 
@@ -166,6 +168,49 @@ const ChatScreen = () => {
     }
   };
 
+  const handleClearChat = async () => {
+    Alert.alert(
+      "Clear Chat History",
+      "This will permanently delete all your conversations. This cannot be undone.\n\nContinue?",
+      [
+        { 
+          text: "Cancel", 
+          style: "cancel" 
+        },
+        {
+          text: "Clear All",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const api = getApiService();
+              await api.clearChatHistory();
+              
+              // Clear local state
+              setMessages([]);
+              setOffset(0);
+              setHasMore(false);
+              
+              // Add welcome message back
+              const welcomeMessage: ChatMessage = {
+                id: 'welcome-' + Date.now(),
+                sender: 'ai',
+                text: 'Hi! How are you doing today?',
+                timestamp: new Date().toISOString(),
+              };
+              addMessage(welcomeMessage);
+              
+              Alert.alert("Success", "Chat history cleared");
+            } catch (error) {
+              console.error('Clear chat error:', error);
+              Alert.alert("Error", "Failed to clear chat history. Please try again.");
+            }
+          }
+        }
+      ]
+    );
+  };
+  
+
   const renderMessage = ({ item }: { item: ChatMessage }) => {
     const isUser = item.sender === "user";
 
@@ -243,6 +288,7 @@ const ChatScreen = () => {
 
   if (!disclaimerAccepted) {
     return (
+      <MenuProvider>
       <Layout title="Chat" onNavigate={(screen) => navigation.navigate(screen as never)}>
         <ScrollView
           style={{ flex: 1, backgroundColor: colors.background }}
@@ -306,24 +352,49 @@ const ChatScreen = () => {
           </TouchableOpacity>
         </ScrollView>
       </Layout>
+      </MenuProvider>
     );
   }
 
   if (isLoadingInitial) {
     return (
+      <MenuProvider>
       <Layout title="Chat" onNavigate={(screen) => navigation.navigate(screen as never)}>
         <View style={[styles.container, styles.centerContent, { backgroundColor: colors.background }]}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.text }]}>Loading conversation...</Text>
         </View>
       </Layout>
+      </MenuProvider>
     );
   }
 
   return (
+    <MenuProvider>
     <Layout
       title="Chat"
       onNavigate={(screen) => navigation.navigate(screen as never)}
+      rightComponent={
+        <Menu>
+          <MenuTrigger>
+            <View style={styles.menuButton}>
+              <Text style={[styles.menuDots, { color: colors.text }]}>⋮</Text>
+            </View>
+          </MenuTrigger>
+          <MenuOptions customStyles={{
+            optionsContainer: {
+              borderRadius: 12,
+              marginTop: 40,
+              marginRight: 8,
+              padding: 4,
+            }
+          }}>
+            <MenuOption onSelect={handleClearChat}>
+              <Text style={styles.menuOptionText}>Clear Chat History</Text>
+            </MenuOption>
+          </MenuOptions>
+        </Menu>
+      }
     >
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <KeyboardAvoidingView
@@ -407,6 +478,7 @@ const ChatScreen = () => {
         </KeyboardAvoidingView>
       </View>
     </Layout>
+    </MenuProvider>
   );
 };
 
@@ -520,6 +592,21 @@ const styles = StyleSheet.create({
     color: "#fff", 
     fontWeight: "bold",
     fontSize: 20,
+  },
+  menuButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  menuDots: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    lineHeight: 24,
+  },
+  menuOptionText: {
+    fontSize: 16,
+    padding: 12,
+    color: '#FF6B6B',
+    fontWeight: '600',
   },
   messageRow: {
     flexDirection: 'row',
