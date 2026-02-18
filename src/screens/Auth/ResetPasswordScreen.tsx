@@ -7,6 +7,22 @@ import { RootStackParamList } from "../../navigation/AppNavigator";
 import { useForgotPassword, useResetPassword } from "../../api/hooks";
 import { useCustomAlert } from "../../components/UI/CustomAlert";
 
+const validatePassword = (password: string): string | null => {
+  if (password.length < 8) {
+    return "Password must be at least 8 characters long";
+  }
+  const hasLetters = /[a-zA-Z]/.test(password);
+  const hasNumbers = /[0-9]/.test(password);
+
+  if (!hasLetters) {
+    return "Password must contain at least one letter";
+  }
+  if (!hasNumbers) {
+    return "Password must contain at least one number";
+  }
+  return null;
+};
+
 export default function ResetPasswordScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, "ResetPassword">>();
@@ -52,8 +68,9 @@ export default function ResetPasswordScreen() {
       alert("Error", "Please enter the reset token.");
       return;
     }
-    if (newPassword.length < 8) {
-      alert("Error", "Password must be at least 8 characters.");
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      alert("Error", passwordError);
       return;
     }
     if (newPassword !== confirmPassword) {

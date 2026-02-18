@@ -42,6 +42,22 @@ const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS || "";
 const { width } = Dimensions.get("window");
 
 
+const validatePassword = (password: string): string | null => {
+  if (password.length < 8) {
+    return "Password must be at least 8 characters long";
+  }
+  const hasLetters = /[a-zA-Z]/.test(password);
+  const hasNumbers = /[0-9]/.test(password);
+
+  if (!hasLetters) {
+    return "Password must contain at least one letter";
+  }
+  if (!hasNumbers) {
+    return "Password must contain at least one number";
+  }
+  return null;
+};
+
 const testTimezoneFlow = async () => {
   const tz = getUserTimezone();
   console.log("=== QUICK TIMEZONE TEST ===");
@@ -191,6 +207,11 @@ const RegisterScreen: React.FC = () => {
     }
     if (!password.trim()) {
       showAlert("Error", "Please enter a password");
+      return;
+    }
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      showAlert("Error", passwordError);
       return;
     }
     if (password !== confirmPassword) {

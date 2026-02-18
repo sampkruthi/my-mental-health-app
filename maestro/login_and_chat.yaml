@@ -1,0 +1,24 @@
+appId: com.Bodhira.mentalhealthassistant
+---
+- launchApp
+- tapOn:
+    id: "login_email"
+- inputText: "${EMAIL}"
+- tapOn:
+    id: "login_password"
+- inputText: "${PASSWORD}"
+- tapOn:
+    id: "login_submit"
+- waitForAnimationToEnd
+- tapOn:
+    id: "home_card_chat_title"
+- waitForAnimationToEnd
+- tapOn:
+    id: "chat_disclaimer_continue"
+- waitForAnimationToEnd
+- assertVisible: "Chat"
+- tapOn:
+    id: "chat_input"
+- inputText: "Hello from Maestro E2E"
+- tapOn:
+    id: "chat_send"

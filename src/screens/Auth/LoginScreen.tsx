@@ -71,7 +71,6 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
 
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -305,17 +304,8 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          {/* Remember Me & Forgot Password */}
+          {/* Forgot Password */}
           <View style={styles.actionsRow}>
-            <TouchableOpacity
-              style={styles.rememberMeContainer}
-              onPress={() => setRememberMe(!rememberMe)}
-            >
-              <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-                {rememberMe && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-              <Text style={styles.rememberMeText}>Remember me</Text>
-            </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate("ResetPassword")}>
               <Text style={styles.forgotPasswordText}>Forgot password?</Text>
             </TouchableOpacity>
@@ -501,32 +491,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 24,
-  },
-  rememberMeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: "#2C2C2C",
-    marginRight: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  checkboxChecked: {
-    backgroundColor: "#2C2C2C",
-  },
-  checkmark: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  rememberMeText: {
-    fontSize: 14,
-    color: "#7F8C8D",
   },
   forgotPasswordText: {
     fontSize: 14,
