@@ -28,7 +28,7 @@ import { registerAuthErrorHandlers } from "./src/utils/authErrorHandler";
 const queryClient = new QueryClient();
 
 const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: ["bodhira://", "https://bodhira.ai", "https://web.bodhira.ai"],
+  prefixes: ["https://bodhira.ai", "https://web.bodhira.ai", "bodhira://",],
   config: {
     screens: {
       ResetPassword: {

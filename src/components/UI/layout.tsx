@@ -28,9 +28,10 @@ type LayoutProps = {
   title: string;
   children: React.ReactNode;
   onNavigate: (screen: string) => void;
+  rightComponent?: React.ReactNode;
 };
 
-function Layout({ children, title, onNavigate }: LayoutProps) {
+function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
   const { colors, toggleTheme } = useTheme();
   const { width } = useWindowDimensions();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -71,6 +72,11 @@ function Layout({ children, title, onNavigate }: LayoutProps) {
         <Text style={[styles.title, { color: colors.buttonText }]}>
           {String(title || "Mental health App")}
         </Text>
+
+        {/* Right component (menu, buttons, etc.) */}
+        <View style={styles.rightComponent}>
+          {rightComponent}
+        </View>
       </View>
 
       {/* Drawer */}
@@ -175,6 +181,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: "bold",
+    flex: 1,
+  },
+  rightComponent: {
+    marginLeft: "auto",
   },
   drawer: {
     position: "absolute",
