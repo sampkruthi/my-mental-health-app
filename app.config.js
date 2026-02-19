@@ -20,7 +20,7 @@ module.exports = {
       icon: "./assets/bodhira_ios_icon_cream.png",
       googleServicesFile: process.env.GOOGLE_SERVICE_INFO_PLIST || "./GoogleService-Info.plist",
       infoPlist: {
-        ITSAppUsesNonExemptEncryption: false
+        ITSAppUsesNonExemptEncryption: true
       }
     },
     android: {
