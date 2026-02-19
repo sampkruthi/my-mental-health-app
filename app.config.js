@@ -17,7 +17,7 @@ module.exports = {
     ios: {
       bundleIdentifier: "com.Bodhira.mentalhealthassistant",
       supportsTablet: true,
-      icon: "./assets/bodhira_ios_icon_full.png",
+      icon: "./assets/bodhira_ios_icon_cream.png",
       googleServicesFile: process.env.GOOGLE_SERVICE_INFO_PLIST || "./GoogleService-Info.plist",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false
