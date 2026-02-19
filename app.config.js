@@ -17,7 +17,7 @@ module.exports = {
     ios: {
       bundleIdentifier: "com.Bodhira.mentalhealthassistant",
       supportsTablet: true,
-      googleServicesFile: process.env.GOOGLE_SERVICE_INFO_PLIST || "./ios/GoogleService-Info.plist",
+      googleServicesFile: process.env.GOOGLE_SERVICE_INFO_PLIST || "./GoogleService-Info.plist",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false
       }
@@ -48,11 +48,11 @@ module.exports = {
           android: {
             usesCleartextTraffic: true,
             networkInspector: true,
-            newArchEnabled: true
+            //newArchEnabled: true
           },
-          ios: {
-            newArchEnabled: true
-          }
+          //ios: {
+          //  newArchEnabled: true
+          //}
         }
       ],
       "expo-notifications",
