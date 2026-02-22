@@ -31,7 +31,7 @@ module.exports = {
         backgroundColor: "#ffffff"
       },
       package: "com.Bodhira.mentalhealthassistant",
-      googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? "./android/app/src/google-services.json"
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON_NEW ?? "./google-services.json"
     },
     web: {
       favicon: "./assets/favicon.png"
