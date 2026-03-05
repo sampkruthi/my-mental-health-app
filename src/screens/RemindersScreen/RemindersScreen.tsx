@@ -27,6 +27,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { SPACING, TYPOGRAPHY, BORDER_RADIUS, SHADOWS } from "../../constants/styles";
 import type { Reminder1 as Reminder, NewReminder } from "../../api/types";
+import Toast from "../../components/UI/Toast";
 
 const { width } = Dimensions.get("window");
 const isIPad = Platform.OS === 'ios' && Platform.isPad;
@@ -55,25 +56,26 @@ const ReminderScreen = () => {
   const [minute, setMinute] = useState("");
   const [period, setPeriod] = useState<"AM" | "PM">("AM");
   const [message, setMessage] = useState("");
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const list = remindersQuery.data || [];
 
   // Add reminder
   const handleAdd = () => {
     if (!type || hour === "" || minute === "") {
-      alert("Please fill in reminder type, hour, and minute");
+      setToast({ message: "Please fill in reminder type, hour, and minute", type: "error" });
       return;
     }
 
     const hourNum = parseInt(hour);
     if (hourNum < 1 || hourNum > 12) {
-      alert("Hour must be between 1 and 12");
+      setToast({ message: "Hour must be between 1 and 12", type: "error" });
       return;
     }
 
     const minuteNum = parseInt(minute);
     if (minuteNum < 0 || minuteNum > 59) {
-      alert("Minute must be between 0 and 59");
+      setToast({ message: "Minute must be between 0 and 59", type: "error" });
       return;
     }
 
@@ -93,7 +95,7 @@ const ReminderScreen = () => {
         setPeriod("AM");
         setMessage("");
         queryClient.invalidateQueries({ queryKey: ["reminders", "list", token] });
-        Alert.alert("Success", "Reminder added successfully");
+        setToast({ message: "Reminder added successfully", type: "success" });
       },
     });
   };
@@ -103,7 +105,7 @@ const ReminderScreen = () => {
     deleteMutation.mutate(id.toString(), {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["reminders", "list", token] });
-        Alert.alert("Success", "Reminder deleted successfully");
+        setToast({ message: "Reminder deleted successfully", type: "success" });
       },
     });
   };
@@ -376,6 +378,12 @@ const ReminderScreen = () => {
           </View>
         )}
       </ScrollView>
+      <Toast
+        message={toast?.message || ""}
+        type={toast?.type || "success"}
+        visible={!!toast}
+        onHide={() => setToast(null)}
+      />
     </Layout>
   );
 };

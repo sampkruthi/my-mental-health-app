@@ -75,8 +75,8 @@ const HomeScreen = () => {
               key={item.key}
               title={item.title}
               subtitle={item.subtitle}
-              titleStyle={{fontSize: isIPad? 24 : 18}}
-              subtitleStyle={{ fontSize: isIPad ? 14 : 10 }}
+              titleStyle={{fontSize: isIPad? 28 : 22}}
+              subtitleStyle={{ fontSize: isIPad ? 16 : 13 }}
               onPress={() => navigation.navigate(item.key as never)}
               testID={`home_card_${item.key}`}
               titleColor="#FFFFFF"

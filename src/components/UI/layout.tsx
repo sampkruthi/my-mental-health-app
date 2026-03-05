@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
+import { useFetchUserProfile } from "../../api/hooks";
 
 import BottomNav from "./BottomNav";
 //import AppLogo from "../../images/Meditating_logo.png";
@@ -39,7 +40,8 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const slideAnim = useState(new Animated.Value(-250))[0];
 
-  const { signOut } = useAuth();
+  const { signOut, token } = useAuth();
+  const { data: profile } = useFetchUserProfile(token);
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -81,6 +83,15 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
         </View>
       </View>
 
+      {/* Backdrop overlay - dismiss menu when tapped anywhere */}
+      {menuOpen && (
+        <TouchableOpacity
+          style={styles.backdrop}
+          onPress={toggleMenu}
+          activeOpacity={1}
+        />
+      )}
+
       {/* Drawer */}
       <Animated.View
         style={[
@@ -88,6 +99,13 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
           { left: slideAnim, backgroundColor: colors.cardBackground },
         ]}
       >
+        {/* User Name Header */}
+        <View style={[styles.drawerHeader, { borderBottomColor: colors.subText }]}>
+          <Text style={[styles.drawerUserName, { color: colors.text }]}>
+            {profile?.name || "User"}
+          </Text>
+        </View>
+
         <TouchableOpacity
           style={styles.drawerItem}
           onPress={() => {
@@ -95,7 +113,7 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
             toggleMenu();
           }}
         >
-          <Text style={{ color: colors.text }}>🏠 Home</Text>
+          <Text style={[styles.drawerItemText, { color: colors.text }]}>🏠 Home</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -105,7 +123,7 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
             toggleMenu();
           }}
         >
-          <Text style={{ color: colors.text }}>👤 Profile</Text>
+          <Text style={[styles.drawerItemText, { color: colors.text }]}>👤 Profile</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -115,7 +133,7 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
             toggleMenu();
           }}
         >
-          <Text style={{ color: colors.text }}>🌗 Switch Theme</Text>
+          <Text style={[styles.drawerItemText, { color: colors.text }]}>🌗 Switch Theme</Text>
         </TouchableOpacity>
 
 
@@ -126,7 +144,7 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
             toggleMenu();
           }}
         >
-          <Text style={{ color: colors.text }}>Logout</Text>
+          <Text style={[styles.drawerItemText, { color: colors.text }]}>Logout</Text>
         </TouchableOpacity>
       </Animated.View>
 
@@ -190,22 +208,45 @@ const styles = StyleSheet.create({
   rightComponent: {
     marginLeft: "auto",
   },
+  backdrop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+  },
   drawer: {
     position: "absolute",
     top: 56,
     bottom: 0,
     width: 250,
     zIndex: 10,
-    paddingVertical: 20,
+    paddingVertical: 0,
     shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowOffset: { width: 2, height: 0 },
     shadowRadius: 4,
     elevation: 5,
   },
-  drawerItem: {
-    paddingVertical: 15,
+  drawerHeader: {
+    paddingVertical: 20,
     paddingHorizontal: 20,
+    borderBottomWidth: 1,
+  },
+  drawerUserName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  drawerItem: {
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+  },
+  drawerItemText: {
+    fontSize: 16,
+    fontWeight: "500",
   },
   container: {
     flex: 1,
