@@ -20,7 +20,8 @@ import BottomNav from "./BottomNav";
 //import AppLogo from "../../images/Meditating_logo.png";
 //import AppLogo from "../../images/MeditatingLogoBlueBG.png";
 import AppLogo from "../../images/MeditatingLogoTransparent.png";
-import UserProfileIcon from "../../images/Gemini_profile_pic_transparent.png";
+//import UserProfileIcon from "../../images/Gemini_profile_pic_transparent.png";
+import UserProfileIcon from "../../images/profilepic_transparent.png";
 
 import { Button } from "../UI/Button";
 import { Card } from "../UI/Card";
@@ -110,7 +111,7 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
         >
           <Image
             source={UserProfileIcon}
-            style={[styles.userProfileImage, { width: isIPad ? 32 : 24, height: isIPad ? 32 : 24, backgroundColor: colors.cardBackground }]}
+            style={[styles.userProfileImage, { width: isIPad ? 40 : 36, height: isIPad ? 40 : 36, backgroundColor: colors.cardBackground }]}
             resizeMode="contain"
           />
           <Text style={[styles.drawerUserName, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>
@@ -156,7 +157,7 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
             toggleMenu();
           }}
         >
-          <Text style={[styles.drawerItemText, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>Logout</Text>
+          <Text style={[styles.drawerItemText, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>💻 Logout</Text>
         </TouchableOpacity>
       </Animated.View>
 
@@ -250,17 +251,20 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   drawerUserItem: {
-    marginBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E5E5",
+    borderBottomColor: "rgba(0,0,0,0.08)",
+    marginBottom: 8,
+    gap: 12,
   },
   userProfileImage: {
-    width: 24,
-    height: 24,
+    width: 28,
+    height: 28,
+    flexShrink: 0,
   },
   drawerUserName: {
     fontSize: 16,
     fontWeight: "600",
+    flex: 1, 
   },
   drawerItemText: {
     fontSize: 16,
