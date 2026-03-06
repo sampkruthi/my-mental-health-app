@@ -20,6 +20,7 @@ import BottomNav from "./BottomNav";
 //import AppLogo from "../../images/Meditating_logo.png";
 //import AppLogo from "../../images/MeditatingLogoBlueBG.png";
 import AppLogo from "../../images/MeditatingLogoTransparent.png";
+import UserProfileIcon from "../../images/Gemini_Bodhira_profile_pic.png";
 
 import { Button } from "../UI/Button";
 import { Card } from "../UI/Card";
@@ -101,7 +102,7 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
       >
         {/* User Name Header */}
         <View style={styles.drawerHeader}>
-          <Text style={styles.userCharacter}>🧘</Text>
+          <Image source={UserProfileIcon} style={styles.userProfileImage} />
           <Text style={[styles.drawerUserName, { color: colors.text }]}>
             {profile?.name || "User"}
           </Text>
@@ -189,17 +190,17 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   logoContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 65,
+    height: 65,
+    borderRadius: 32.5,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
     overflow: 'hidden',
   },
   logo: {
-    width: 45,
-    height: 45,
+    width: 60,
+    height: 60,
   },
   title: {
     fontSize: 20,
@@ -238,13 +239,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
-  userCharacter: {
-    fontSize: 28,
+  userProfileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   drawerUserName: {
     fontSize: 16,
     fontWeight: "600",
-    flex: 1,
   },
   drawerItem: {
     paddingVertical: 18,
