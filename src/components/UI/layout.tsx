@@ -74,7 +74,7 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
           <Image source={AppLogo} style={styles.logo} resizeMode="contain" />
         </View>
 
-        <Text style={[styles.title, { color: colors.buttonText }]}>
+        <Text style={[styles.title, { color: colors.buttonText, fontSize: isIPad ? 24 : 20 }]}>
           {String(title || "Mental health App")}
         </Text>
 
@@ -101,12 +101,22 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
         ]}
       >
         {/* User Name Header */}
-        <View style={styles.drawerHeader}>
-          <Image source={UserProfileIcon} style={styles.userProfileImage} />
-          <Text style={[styles.drawerUserName, { color: colors.text }]}>
+        <TouchableOpacity
+          style={[styles.drawerItem, styles.drawerUserItem]}
+          onPress={() => {
+            onNavigate("memorysummary");
+            toggleMenu();
+          }}
+        >
+          <Image
+            source={UserProfileIcon}
+            style={[styles.userProfileImage, { width: isIPad ? 32 : 24, height: isIPad ? 32 : 24, backgroundColor: colors.cardBackground }]}
+            resizeMode="contain"
+          />
+          <Text style={[styles.drawerUserName, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>
             {profile?.name || "User"}
           </Text>
-        </View>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.drawerItem}
@@ -115,7 +125,7 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
             toggleMenu();
           }}
         >
-          <Text style={[styles.drawerItemText, { color: colors.text }]}>🏠 Home</Text>
+          <Text style={[styles.drawerItemText, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>🏠 Home</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -125,7 +135,7 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
             toggleMenu();
           }}
         >
-          <Text style={[styles.drawerItemText, { color: colors.text }]}>👤 Profile</Text>
+          <Text style={[styles.drawerItemText, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>👤 Profile</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -135,7 +145,7 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
             toggleMenu();
           }}
         >
-          <Text style={[styles.drawerItemText, { color: colors.text }]}>🌗 Switch Theme</Text>
+          <Text style={[styles.drawerItemText, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>🌗 Switch Theme</Text>
         </TouchableOpacity>
 
 
@@ -146,7 +156,7 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
             toggleMenu();
           }}
         >
-          <Text style={[styles.drawerItemText, { color: colors.text }]}>Logout</Text>
+          <Text style={[styles.drawerItemText, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>Logout</Text>
         </TouchableOpacity>
       </Animated.View>
 
@@ -232,29 +242,30 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  drawerHeader: {
+  drawerItem: {
     paddingVertical: 18,
     paddingHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
+  drawerUserItem: {
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E5E5",
+  },
   userProfileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 24,
+    height: 24,
   },
   drawerUserName: {
     fontSize: 16,
     fontWeight: "600",
   },
-  drawerItem: {
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-  },
   drawerItemText: {
     fontSize: 16,
     fontWeight: "500",
+    flex: 1,
   },
   container: {
     flex: 1,
