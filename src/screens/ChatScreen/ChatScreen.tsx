@@ -460,7 +460,7 @@ const ChatScreen = () => {
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : "height"}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? HEADER_HEIGHT : 0}
         >
             { /* FlatList takes up all available space */}
@@ -478,7 +478,15 @@ const ChatScreen = () => {
             //onContentSizeChange fires after Flatlist finishes rendering content, more reliable than
             //setTimeout alone
             onContentSizeChange={() => {
-              flatListRef.current?.scrollToEnd({ animated: false });
+              if (Platform.OS === 'android') {
+                // Android needs a longer delay — layout measurement happens after
+                // keyboard resize, so scrollToEnd fires too early without this
+                setTimeout(() => {
+                  flatListRef.current?.scrollToEnd({ animated: false });
+                }, 150);
+              } else {
+                flatListRef.current?.scrollToEnd({ animated: false });
+              }
             }}
             onLayout={() => {
               flatListRef.current?.scrollToEnd({ animated: false });
