@@ -25,7 +25,7 @@ module.exports = {
       }
     },
     android: {
-      softwareKeyboardLayoutMode: "resize",
+      softwareKeyboardLayoutMode: "pan",
       permissions: ["INTERNET"],
       adaptiveIcon: {
         foregroundImage: "./assets/bodhira_adaptive_icon_foreground.png",
