@@ -20,7 +20,7 @@ import BottomNav from "./BottomNav";
 //import AppLogo from "../../images/Meditating_logo.png";
 //import AppLogo from "../../images/MeditatingLogoBlueBG.png";
 import AppLogo from "../../images/MeditatingLogoTransparent.png";
-import UserProfileIcon from "../../images/Gemini_Bodhira_profile_pic.png";
+import UserProfileIcon from "../../images/Gemini_Bodhira_profile_pic.jpg";
 
 import { Button } from "../UI/Button";
 import { Card } from "../UI/Card";
