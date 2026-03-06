@@ -471,7 +471,7 @@ const ChatScreen = () => {
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={[
               styles.chatContainer,
-              { paddingBottom: Platform.OS === 'android' ? 100 : 10 }
+              { paddingBottom: Platform.OS === 'android' ? 20 : 10 }
             ]}
             ListHeaderComponent={renderListHeader}
             ListFooterComponent={renderListFooter}
@@ -519,7 +519,8 @@ const ChatScreen = () => {
             { 
               borderColor: colors.inputBorder,
               backgroundColor: colors.background,
-              paddingBottom: Platform.OS === 'ios' ? insets.bottom + 8 : 16,
+              paddingBottom: Platform.OS === 'ios' ? insets.bottom + 8 : 32,
+              marginBottom: Platform.OS === 'android' ? 8 : 0,
             }
           ]}>
             <TouchableOpacity
