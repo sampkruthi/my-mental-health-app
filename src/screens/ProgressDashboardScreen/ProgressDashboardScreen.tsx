@@ -144,8 +144,8 @@ export const ProgressDashboardScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    maxWidth: isIPad ? 700 : undefined,
+    padding: isIPad ? 32 : 16,
+    maxWidth: isIPad ? 900 : undefined,
     width: '100%',
     alignSelf: 'center',
   },
@@ -192,9 +192,9 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   metric: {
-    width: '48%',
+    width: isIPad ? '47%' : '48%',
     alignItems: 'center',
-    padding: 16,
+    padding: isIPad ? 24 : 16,
     borderRadius: 16,
     // ADD shadow:
     shadowColor: '#000',

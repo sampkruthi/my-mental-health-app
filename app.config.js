@@ -12,7 +12,7 @@ module.exports = {
     splash: {
       image: "./assets/bodhira_splash_screen.png",
       resizeMode: "contain",
-      backgroundColor: "#ffffff"
+      backgroundColor: "#FAF8F5"
     },
     ios: {
       bundleIdentifier: "com.Bodhira.mentalhealthassistant",

@@ -157,7 +157,14 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
             toggleMenu();
           }}
         >
-          <Text style={[styles.drawerItemText, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>💻 Logout</Text>
+          <Text
+            style={[
+              styles.drawerItemText,
+              { color: colors.text, fontSize: isIPad ? 18 : 16 },
+            ]}
+          >
+            👋 Logout
+          </Text>
         </TouchableOpacity>
       </Animated.View>
 

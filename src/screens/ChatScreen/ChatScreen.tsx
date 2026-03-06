@@ -101,7 +101,7 @@ const ChatScreen = () => {
       if (initialHistory.messages.length > 0) {
         setMessages(initialHistory.messages);
         setHasMore(initialHistory.has_more);
-        setOffset(MESSAGES_PER_PAGE);
+        //setOffset(MESSAGES_PER_PAGE);
       } else {
         const welcomeMessage: ChatMessage = {
           id: 'welcome-' + Date.now(),
@@ -134,7 +134,11 @@ const ChatScreen = () => {
     setIsLoadingMore(true);
 
     try {
-      const olderMessages = await getApiService().getChatHistory?.(MESSAGES_PER_PAGE, offset) ?? {
+      const oldestId = messages.length > 0
+        ? Math.min(...messages.map(m => parseInt(m.id)).filter(id => !isNaN(id)))
+        : undefined;
+
+      const olderMessages = await getApiService().getChatHistory?.(MESSAGES_PER_PAGE, oldestId) ?? {
         messages: [],
         total_count: 0,
         has_more: false
@@ -142,7 +146,7 @@ const ChatScreen = () => {
       
       if (olderMessages && olderMessages.messages.length > 0) {
         prependMessages(olderMessages.messages);
-        setOffset(offset + MESSAGES_PER_PAGE);
+        //setOffset(offset + MESSAGES_PER_PAGE);
         setHasMore(olderMessages.has_more);
       } else {
         setHasMore(false);
@@ -199,7 +203,7 @@ const ChatScreen = () => {
 
               // Clear local state
               setMessages([]);
-              setOffset(0);
+              //setOffset(0);
               setHasMore(false);
 
               // Add welcome message back
@@ -507,6 +511,7 @@ const ChatScreen = () => {
             { 
               borderColor: colors.inputBorder,
               backgroundColor: colors.background,
+              paddingBottom: Platform.OS === 'ios' ? insets.bottom + 8 : 16,
             }
           ]}>
             <TouchableOpacity
