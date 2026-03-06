@@ -54,7 +54,7 @@ const ChatScreen = () => {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   
-  const [offset, setOffset] = useState(0);
+  //const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
@@ -76,9 +76,9 @@ const ChatScreen = () => {
       (e) => {
         setKeyboardHeight(e.endCoordinates.height);
         // Scroll to end when keyboard opens
-        setTimeout(() => {
+       /* setTimeout(() => {
           flatListRef.current?.scrollToEnd({ animated: true });
-        }, 100);
+        }, 100); */
       }
     );
 
@@ -116,12 +116,15 @@ const ChatScreen = () => {
     }
   }, [initialHistory, initialLoadDone]);
 
-  //Scroll to bottom when messages change
+  //Scroll to bottom when messages change: Single scroll-to-end source of truth. Increased delay 100ms→200ms, added clearTimeout cleanup,
+  // animated=false on first load so initial render doesn't flicker
+
   useEffect(() => {
     if (flatListRef.current && messages.length > 0 && initialLoadDone) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      const timer = setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: messages.length > 1 });
+      }, 200);
+      return () => clearTimeout(timer);
     }
   }, [messages.length, initialLoadDone]);
 
@@ -453,7 +456,7 @@ const ChatScreen = () => {
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : "height"}
           keyboardVerticalOffset={Platform.OS === 'ios' ? HEADER_HEIGHT : 0}
         >
             { /* FlatList takes up all available space */}
@@ -468,9 +471,22 @@ const ChatScreen = () => {
             ]}
             ListHeaderComponent={renderListHeader}
             ListFooterComponent={renderListFooter}
+            //onContentSizeChange fires after Flatlist finishes rendering content, more reliable than
+            //setTimeout alone
+            onContentSizeChange={() => {
+              flatListRef.current?.scrollToEnd({ animated: false });
+            }}
+            onLayout={() => {
+              flatListRef.current?.scrollToEnd({ animated: false });
+            }}
+            onScrollBeginDrag={() => {
+              // Only load more when user explicitly scrolls to top
+            }}
+
             onScroll={(event) => {
+              //changing threshhold from < 100 to <=0 : old value triggered loadMoreMessages constantly while scrolling near top
               const { contentOffset } = event.nativeEvent;
-              if (contentOffset.y < 100 && hasMore && !isLoadingMore) {
+              if (contentOffset.y <= 0 && hasMore && !isLoadingMore) {
                 loadMoreMessages();
               }
             }}
@@ -478,8 +494,10 @@ const ChatScreen = () => {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
             maintainVisibleContentPosition={{
-                minIndexForVisible: 0,
-                autoscrollToTopThreshold: 10,
+                minIndexForVisible: 0, 
+                // autoscrollToTopThreshold removed (set to undefined) — value of 10 was
+                // auto-scrolling upward when new messages arrived, fighting scrollToEnd calls
+                autoscrollToTopThreshold: undefined,
               }}
           />
 
@@ -512,11 +530,6 @@ const ChatScreen = () => {
               blurOnSubmit={false}
               autoFocus={false}
               returnKeyType="default"
-              onFocus={() => {
-                setTimeout(() => {
-                  flatListRef.current?.scrollToEnd({ animated: true });
-                }, 300);
-              }}
             />
 
             <TouchableOpacity testID="chat_send" onPress={handleSend} style={styles.sendBtn}>

@@ -28,5 +28,9 @@ export const useChatStore = create<ChatState>((set) => ({
   setMessages: (messages) => 
     set({ messages }),
   prependMessages: (messages) =>
-    set((state) => ({ messages: [...messages, ...state.messages] })),
+    set((state) => {
+      const existingIds = new Set(state.messages.map((m) => m.id));
+      const unique = messages.filter((m) => !existingIds.has(m.id));
+      return { messages: [...unique, ...state.messages] };
+    }),
 }));

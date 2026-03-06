@@ -30,7 +30,7 @@ export interface ApiService {
   logMood?: (input: { score: number; note?: string }) => Promise<MoodLog>;
   getReminders?: () => Promise<Reminder[]>;
   //getChatHistory?: () => Promise<ChatMessage[]>;
-  getChatHistory?: (limit?: number, offset?: number) => Promise<{
+  getChatHistory?: (limit?: number, offset?: number, before_id?: number) => Promise<{
     messages: ChatMessage[];
     total_count: number;
     has_more: boolean;
@@ -539,9 +539,13 @@ export const realApiService: ApiService = {
 
   //Chat history
 
-  async getChatHistory(limit: number = 20, offset: number = 0) {
+  async getChatHistory(limit: number = 20, offset: number = 0, before_id?: number) {
     const { data } = await apiClient.get("/api/chat/history", {
-      params: { limit, offset }
+      params: { 
+        limit, 
+        offset,
+        ...(before_id !== undefined && { before_id })
+      }
     });
     
     return {
