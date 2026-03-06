@@ -100,7 +100,8 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
         ]}
       >
         {/* User Name Header */}
-        <View style={[styles.drawerHeader, { borderBottomColor: colors.subText }]}>
+        <View style={styles.drawerHeader}>
+          <Text style={styles.userCharacter}>🧘</Text>
           <Text style={[styles.drawerUserName, { color: colors.text }]}>
             {profile?.name || "User"}
           </Text>
@@ -231,14 +232,19 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   drawerHeader: {
-    paddingVertical: 20,
+    paddingVertical: 18,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  userCharacter: {
+    fontSize: 28,
   },
   drawerUserName: {
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
+    fontSize: 16,
+    fontWeight: "600",
+    flex: 1,
   },
   drawerItem: {
     paddingVertical: 18,
