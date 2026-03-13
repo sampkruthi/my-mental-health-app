@@ -170,7 +170,9 @@ console.log('🔍 API Base URL:', getApiBaseUrl());
 
 //const API_BASE_URL = getApiBaseUrl();
 //console.log('🔍 API Base URL:', getApiBaseUrl());
-const API_BASE_URL = 'https://mental-health-assistant-app-production.up.railway.app';
+//Change to PROD BASE URL for Prod Deployment!!
+//const API_BASE_URL = 'https://mental-health-assistant-app-production.up.railway.app';
+const API_BASE_URL = 'https://mental-health-assistant-app-staging.up.railway.app';
 console.log('Using API URL:', API_BASE_URL);
 
 // Step 3: Real API
@@ -243,7 +245,16 @@ apiClient.interceptors.response.use(
       error.message = error.response.data.detail;
     }
 
-    if (error.response?.status === 401) {
+    const requestUrl: string = error.config?.url || "";
+    const isAuthEndpoint =
+      requestUrl.startsWith("/api/auth/token") ||
+      requestUrl.startsWith("/api/auth/register") ||
+      requestUrl.startsWith("/api/auth/google") ||
+      requestUrl.startsWith("/api/auth/google/code") ||
+      requestUrl.startsWith("/api/auth/forgot-password") ||
+      requestUrl.startsWith("/api/auth/reset-password");
+
+    if (error.response?.status === 401 && !isAuthEndpoint) {
       console.warn('401 Unauthorized - Token may be expired');
       // Handle unauthorized error (will trigger logout and redirect)
       handleUnauthorizedError(error.response?.data?.detail || 'Session expired');
@@ -575,6 +586,8 @@ export const realApiService: ApiService = {
         .split(/\n/)
         .map((s: string) => s.replace(/^\d+\)\s*/, "").trim())
         .filter((s: string) => s.length > 0),
+      audioUrl: activity.audio_url || null,
+      audioDurationSeconds: activity.audio_duration_seconds || null,
     }));
   },
 

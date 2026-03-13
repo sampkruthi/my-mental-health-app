@@ -1,5 +1,5 @@
 // src/screens/Auth/LoginScreen.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import { RootStackParamList } from "../../navigation/AppNavigator";
 import { Button } from "../../components/UI/Button";
 import { Alert } from "react-native";
 import MeditatingLogo from "../../images/Meditating_logo.png";
+import Toast from "../../components/UI/Toast";
 import {
   GoogleSignin,
   isSuccessResponse,
@@ -82,6 +83,7 @@ export default function LoginScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const appleLoginMutation = useAppleLogin();
   const [appleLoading, setAppleLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
   // Native Google Sign-In using Google Identity Services SDK
   const handleGoogleSignIn = async () => {
@@ -294,7 +296,14 @@ export default function LoginScreen() {
 
   const loading = loginMutation.status === "pending";
   const hasError = loginMutation.status === "error" || googleLoginMutation.status === "error" || appleLoginMutation.status === "error";
-  const error = loginMutation.error || googleLoginMutation.error || appleLoginMutation.status === "error";
+  const error = loginMutation.error || googleLoginMutation.error || appleLoginMutation.error;
+
+  useEffect(() => {
+    const message = typeof error === "string" ? error : error?.message;
+    if (hasError && message) {
+      setToast({ message, type: "error" });
+    }
+  }, [hasError, error]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4DB" }}>
@@ -310,6 +319,12 @@ export default function LoginScreen() {
         >
         {/* White Card Container */}
         <View style={styles.card}>
+          <Toast
+            message={toast?.message || ""}
+            type={toast?.type || "info"}
+            visible={!!toast}
+            onHide={() => setToast(null)}
+          />
           {/* Logo Section */}
           <View style={styles.logoSection}>
             <Image
@@ -388,15 +403,6 @@ export default function LoginScreen() {
               <Text style={styles.forgotPasswordText}>Forgot password?</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Error Message */}
-          {hasError && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>
-                Error: {error?.message || "Login failed"}
-              </Text>
-            </View>
-          )}
 
           {/* Sign In Button */}
           <TouchableOpacity

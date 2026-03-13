@@ -18,6 +18,7 @@ import {
   onNotificationReceived,
   onNotificationResponse,
   handleNotificationResponse,
+  consumePendingNotificationRoute,
   getPlatform,
 } from "./src/notificationService";
 import { useRegisterDeviceToken } from "./src/api/hooks";
@@ -110,7 +111,7 @@ function NotificationInitializer() {
         try {
           unsubscribeResponse = onNotificationResponse((response) => {
             console.log('[App] User responded to notification:', response);
-            handleNotificationResponse(response);
+            handleNotificationResponse(response, navigationRef.current, !!token);
           });
         } catch (e) {
           console.warn('[App] Could not set up notification response listener:', e);
@@ -137,7 +138,7 @@ function NotificationInitializer() {
  * Main App Content - Inside all providers
  */
 function AppContent({ navigationRef }: { navigationRef: React.RefObject<NavigationContainerRef<any> | null> }) {
-  const { restoreComplete, signOut } = useAuth();
+  const { restoreComplete, signOut, token } = useAuth();
 
   // Register auth error handlers once on component mount
   useEffect(() => {
@@ -156,6 +157,16 @@ function AppContent({ navigationRef }: { navigationRef: React.RefObject<Navigati
 
     registerAuthErrorHandlers(onUnauthorized, onNavigateToLogin);
   }, [signOut, navigationRef]);
+
+  useEffect(() => {
+    if (!token) return;
+    (async () => {
+      const pendingRoute = await consumePendingNotificationRoute();
+      if (pendingRoute && navigationRef.current) {
+        navigationRef.current.navigate(pendingRoute as never);
+      }
+    })();
+  }, [token, navigationRef]);
 
   // Show loading while restoring auth
   if (!restoreComplete) {

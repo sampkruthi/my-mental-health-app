@@ -1,7 +1,9 @@
 // src/screens/GuidedActivitiesScreen.tsx
 import React, { useState } from "react";
-import { View, Text, Image, FlatList, Modal, ScrollView, Dimensions, StyleSheet } from "react-native";
+import { View, Text, Image, FlatList, Modal, ScrollView, StyleSheet, Platform, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
+
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -10,7 +12,7 @@ import { useFetchActivities } from "../../api/hooks";
 import { Button } from "../../components/UI/Button";
 import Layout from "../../components/UI/layout";
 
-const { width } = Dimensions.get("window");
+const isIPad = Platform.OS === "ios" && Platform.isPad;
 
 const GuidedActivitiesScreen = () => {
   const { colors } = useTheme();
@@ -63,22 +65,46 @@ const GuidedActivitiesScreen = () => {
         )}
 
         <Modal visible={modalVisible} animationType="slide">
-          <ScrollView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
-            {selectedActivity && (
-              <>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>{selectedActivity.title}</Text>
-                {selectedActivity.steps?.map((step, index) => (
-                  <View key={index} style={styles.stepContainer}>
-                    <Text style={[styles.stepTitle, { color: colors.text }]}>Step {index + 1}</Text>
-                    <Text style={[styles.stepText, { color: colors.subText }]}>{step}</Text>
+          <SafeAreaView
+            style={{ flex: 1, backgroundColor: colors.background }}
+            edges={["top", "bottom"]}
+          >
+            <View style={[styles.modalHeader, { borderBottomColor: colors.inputBorder }]}>
+              <Text
+                style={[styles.modalHeaderTitle, { color: colors.subText }]}
+                numberOfLines={1}
+              >
+                {selectedActivity?.title}
+              </Text>
+              <TouchableOpacity onPress={handleDone} style={styles.closeButton}>
+                <Text style={[styles.closeButtonText, { color: colors.text }]}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={[styles.modalContainer, { backgroundColor: colors.background }]}
+              contentContainerStyle={{ paddingBottom: 40 }}
+            >
+              {selectedActivity && (
+                <>
+                  <Text style={[styles.modalTitle, { color: colors.text }]}>
+                    {selectedActivity.title}
+                  </Text>
+                  {selectedActivity.steps?.map((step, index) => (
+                    <View key={index} style={styles.stepContainer}>
+                      <Text style={[styles.stepTitle, { color: colors.text }]}>
+                        Step {index + 1}
+                      </Text>
+                      <Text style={[styles.stepText, { color: colors.subText }]}>{step}</Text>
+                    </View>
+                  ))}
+                  <View style={{ marginTop: 16 }}>
+                    <Button title="Done" onPress={handleDone} />
                   </View>
-                ))}
-                <View style={{ marginTop: 16 }}>
-                  <Button title="Done" onPress={handleDone} />
-                </View>
-              </>
-            )}
-          </ScrollView>
+                </>
+              )}
+            </ScrollView>
+          </SafeAreaView>
         </Modal>
       </View>
     </Layout>
@@ -88,7 +114,8 @@ const GuidedActivitiesScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: width > 800 ? 900 : "100%",
+    maxWidth: isIPad ? 700 : undefined,
+    width: "100%",
     alignSelf: "center",
     padding: 10,
   },
@@ -147,6 +174,27 @@ const styles = StyleSheet.create({
   },
   stepText: {
     fontSize: 14,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+  },
+  modalHeaderTitle: {
+    fontSize: 14,
+    fontWeight: "500",
+    flex: 1,
+    marginRight: 12,
+  },
+  closeButton: {
+    padding: 4,
+  },
+  closeButtonText: {
+    fontSize: 18,
+    fontWeight: "600",
   },
 });
 

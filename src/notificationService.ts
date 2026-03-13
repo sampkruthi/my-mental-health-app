@@ -1,7 +1,9 @@
 // src/services/notificationService.ts
 import * as Notifications from 'expo-notifications';
 import { Platform, Alert } from 'react-native';
-import { storage, STORAGE_KEYS } from '../src/utils/storage';
+import { storage } from '../src/utils/storage';
+
+const PENDING_NOTIFICATION_ROUTE_KEY = "pending_notification_route";
 
 /**
  * Notification Service
@@ -219,18 +221,48 @@ export async function initializeNotifications(): Promise<string | null> {
  * Handle notification response when user taps notification
  * Useful for navigating to relevant screen based on notification data
  */
-export function handleNotificationResponse(response: Notifications.NotificationResponse): void {
+type NavigationHandler = { navigate: (screen: string, params?: Record<string, any>) => void };
+
+export function handleNotificationResponse(
+  response: Notifications.NotificationResponse,
+  navigator?: NavigationHandler | null,
+  isAuthenticated: boolean = false
+): void {
   const { notification } = response;
   const { data } = notification.request.content;
 
   console.log('[NotificationService] Handling notification response with data:', data);
 
   if (data?.type === 'reminder') {
-    const reminderType = data.reminder_type;
+    const reminderType = String(data.reminder_type || data.reminderType || "").toLowerCase();
     console.log(`[NotificationService] Reminder notification tapped: ${reminderType}`);
-    // Could navigate to relevant screen based on reminderType
-    // e.g., navigate to RemindersScreen or show a modal
+    if (!navigator) {
+      console.warn('[NotificationService] No navigator available to handle reminder tap');
+      return;
+    }
+    let targetScreen = "reminders";
+    if (reminderType === 'journaling' || reminderType === 'journal') {
+      targetScreen = "journal";
+    } else if (reminderType === 'activity' || reminderType === 'activities') {
+      targetScreen = "activities";
+    }
+
+    if (!isAuthenticated) {
+      storage.setItem(PENDING_NOTIFICATION_ROUTE_KEY, targetScreen).catch(() => {});
+      navigator.navigate("Login");
+      return;
+    }
+
+    navigator.navigate(targetScreen);
   }
+}
+
+export async function consumePendingNotificationRoute(): Promise<string | null> {
+  const route = await storage.getItem(PENDING_NOTIFICATION_ROUTE_KEY);
+  if (route) {
+    await storage.removeItem(PENDING_NOTIFICATION_ROUTE_KEY);
+  }
+  return route;
 }
 
 /**

@@ -197,6 +197,8 @@ export interface ActivityResponse {
   type: string;                 // activity type
   description: string;
   script: string;               // activity script/instructions
+  audio_url?: string | null;
+  audio_duration_seconds?: number | null;
 }
 
 // Keep GuidedActivity for frontend compatibility (with local fields)
@@ -206,8 +208,8 @@ export interface GuidedActivity extends Omit<ActivityResponse, 'id'> {
   type: "Breathing" | "Meditation" | "Stretching" | "Walking" | "Music" | "Exercise";
   thumbnail: ImageSourcePropType;
   steps: string[];
-  audioFile?: string;
-  duration?: number;
+  audioUrl?: string;
+  audioDurationSeconds?: number;
 }
 
 // src/api/types.ts
