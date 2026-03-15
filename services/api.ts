@@ -171,8 +171,11 @@ console.log('🔍 API Base URL:', getApiBaseUrl());
 //const API_BASE_URL = getApiBaseUrl();
 //console.log('🔍 API Base URL:', getApiBaseUrl());
 //Change to PROD BASE URL for Prod Deployment!!
+
 //const API_BASE_URL = 'https://mental-health-assistant-app-production.up.railway.app';
 const API_BASE_URL = 'https://mental-health-assistant-app-staging.up.railway.app';
+
+
 console.log('Using API URL:', API_BASE_URL);
 
 // Step 3: Real API

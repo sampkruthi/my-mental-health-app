@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import { useForgotPassword, useResetPassword } from "../../api/hooks";
-import { useCustomAlert } from "../../components/UI/CustomAlert";
+import { showToast } from "../../utils/toast";
 
 const validatePassword = (password: string): string | null => {
   if (password.length < 8) {
@@ -28,8 +28,6 @@ export default function ResetPasswordScreen() {
   const route = useRoute<RouteProp<RootStackParamList, "ResetPassword">>();
   const forgotPasswordMutation = useForgotPassword();
   const resetPasswordMutation = useResetPassword();
-  const { alert, alertComponent } = useCustomAlert();
-
   const [email, setEmail] = useState("");
   const [resetToken, setResetToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -45,7 +43,7 @@ export default function ResetPasswordScreen() {
 
   const handleRequestReset = async () => {
     if (!email.trim()) {
-      alert("Error", "Please enter your email.");
+      showToast("Please enter your email.", "error");
       return;
     }
     try {
@@ -57,24 +55,24 @@ export default function ResetPasswordScreen() {
         message += `\n\nDev token: ${response.dev_reset_token}`;
         setResetToken(response.dev_reset_token);
       }
-      alert("Reset requested", message);
+      showToast(message, "success");
     } catch (err: any) {
-      alert("Error", err?.message || "Unable to send reset link.");
+      showToast(err?.message || "Unable to send reset link.", "error");
     }
   };
 
   const handleResetPassword = async () => {
     if (!resetToken.trim()) {
-      alert("Error", "Please enter the reset token.");
+      showToast("Please enter the reset token.", "error");
       return;
     }
     const passwordError = validatePassword(newPassword);
     if (passwordError) {
-      alert("Error", passwordError);
+      showToast(passwordError, "error");
       return;
     }
     if (newPassword !== confirmPassword) {
-      alert("Error", "Passwords do not match.");
+      showToast("Passwords do not match.", "error");
       return;
     }
 
@@ -83,17 +81,15 @@ export default function ResetPasswordScreen() {
         token: resetToken.trim(),
         newPassword,
       });
-      alert("Success", response.message || "Password reset successful.", [
-        { text: "Back to Login", onPress: () => navigation.navigate("Login") },
-      ]);
+      showToast(response.message || "Password reset successful.", "success");
+      navigation.navigate("Login");
     } catch (err: any) {
-      alert("Error", err?.message || "Unable to reset password.");
+      showToast(err?.message || "Unable to reset password.", "error");
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {alertComponent}
       <View style={styles.card}>
         <Text style={styles.title}>Reset Password</Text>
         <Text style={styles.subtitle}>

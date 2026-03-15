@@ -26,6 +26,7 @@ import { RootStackParamList } from "../../navigation/AppNavigator";
 import { Token } from "../../api/types";
 import MeditatingLogo from "../../images/Meditating_logo.png";
 import { getUserTimezone } from "../../utils/timezoneUtils";
+import Toast from "../../components/UI/Toast";
 import { initializeNotifications } from '../../notificationService';
 import { getApiService } from '../../../services/api';
 import {
@@ -119,6 +120,7 @@ const RegisterScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
   // Native Google Sign-In using Google Identity Services SDK
   const handleGoogleSignUp = async () => {
@@ -168,7 +170,7 @@ const RegisterScreen: React.FC = () => {
 
       await signInWithToken(result.token, userId);
       console.log("[RegisterScreen] Google sign-up complete!");
-      Alert.alert("Success", "Signed in with Google successfully!");
+      setToast({ message: "Signed in with Google successfully!", type: "success" });
 
       // Non-critical: register for notifications (don't let this fail sign-in)
       registerDeviceForNotifications().catch((e) =>
@@ -185,14 +187,14 @@ const RegisterScreen: React.FC = () => {
             console.log("[RegisterScreen] Google sign-up already in progress");
             break;
           case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-            showAlert("Error", "Google Play Services are not available on this device.");
-            break;
-          default:
-            showAlert("Error", `Google sign-up failed: ${error.message || error.code}`);
-        }
-      } else {
-        showAlert("Error", `Sign-up failed: ${error?.message || "Unknown error"}`);
-      }
+        setToast({ message: "Google Play Services are not available on this device.", type: "error" });
+        break;
+      default:
+        setToast({ message: `Google sign-up failed: ${error.message || error.code}`, type: "error" });
+    }
+  } else {
+    setToast({ message: `Sign-up failed: ${error?.message || "Unknown error"}`, type: "error" });
+  }
     } finally {
       setGoogleLoading(false);
     }
@@ -317,7 +319,7 @@ const RegisterScreen: React.FC = () => {
       await signIn(email, password, res.access_token, email);
       await registerDeviceForNotifications();
 
-      Alert.alert("Success", "Registered successfully!");
+      setToast({ message: "Registered successfully!", type: "success" });
     } catch (err: any) {
       console.error("Registration error:", err);
       const message =
@@ -326,7 +328,7 @@ const RegisterScreen: React.FC = () => {
         err?.message ||
         "Registration failed";
 
-      showAlert("Error", message);
+      setToast({ message, type: "error" });
       console.log("Final message:", message);
     }
   };
@@ -345,6 +347,12 @@ const RegisterScreen: React.FC = () => {
         >
         {/* White Card Container */}
         <View style={styles.card}>
+          <Toast
+            message={toast?.message || ""}
+            type={toast?.type || "info"}
+            visible={!!toast}
+            onHide={() => setToast(null)}
+          />
           {/* Logo Section */}
           <View style={styles.logoSection}>
             <Image

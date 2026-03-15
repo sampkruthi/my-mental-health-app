@@ -226,6 +226,24 @@ const ChatScreen = () => {
     );
   };
   
+  const handleCitationPress = async (url: string) => {
+    if (!url) return;
+    try {
+      if (Platform.OS === 'web') {
+        // On web, Linking.openURL navigates the current tab away from the app.
+        // Use window.open to open in a new tab instead.
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } else {
+        // On iOS and Android, open in the device browser.
+        // Skipping canOpenURL — unreliable for https:// on Android 11+ without
+        // a <queries> manifest entry. Direct openURL with error handling is sufficient.
+        await Linking.openURL(url);
+      }
+    } catch (error) {
+      console.error("[ChatScreen] Failed to open citation URL:", url, error);
+    }
+  };
+
   const renderCitations = (citations?: Citation[]) => {
     if (!citations || citations.length === 0) return null;
     
@@ -240,16 +258,20 @@ const ChatScreen = () => {
         </Text>
         {citations.map((citation, index) => (
           <TouchableOpacity
-            key={citation.id}
-            onPress={() => Linking.openURL(citation.url)}
+            key={citation.id || index.toString()}
+            onPress={() => handleCitationPress(citation.url)}
             style={[styles.citationItem, { borderColor: colors.primary + '20' }]}
+            accessible={true}
+            accessibilityRole="link"
+            accessibilityLabel={`Open ${citation.title}`}
+            activeOpacity={0.6}
           >
             <View style={styles.citationContent}>
               <Text style={[styles.citationNumber, { color: colors.primary }]}>
                 [{index + 1}]
               </Text>
               <View style={styles.citationText}>
-                <Text style={[styles.citationTitle, { color: colors.text }]} numberOfLines={1}>
+                <Text style={[styles.citationTitle, { color: colors.primary }]} numberOfLines={2}>
                   {citation.title}
                 </Text>
                 <View style={styles.citationMeta}>

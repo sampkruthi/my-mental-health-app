@@ -25,6 +25,7 @@ import { Button } from "../../components/UI/Button";
 import { Alert } from "react-native";
 import MeditatingLogo from "../../images/Meditating_logo.png";
 import Toast from "../../components/UI/Toast";
+import { showToast } from "../../utils/toast";
 import {
   GoogleSignin,
   isSuccessResponse,
@@ -92,7 +93,7 @@ export default function LoginScreen() {
       console.log("[LoginScreen] Starting native Google Sign-In");
       console.log("[LoginScreen] webClientId:", GOOGLE_CLIENT_ID_WEB ? "SET" : "EMPTY");
       if (!GOOGLE_CLIENT_ID_WEB) {
-        Alert.alert("Error", "Google sign-in is not configured (missing web client ID).");
+        showToast("Google sign-in is not configured (missing web client ID).", "error");
         return;
       }
 
@@ -151,9 +152,9 @@ export default function LoginScreen() {
 
       console.log("[LoginScreen] idToken present:", !!idToken);
       if (!idToken) {
-        Alert.alert(
-          "Error",
-          "Google sign-in failed (no ID token). Verify Web Client ID and Google console SHA/package setup."
+        showToast(
+          "Google sign-in failed (no ID token). Verify Web Client ID and Google console SHA/package setup.",
+          "error"
         );
         return;
       }
@@ -164,7 +165,7 @@ export default function LoginScreen() {
       console.log("[LoginScreen] Backend result:", JSON.stringify(result));
 
       if (!result?.token) {
-        Alert.alert("Error", "Sign-in succeeded but no token was returned.");
+        showToast("Sign-in succeeded but no token was returned.", "error");
         return;
       }
 
@@ -190,13 +191,13 @@ export default function LoginScreen() {
             console.log("[LoginScreen] Google sign-in already in progress");
             break;
           case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-            Alert.alert("Error", "Google Play Services are not available on this device.");
+            showToast("Google Play Services are not available on this device.", "error");
             break;
           default:
-            Alert.alert("Error", `Google sign-in failed: ${error.message || error.code}`);
+            setToast({ message: `Google sign-in failed: ${error.message || error.code}`, type: "error" });
         }
       } else {
-        Alert.alert("Error", `Sign-in failed: ${error?.message || "Unknown error"}`);
+        setToast({ message: `Sign-in failed: ${error?.message || "Unknown error"}`, type: "error" });
       }
     } finally {
       setGoogleLoading(false);
@@ -221,7 +222,7 @@ export default function LoginScreen() {
 
       const identityToken = credential.identityToken;
       if (!identityToken) {
-        Alert.alert("Error", "Apple sign-in failed (no identity token).");
+        showToast("Apple sign-in failed (no identity token).", "error");
         return;
       }
 
@@ -243,7 +244,7 @@ export default function LoginScreen() {
       console.log("[LoginScreen] Backend result:", JSON.stringify(result));
 
       if (!result?.token) {
-        Alert.alert("Error", "Sign-in succeeded but no token was returned.");
+        showToast("Sign-in succeeded but no token was returned.", "error");
         return;
       }
 
@@ -269,7 +270,7 @@ export default function LoginScreen() {
          { 
           console.log("[LoginScreen] Apple sign-in flow interrupted, ignoring:", error.code);
       } else {
-        Alert.alert("Error", `Apple sign-in failed: ${error?.message || "Unknown error"}`);
+        setToast({ message: `Apple sign-in failed: ${error?.message || "Unknown error"}`, type: "error" });
       }
     } finally {
       setAppleLoading(false);
@@ -291,6 +292,8 @@ export default function LoginScreen() {
       }
     } catch (e) {
       console.error("[LoginScreen] Login failed", e);
+      const message = (e as any)?.message || "Login failed";
+      setToast({ message, type: "error" });
     }
   };
 

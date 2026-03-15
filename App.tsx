@@ -7,6 +7,7 @@ import AppNavigator from "./src/navigation/AppNavigator";
 import type { RootStackParamList } from "./src/navigation/AppNavigator";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { ThemeProvider } from "./src/context/ThemeContext";
+import ToastHost from "./src/components/UI/ToastHost";
 
 // Import API services
 import { setApiService, realApiService } from "./services/api";
@@ -180,6 +181,7 @@ function AppContent({ navigationRef }: { navigationRef: React.RefObject<Navigati
   return (
     <>
       <NotificationInitializer />
+      <ToastHost />
       <NavigationContainer ref={navigationRef} linking={linking}>
         <AppNavigator />
       </NavigationContainer>

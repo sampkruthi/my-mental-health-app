@@ -26,9 +26,10 @@ import { useCustomAlert } from "../../components/UI/CustomAlert";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/AppNavigator";
-import Svg, { Line, Circle, Path } from "react-native-svg";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getApiService } from "../../../services/api";
 import { Menu, MenuOptions, MenuOption, MenuTrigger, MenuProvider } from 'react-native-popup-menu';
+import { useQueryClient } from "@tanstack/react-query";
 
 const { width } = Dimensions.get("window");
 
@@ -40,6 +41,10 @@ const ChatScreen = () => {
   const { mutateAsync: sendChat } = useSendChatMessage(token);
   const { colors } = useTheme();
   const { alert, alertComponent } = useCustomAlert();
+  const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
+  // Header height = padding(12*2) + logo(50) + safe area top
+  const HEADER_HEIGHT = 74 + insets.top;
   
 
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
@@ -49,7 +54,7 @@ const ChatScreen = () => {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   
-  const [offset, setOffset] = useState(0);
+  //const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
@@ -71,9 +76,9 @@ const ChatScreen = () => {
       (e) => {
         setKeyboardHeight(e.endCoordinates.height);
         // Scroll to end when keyboard opens
-        setTimeout(() => {
+       /* setTimeout(() => {
           flatListRef.current?.scrollToEnd({ animated: true });
-        }, 100);
+        }, 100); */
       }
     );
 
@@ -96,7 +101,7 @@ const ChatScreen = () => {
       if (initialHistory.messages.length > 0) {
         setMessages(initialHistory.messages);
         setHasMore(initialHistory.has_more);
-        setOffset(MESSAGES_PER_PAGE);
+        //setOffset(MESSAGES_PER_PAGE);
       } else {
         const welcomeMessage: ChatMessage = {
           id: 'welcome-' + Date.now(),
@@ -111,12 +116,15 @@ const ChatScreen = () => {
     }
   }, [initialHistory, initialLoadDone]);
 
-  //Scroll to bottom when messages change
+  //Scroll to bottom when messages change: Single scroll-to-end source of truth. Increased delay 100ms→200ms, added clearTimeout cleanup,
+  // animated=false on first load so initial render doesn't flicker
+
   useEffect(() => {
     if (flatListRef.current && messages.length > 0 && initialLoadDone) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      const timer = setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: messages.length > 1 });
+      }, 200);
+      return () => clearTimeout(timer);
     }
   }, [messages.length, initialLoadDone]);
 
@@ -126,7 +134,11 @@ const ChatScreen = () => {
     setIsLoadingMore(true);
 
     try {
-      const olderMessages = await getApiService().getChatHistory?.(MESSAGES_PER_PAGE, offset) ?? {
+      const oldestId = messages.length > 0
+        ? Math.min(...messages.map(m => parseInt(m.id)).filter(id => !isNaN(id)))
+        : undefined;
+
+      const olderMessages = await getApiService().getChatHistory?.(MESSAGES_PER_PAGE, oldestId) ?? {
         messages: [],
         total_count: 0,
         has_more: false
@@ -134,7 +146,7 @@ const ChatScreen = () => {
       
       if (olderMessages && olderMessages.messages.length > 0) {
         prependMessages(olderMessages.messages);
-        setOffset(offset + MESSAGES_PER_PAGE);
+        //setOffset(offset + MESSAGES_PER_PAGE);
         setHasMore(olderMessages.has_more);
       } else {
         setHasMore(false);
@@ -163,6 +175,8 @@ const ChatScreen = () => {
     try {
       const botReply = await sendChat({ text: userMessage.text });
       addMessage(botReply);
+      //Invalidate history cache so next time a user visits, it fetches fresh data instead of stale data
+      queryClient.invalidateQueries({queryKey: ["chat", "history"]});
     } catch (error) {
       console.error("Send failed:", error);
     } finally {
@@ -189,7 +203,7 @@ const ChatScreen = () => {
 
               // Clear local state
               setMessages([]);
-              setOffset(0);
+              //setOffset(0);
               setHasMore(false);
 
               // Add welcome message back
@@ -252,14 +266,6 @@ const ChatScreen = () => {
             </View>
           </TouchableOpacity>
         ))}
-        <TouchableOpacity
-        style={[styles.exploreButton, { borderColor: colors.primary }]}
-        onPress={() => navigation.navigate('resources')}
-      >
-        <Text style={[styles.exploreButtonText, { color: colors.primary }]}>
-          Explore more in Resources tab →
-        </Text>
-      </TouchableOpacity>
       </View>
     );
   };
@@ -454,8 +460,8 @@ const ChatScreen = () => {
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 100}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? HEADER_HEIGHT : 0}
         >
             { /* FlatList takes up all available space */}
           <FlatList
@@ -465,13 +471,34 @@ const ChatScreen = () => {
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={[
               styles.chatContainer,
-              { paddingBottom: Platform.OS === 'android' ? 100 : 10 }
+              { paddingBottom: Platform.OS === 'android' ? 20 : 10 }
             ]}
             ListHeaderComponent={renderListHeader}
             ListFooterComponent={renderListFooter}
+            //onContentSizeChange fires after Flatlist finishes rendering content, more reliable than
+            //setTimeout alone
+            onContentSizeChange={() => {
+              if (Platform.OS === 'android') {
+                // Android needs a longer delay — layout measurement happens after
+                // keyboard resize, so scrollToEnd fires too early without this
+                setTimeout(() => {
+                  flatListRef.current?.scrollToEnd({ animated: false });
+                }, 150);
+              } else {
+                flatListRef.current?.scrollToEnd({ animated: false });
+              }
+            }}
+            onLayout={() => {
+              flatListRef.current?.scrollToEnd({ animated: false });
+            }}
+            onScrollBeginDrag={() => {
+              // Only load more when user explicitly scrolls to top
+            }}
+
             onScroll={(event) => {
+              //changing threshhold from < 100 to <=0 : old value triggered loadMoreMessages constantly while scrolling near top
               const { contentOffset } = event.nativeEvent;
-              if (contentOffset.y < 100 && hasMore && !isLoadingMore) {
+              if (contentOffset.y <= 0 && hasMore && !isLoadingMore) {
                 loadMoreMessages();
               }
             }}
@@ -479,8 +506,10 @@ const ChatScreen = () => {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
             maintainVisibleContentPosition={{
-                minIndexForVisible: 0,
-                autoscrollToTopThreshold: 10,
+                minIndexForVisible: 0, 
+                // autoscrollToTopThreshold removed (set to undefined) — value of 10 was
+                // auto-scrolling upward when new messages arrived, fighting scrollToEnd calls
+                autoscrollToTopThreshold: undefined,
               }}
           />
 
@@ -490,6 +519,8 @@ const ChatScreen = () => {
             { 
               borderColor: colors.inputBorder,
               backgroundColor: colors.background,
+              paddingBottom: Platform.OS === 'ios' ? insets.bottom + 8 : 32,
+              marginBottom: Platform.OS === 'android' ? 8 : 0,
             }
           ]}>
             <TouchableOpacity
@@ -513,11 +544,6 @@ const ChatScreen = () => {
               blurOnSubmit={false}
               autoFocus={false}
               returnKeyType="default"
-              onFocus={() => {
-                setTimeout(() => {
-                  flatListRef.current?.scrollToEnd({ animated: true });
-                }, 300);
-              }}
             />
 
             <TouchableOpacity testID="chat_send" onPress={handleSend} style={styles.sendBtn}>
@@ -765,19 +791,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     lineHeight: 14,
   },
-  exploreButton: {
-    marginTop: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  exploreButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  
 });
 
 const CuteBotAvatar = ({ size = 40 }: { size?: number }) => {
