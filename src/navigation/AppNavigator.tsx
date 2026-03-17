@@ -16,6 +16,7 @@ import  RegisterScreen  from "../screens/Auth/RegisterScreen";
 import ReminderScreen  from "../screens/RemindersScreen/RemindersScreen";
 import { MemorySummaryScreen } from "../screens/MemorySummaryScreen/MemorySummaryScreen";
 import { ProgressDashboardScreen } from "../screens/ProgressDashboardScreen/ProgressDashboardScreen";
+import MoreScreen from "../screens/MoreScreen";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -23,14 +24,15 @@ export type RootStackParamList = {
   chat: undefined;
   mood: undefined;
   moodhistory : undefined;
-  activities : undefined;
+  activities: { activityId?: string } | undefined;
   journal:undefined;
-  resources : undefined;
+  resources: { filter?: string } | undefined;
   Register:undefined;
   ResetPassword: { token?: string } | undefined;
   reminders:undefined;
-  memorysummary: undefined
-  progressdashboard: undefined
+  memorysummary: undefined;
+  progressdashboard: undefined;
+  more: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -59,6 +61,7 @@ export default function AppNavigator() {
         <Stack.Screen name="reminders" component={ReminderScreen}/>
         <Stack.Screen name="memorysummary" component={MemorySummaryScreen}/>
         <Stack.Screen name="progressdashboard" component={ProgressDashboardScreen}/>
+        <Stack.Screen name="more" component={MoreScreen}/>
         </>
       )}
     </Stack.Navigator>

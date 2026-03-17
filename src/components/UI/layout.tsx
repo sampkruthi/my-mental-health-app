@@ -139,6 +139,50 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
           <Text style={[styles.drawerItemText, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>👤 Profile</Text>
         </TouchableOpacity>
 
+        {/* Web-only: show More screen items since there's no bottom nav */}
+        {Platform.OS === "web" && (
+          <>
+            <View style={styles.drawerDivider} />
+            <TouchableOpacity
+              style={styles.drawerItem}
+              onPress={() => { onNavigate("journal"); toggleMenu(); }}
+            >
+              <Text style={[styles.drawerItemText, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>📓 Journal</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.drawerItem}
+              onPress={() => { onNavigate("resources"); toggleMenu(); }}
+            >
+              <Text style={[styles.drawerItemText, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>📚 Resources</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.drawerItem}
+              onPress={() => { onNavigate("reminders"); toggleMenu(); }}
+            >
+              <Text style={[styles.drawerItemText, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>🔔 Reminders</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.drawerItem}
+              onPress={() => { onNavigate("mood"); toggleMenu(); }}
+            >
+              <Text style={[styles.drawerItemText, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>😊 Mood Tracker</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.drawerItem}
+              onPress={() => { onNavigate("activities"); toggleMenu(); }}
+            >
+              <Text style={[styles.drawerItemText, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>🍃 Activities</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.drawerItem}
+              onPress={() => { onNavigate("progressdashboard"); toggleMenu(); }}
+            >
+              <Text style={[styles.drawerItemText, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>📈 Progress</Text>
+            </TouchableOpacity>
+            <View style={styles.drawerDivider} />
+          </>
+        )}
+
         <TouchableOpacity
           style={styles.drawerItem}
           onPress={() => {
@@ -277,6 +321,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     flex: 1,
+  },
+  drawerDivider: {
+    height: 1,
+    backgroundColor: "rgba(0,0,0,0.08)",
+    marginHorizontal: 20,
+    marginVertical: 4,
   },
   container: {
     flex: 1,

@@ -13,12 +13,8 @@ type NavKeys = keyof RootStackParamList;
 const tabs: { name: NavKeys; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { name: "Home", label: "Home", icon: "home-outline" },
   { name: "chat", label: "Chat", icon: "chatbubble-outline" },
-  { name: "mood", label: "Mood", icon: "happy-outline" },
-  { name: "journal", label: "Journal", icon: "book-outline" },
-  { name: "resources", label: "Resources", icon: "layers-outline" },
-  { name: "reminders", label: "Reminders", icon: "notifications-outline" },
   { name: "progressdashboard", label: "Progress", icon: "trending-up-outline" },
-  { name: "activities", label: "Activities", icon: "leaf-outline" },
+  { name: "more", label: "More", icon: "grid-outline" },
 ];
 
 // Minimum width per tab to ensure labels like "Reminders" fit

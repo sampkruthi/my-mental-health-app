@@ -13,7 +13,8 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Linking,
-  Alert
+  Alert,
+  Animated,
 } from "react-native";
 import { useChatStore } from "../../stores/chatStore";
 import { useAuth } from "../../context/AuthContext";
@@ -30,8 +31,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getApiService } from "../../../services/api";
 import { Menu, MenuOptions, MenuOption, MenuTrigger, MenuProvider } from 'react-native-popup-menu';
 import { useQueryClient } from "@tanstack/react-query";
+import { storage } from "../../utils/storage";
 
-const { width } = Dimensions.get("window");
+const { width, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 
 const ChatScreen = () => {
@@ -52,6 +54,10 @@ const ChatScreen = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  // First-time chat intro bottom sheet
+  const [showChatIntro, setShowChatIntro] = useState(false);
+  const introSlideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
   
   //const [offset, setOffset] = useState(0);
@@ -94,6 +100,33 @@ const ChatScreen = () => {
       keyboardWillHide.remove();
     };
   }, []);
+
+  // Check if user has seen the chat intro
+  useEffect(() => {
+    storage.getItem("hasSeenChatIntro").then((value) => {
+      if (!value) {
+        setShowChatIntro(true);
+        Animated.spring(introSlideAnim, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 50,
+          friction: 9,
+        }).start();
+      }
+    });
+  }, []);
+
+  const dismissChatIntro = () => {
+    Animated.spring(introSlideAnim, {
+      toValue: SCREEN_HEIGHT,
+      useNativeDriver: true,
+      tension: 50,
+      friction: 9,
+    }).start(() => {
+      setShowChatIntro(false);
+    });
+    storage.setItem("hasSeenChatIntro", "true");
+  };
 
   //Load initial history
   useEffect(() => {
@@ -581,10 +614,221 @@ const ChatScreen = () => {
         </KeyboardAvoidingView>
       </View>
     </Layout>
+    {/* First-time chat intro bottom sheet */}
+    {showChatIntro && (
+      <>
+        <TouchableOpacity
+          style={introStyles.overlay}
+          activeOpacity={1}
+          onPress={dismissChatIntro}
+        />
+        <Animated.View
+          style={[
+            introStyles.sheet,
+            { transform: [{ translateY: introSlideAnim }] },
+          ]}
+        >
+          {/* Drag handle */}
+          <View style={introStyles.handleContainer}>
+            <View style={introStyles.handle} />
+          </View>
+
+          {/* Headline */}
+          <Text style={introStyles.headlineDark}>Built to support you.</Text>
+          <Text style={introStyles.headlineTeal}>
+            Designed to know its own limits.
+          </Text>
+
+          {/* Subtext */}
+          <Text style={introStyles.subtext}>
+            Bodhira is different from a general AI. It connects your mood,
+            journal and conversations to build a picture of your wellbeing over
+            time {"\u2014"} and it has hard limits that protect you.
+          </Text>
+
+          {/* Feature bullets */}
+          <View style={introStyles.bulletList}>
+            <IntroBullet
+              outerBg="#e8f4f5"
+              dotColor="#4a9fa5"
+              boldText="Longitudinal memory."
+              text=" Remembers your mood trends, journal themes and past conversations \u2014 not just this session."
+            />
+            <IntroBullet
+              outerBg="#fff0e6"
+              dotColor="#e07030"
+              boldText="Architecturally safe."
+              text=" Cannot diagnose you or suggest medication \u2014 these are hard constraints, not just instructions."
+            />
+            <IntroBullet
+              outerBg="#ffeaea"
+              dotColor="#e04040"
+              boldText="Crisis-aware."
+              text=" Detects distress signals and connects you to real support \u2014 988 Lifeline, Crisis Text Line \u2014 immediately."
+            />
+            <IntroBullet
+              outerBg="#f0f5ff"
+              dotColor="#4060d0"
+              boldText="Proactively helpful."
+              text=" Surfaces curated resources when it notices a pattern \u2014 before you think to ask."
+            />
+          </View>
+
+          {/* Primary button */}
+          <TouchableOpacity
+            style={introStyles.primaryButton}
+            onPress={dismissChatIntro}
+            activeOpacity={0.8}
+          >
+            <Text style={introStyles.primaryButtonText}>Start chatting</Text>
+          </TouchableOpacity>
+
+          {/* Secondary link */}
+          <TouchableOpacity onPress={dismissChatIntro}>
+            <Text style={introStyles.secondaryLink}>
+              Don't show this again
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </>
+    )}
     {alertComponent}
     </MenuProvider>
   );
 };
+
+// --- Intro bullet component ---
+const IntroBullet = ({
+  outerBg,
+  dotColor,
+  boldText,
+  text,
+}: {
+  outerBg: string;
+  dotColor: string;
+  boldText: string;
+  text: string;
+}) => (
+  <View style={introStyles.bulletRow}>
+    <View
+      style={[
+        introStyles.bulletOuter,
+        { backgroundColor: outerBg, borderColor: dotColor },
+      ]}
+    >
+      <View
+        style={[introStyles.bulletInner, { backgroundColor: dotColor }]}
+      />
+    </View>
+    <Text style={introStyles.bulletText}>
+      <Text style={introStyles.bulletBold}>{boldText}</Text>
+      {text}
+    </Text>
+  </View>
+);
+
+// --- Intro bottom sheet styles ---
+const introStyles = StyleSheet.create({
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    zIndex: 100,
+  },
+  sheet: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 14,
+    zIndex: 101,
+  },
+  handleContainer: {
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  handle: {
+    width: 28,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: "#ddd",
+  },
+  headlineDark: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#1a1a1a",
+  },
+  headlineTeal: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#4a9fa5",
+    marginBottom: 8,
+  },
+  subtext: {
+    fontSize: 8.5,
+    color: "#666",
+    lineHeight: 8.5 * 1.5,
+    marginBottom: 10,
+  },
+  bulletList: {
+    gap: 8,
+    marginBottom: 12,
+  },
+  bulletRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  bulletOuter: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 1,
+    flexShrink: 0,
+  },
+  bulletInner: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  bulletText: {
+    fontSize: 8,
+    color: "#444",
+    lineHeight: 8 * 1.45,
+    flex: 1,
+  },
+  bulletBold: {
+    fontWeight: "500",
+    color: "#1a1a1a",
+  },
+  primaryButton: {
+    backgroundColor: "#4a9fa5",
+    borderRadius: 20,
+    paddingVertical: 9,
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 9,
+    fontWeight: "500",
+  },
+  secondaryLink: {
+    textAlign: "center",
+    fontSize: 7,
+    color: "#bbb",
+    marginBottom: 6,
+  },
+});
 
 const styles = StyleSheet.create({
   container: { 

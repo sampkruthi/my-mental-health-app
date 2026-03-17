@@ -20,7 +20,7 @@ import {
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Layout from "../../components/UI/layout";
@@ -36,12 +36,14 @@ const ResourcesScreen = () => {
   const { colors } = useTheme();
   const { token } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, 'resources'>>();
+  const filterParam = route.params?.filter;
 
   // OPTIMIZATION 1: Load fast recommendations immediately (no LLM, ~100ms)
-  const { 
-    data: quickRecs = [], 
-    isLoading: isLoadingQuick 
-  } = useFetchContentRec(token, { limit: 10 });
+  const {
+    data: quickRecs = [],
+    isLoading: isLoadingQuick
+  } = useFetchContentRec(token, { q: filterParam, limit: 10 });
 
   // OPTIMIZATION 2: Load RAG recommendations in background (with LLM, ~400ms with Haiku)
   const {
