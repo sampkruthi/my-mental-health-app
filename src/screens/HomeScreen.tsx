@@ -5,7 +5,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   Platform,
   Dimensions,
   ActivityIndicator,
@@ -66,14 +65,6 @@ const MOOD_OPTIONS = [
   { score: 5, emoji: "\uD83D\uDE04" },
 ];
 
-const FALLBACK_TOPICS = [
-  "Managing anxiety",
-  "Better sleep",
-  "Stress relief",
-  "Mindfulness basics",
-  "Burnout recovery",
-  "Grief and loss",
-];
 
 const QUICK_ACTIONS = [
   { key: "journal" as const, label: "Journal", emoji: "\uD83D\uDCD3", color: "#e8f4f5" },
@@ -178,17 +169,6 @@ const HomeScreen = () => {
     [activities, moodHistory, memoryTags, lastCompletedId]
   );
 
-  const resourcePills = useMemo(() => {
-    const tags = memoryTags.slice(0, 2);
-    const pills = [...tags];
-    for (const fallback of FALLBACK_TOPICS) {
-      if (pills.length >= 6) break;
-      if (!pills.some((p) => p.toLowerCase() === fallback.toLowerCase())) {
-        pills.push(fallback);
-      }
-    }
-    return pills.slice(0, 6);
-  }, [memoryTags]);
 
   // Handlers
   const handleLogMood = async (score: number) => {
@@ -209,9 +189,6 @@ const HomeScreen = () => {
     }
   };
 
-  const handlePillPress = (topic: string) => {
-    navigation.navigate("resources", { filter: topic });
-  };
 
   return (
     <Layout
@@ -394,32 +371,6 @@ const HomeScreen = () => {
           ))}
         </View>
 
-        {/* 5b. RESOURCE PILLS STRIP */}
-        <Text style={[styles.pillsLabel, { color: colors.subText }]}>
-          SAVED FOR YOU
-        </Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.pillsContainer}
-        >
-          {resourcePills.map((pill, index) => (
-            <TouchableOpacity
-              key={`pill-${index}`}
-              style={[
-                styles.pill,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: "#e0e0e0",
-                },
-              ]}
-              onPress={() => handlePillPress(pill)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.pillText, { color: "#333" }]}>{pill}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
       </View>
     </Layout>
   );
@@ -604,27 +555,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 
-  // Resource pills
-  pillsLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 8,
-  },
-  pillsContainer: {
-    paddingRight: 16,
-    gap: 8,
-  },
-  pill: {
-    borderRadius: 16,
-    borderWidth: 0.5,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-  },
-  pillText: {
-    fontSize: 12,
-  },
 });
 
 export default HomeScreen;
