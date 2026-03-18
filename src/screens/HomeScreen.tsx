@@ -67,9 +67,9 @@ const MOOD_OPTIONS = [
 
 
 const QUICK_ACTIONS = [
-  { key: "journal" as const, label: "Journal", emoji: "\uD83D\uDCD3", color: "#e8f4f5" },
-  { key: "progressdashboard" as const, label: "Progress", emoji: "\uD83D\uDCC8", color: "#f0f5ff" },
-  { key: "resources" as const, label: "Resources", emoji: "\uD83D\uDCDA", color: "#fff0e6" },
+  { key: "journal" as const, label: "Journal", emoji: "\uD83D\uDCD3" },
+  { key: "progressdashboard" as const, label: "Progress", emoji: "\uD83D\uDCC8" },
+  { key: "resources" as const, label: "Resources", emoji: "\uD83D\uDCDA" },
 ];
 
 function selectTodayActivity(
@@ -276,20 +276,10 @@ const HomeScreen = () => {
             ]}
           >
             <View style={styles.activitySkeleton}>
-              <View style={[styles.skeletonIcon, { backgroundColor: "#e8f4f5" }]} />
+              <View style={styles.skeletonIcon} />
               <View style={styles.skeletonTextArea}>
-                <View
-                  style={[
-                    styles.skeletonLine,
-                    { width: "40%", backgroundColor: "#e8f4f5" },
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.skeletonLine,
-                    { width: "70%", backgroundColor: "#e8f4f5" },
-                  ]}
-                />
+                <View style={[styles.skeletonLine, { width: "40%" }]} />
+                <View style={[styles.skeletonLine, { width: "70%" }]} />
               </View>
             </View>
           </View>
@@ -356,7 +346,7 @@ const HomeScreen = () => {
               <View
                 style={[
                   styles.quickActionIcon,
-                  { backgroundColor: action.color },
+                  { backgroundColor: colors.primary + '18' },
                 ]}
               >
                 <Text style={styles.quickActionEmoji}>{action.emoji}</Text>
@@ -390,19 +380,20 @@ const styles = StyleSheet.create({
     fontSize: isIPad ? 14 : 12,
     textAlign: "center",
     fontWeight: "500",
-    marginBottom: 4,
+    marginBottom: 8,
   },
   greeting: {
     fontSize: isIPad ? 26 : 22,
     fontWeight: "700",
     textAlign: "center",
     letterSpacing: -0.5,
+    marginBottom: 4,
   },
   subtitle: {
     fontSize: isIPad ? 15 : 13,
     textAlign: "center",
-    marginTop: 2,
-    marginBottom: 14,
+    marginTop: 0,
+    marginBottom: 16,
   },
 
   // Mood card
@@ -410,6 +401,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 0.5,
     padding: 14,
+    paddingTop: 12,
     marginBottom: 12,
   },
   moodLabel: {
@@ -468,7 +460,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: "#e8f4f5",
+    backgroundColor: "rgba(26, 171, 186, 0.12)",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 10,
@@ -514,6 +506,7 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 10,
     marginRight: 10,
+    backgroundColor: "rgba(26, 171, 186, 0.12)",
   },
   skeletonTextArea: {
     flex: 1,
@@ -522,6 +515,7 @@ const styles = StyleSheet.create({
   skeletonLine: {
     height: 10,
     borderRadius: 5,
+    backgroundColor: "rgba(26, 171, 186, 0.12)",
   },
 
   // Quick actions
@@ -529,7 +523,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 10,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   quickActionCard: {
     flex: 1,

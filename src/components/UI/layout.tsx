@@ -245,15 +245,15 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
+    padding: 6,
     elevation: 4,
   },
   hamburger: {
     marginRight: 12,
   },
   logoContainer: {
-    width: 65,
-    height: 65,
+    width: 46,
+    height: 46,
     borderRadius: 32.5,
     justifyContent: 'center',
     alignItems: 'center',

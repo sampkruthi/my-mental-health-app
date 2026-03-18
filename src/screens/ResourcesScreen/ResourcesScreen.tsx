@@ -622,7 +622,7 @@ const styles = StyleSheet.create({
     marginTop: 12,  // Changed from 8
     marginBottom: 16,
     borderLeftWidth: 4,
-    borderLeftColor: "#5B9EB3",  // Use theme color instead of hardcoded
+    borderLeftColor: "#1aabba",  // Use theme color instead of hardcoded Updating from 5B9EB3 for consistency
     // ADD shadow:
     shadowColor: "#5B9EB3",
     shadowOffset: { width: 0, height: 3 },

@@ -15,28 +15,28 @@ export const lightTheme = {
 
   
   // Primary brand colors - warmer teal/sage instead of blue-gray
-  primary: "#5B9EB3", //, //#66B6A3", //Using brighter mint // "#7C9BA7",  // Your new sage/teal
-  primaryDark:"#4A8FA5",  //"#4A8FA5",// '#52A08E', //"#5A7A87",
+  primary: "#1aabba",
+  primaryDark: "#0d96a8",
   secondary: "#A8D5BA",  // Keep this green
   accent: "#E8B4A8",  // Changed to coral for warmth
   
 
   // Input fields
   inputBackground: "#FAF8F5",
-  inputBorder: "rgba(102, 182, 163, 0.2)",  // Updated to match new primary
-  inputBorderFocused: "#66B6A3",
+  inputBorder: "rgba(26, 171, 186, 0.2)",  // Updated to match new primary
+  inputBorderFocused: "#1aabba",
   
   // Buttons
-  buttonPrimary: "#66B6A3",
-  buttonPrimaryDark: "#52A08E",
+  buttonPrimary: "#1aabba",
+  buttonPrimaryDark: "#0d96a8",
   buttonText: "#FFFFFF",
   
   // Header
-  headerBackground: "#66B6A3",  // Updated
+  headerBackground: "#1aabba",  // Updated
   headerText: "#FFFFFF",
   
   // Icons
-  iconPrimary: "#66B6A3",
+  iconPrimary: "#1aabba",
   iconSecondary: "#8FB5A8",
   iconTertiary: "#E8B4A8",
   
@@ -45,9 +45,9 @@ export const lightTheme = {
   aiBubble: "#F0EEFA",      // Soft lavender
   
   // Other
-  logoTint: "#66B6A3",
+  logoTint: "#1aabba",
   fontFamily: "System",
-  divider: "rgba(102, 182, 163, 0.15)",
+  divider: "rgba(26, 171, 186, 0.15)",
   
   // Status colors
   success: "#81C995",

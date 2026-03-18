@@ -259,6 +259,23 @@ const ChatScreen = () => {
     );
   };
   
+  // Strips [Sources: ...] from bubble text (redundant since citation cards show below)
+  // and renders **bold** markdown as actual bold Text spans.
+  const renderMarkdownText = (text: string, baseStyle: object) => {
+    const clean = text.replace(/\[Sources?:[^\]]+\]/gi, '').replace(/\s{2,}/g, ' ').trim();
+    const parts = clean.split(/\*\*(.*?)\*\*/g);
+    if (parts.length === 1) return <Text style={baseStyle}>{clean}</Text>;
+    return (
+      <Text style={baseStyle}>
+        {parts.map((part, i) =>
+          i % 2 === 1
+            ? <Text key={i} style={[baseStyle, { fontWeight: 'bold' }]}>{part}</Text>
+            : part
+        )}
+      </Text>
+    );
+  };
+
   const handleCitationPress = async (url: string) => {
     if (!url) return;
     try {
@@ -350,18 +367,15 @@ const ChatScreen = () => {
                },
             ]}
           >
-            <Text
-              style={{
-                fontSize: 16,
-                color: colors.text,
-                lineHeight: 22,
-                //textAlign: isUser ? 'right' : 'left',
-              }}
-            >
-              {item.text}
-            </Text>
-            {item.sender === 'ai' && renderCitations(item.citations)}
+            {isUser ? (
+              <Text style={{ fontSize: 16, color: colors.text, lineHeight: 22 }}>
+                {item.text}
+              </Text>
+            ) : (
+              renderMarkdownText(item.text, { fontSize: 16, color: colors.text, lineHeight: 22 })
+            )}
           </View>
+          {item.sender === 'ai' && renderCitations(item.citations)}
           <Text style={[styles.timestamp, { color: colors.subText }]}>
             {new Date(item.timestamp).toLocaleTimeString([], {
               hour: "2-digit",

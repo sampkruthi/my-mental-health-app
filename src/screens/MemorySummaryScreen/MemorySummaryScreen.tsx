@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
   },
   themeText: {
     fontSize: 14,
-    color: '#5B9EB3',
+    color: '#1aabba', //Use theme color instead of hardcoded Updating from 5B9EB3 for consistency
     fontWeight: '600',
   },
   statsContainer: {

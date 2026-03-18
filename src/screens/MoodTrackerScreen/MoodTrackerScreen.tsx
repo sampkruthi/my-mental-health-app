@@ -243,8 +243,8 @@ const styles = StyleSheet.create({
   },
   // ADD this style for selected emoji:
   emojiButtonSelected: {
-    borderColor:"#5B9EB3",
-    backgroundColor: `"#5B9EB3"10`,  // 10% opacity of primary
+    borderColor:"#1aabba",
+    backgroundColor: `"#1aabba1a`,  // 10% opacity of primary updating to brighter teal color
     transform: [{ scale: 1.05 }],  // Slightly bigger when selected
   },
 
