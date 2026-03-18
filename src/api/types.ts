@@ -37,12 +37,15 @@ export interface Token {
 
 
 export interface Citation {
-  id: number;
+  id: number | string; 
   title: string;
   url: string;
   content_type: 'article' | 'video' | 'podcast';
   relevance_score: number;
   tags: string[];
+  citation_type?: 'health_education' | 'curated_resource' | 'web_resource' | 'therapist_referral';
+  organization?: string;  // e.g. "NIMH", "APA", "SAMHSA"
+  snippet?: string;       // brief description (Path B curated, Path C Tavily, therapist card)
 }
 
 

@@ -259,18 +259,135 @@ const ChatScreen = () => {
     );
   };
   
-  // Strips [Sources: ...] from bubble text (redundant since citation cards show below)
-  // and renders **bold** markdown as actual bold Text spans.
-  const renderMarkdownText = (text: string, baseStyle: object) => {
-    const clean = text.replace(/\[Sources?:[^\]]+\]/gi, '').replace(/\s{2,}/g, ' ').trim();
-    const parts = clean.split(/\*\*(.*?)\*\*/g);
-    if (parts.length === 1) return <Text style={baseStyle}>{clean}</Text>;
+  // Renders **bold** markdown, detects URLs as tappable links, and converts
+  // [Sources: X, Y] inline markers into tappable citation links.
+  //
+  // The LLM writes [Sources: NIMH, APA] in health education responses. The backend
+  // also attaches structured citation objects (citation_type="health_education")
+  // with the actual URLs. This function matches the short names in [Sources: ...]
+  // to the citation objects and renders them as tappable links.
+  // If no citation match is found, the source name is still shown as plain text
+  // so the user sees the attribution.
+  const renderMarkdownText = (text: string, baseStyle: object, citations?: Citation[]) => {
+    // Build a lookup from source short names to citation URLs
+    // e.g. "NIMH" -> "https://www.nimh.nih.gov/...", "APA" -> "https://www.apa.org/..."
+    const sourceUrlMap: Record<string, { url: string; title: string }> = {};
+    if (citations) {
+      for (const c of citations) {
+        if (c.citation_type === 'health_education' && c.url) {
+          // Map organization name
+          if (c.organization) {
+            sourceUrlMap[c.organization.toUpperCase()] = { url: c.url, title: c.title };
+            sourceUrlMap[c.organization] = { url: c.url, title: c.title };
+          }
+          // Extract abbreviation from title like "Anxiety Disorders — NIMH" -> "NIMH"
+          const dashMatch = c.title?.match(/—\s*(.+)$/);
+          if (dashMatch) {
+            const abbrev = dashMatch[1].trim();
+            sourceUrlMap[abbrev.toUpperCase()] = { url: c.url, title: c.title };
+            sourceUrlMap[abbrev] = { url: c.url, title: c.title };
+          }
+        }
+      }
+    }
+
+    const urlRegex = /(https?:\/\/[^\s,;)}\]>"']+)/g;
+    const sourceBlockRegex = /\[Sources?:\s*([^\]]+)\]/gi;
+
+    // Step 1: Split text into chunks — alternating between plain text and [Sources:] blocks
+    type Chunk = { type: 'text'; value: string } | { type: 'sources'; names: string[] };
+    const chunks: Chunk[] = [];
+    let lastIdx = 0;
+    let srcMatch;
+    const srcRegex = new RegExp(sourceBlockRegex.source, 'gi');
+
+    while ((srcMatch = srcRegex.exec(text)) !== null) {
+      if (srcMatch.index > lastIdx) {
+        chunks.push({ type: 'text', value: text.substring(lastIdx, srcMatch.index) });
+      }
+      const names = srcMatch[1].split(',').map((s: string) => s.trim()).filter(Boolean);
+      chunks.push({ type: 'sources', names });
+      lastIdx = srcMatch.index + srcMatch[0].length;
+    }
+    if (lastIdx < text.length) {
+      chunks.push({ type: 'text', value: text.substring(lastIdx) });
+    }
+
+    // Step 2: Render a text chunk with bold + URL support
+    const renderTextChunk = (segment: string, keyPrefix: string): React.ReactNode[] => {
+      const boldParts = segment.split(/\*\*(.*?)\*\*/g);
+      return boldParts.map((part, i) => {
+        const isBold = i % 2 === 1;
+        const partUrlMatch = part.match(urlRegex);
+        if (!partUrlMatch) {
+          const style = isBold ? [baseStyle, { fontWeight: 'bold' as const }] : baseStyle;
+          return <Text key={`${keyPrefix}-b${i}`} style={style}>{part}</Text>;
+        }
+        // Has URLs — split around them
+        const urlParts: React.ReactNode[] = [];
+        let uLastIdx = 0;
+        let uMatch;
+        const uRegex = new RegExp(urlRegex.source, 'g');
+        while ((uMatch = uRegex.exec(part)) !== null) {
+          if (uMatch.index > uLastIdx) {
+            const before = part.substring(uLastIdx, uMatch.index);
+            const style = isBold ? [baseStyle, { fontWeight: 'bold' as const }] : baseStyle;
+            urlParts.push(<Text key={`${keyPrefix}-b${i}-t${uLastIdx}`} style={style}>{before}</Text>);
+          }
+          const url = uMatch[0];
+          urlParts.push(
+            <Text
+              key={`${keyPrefix}-b${i}-u${uMatch.index}`}
+              style={[baseStyle, { color: colors.primary, textDecorationLine: 'underline' as const }]}
+              onPress={() => handleCitationPress(url)}
+              accessibilityRole="link"
+            >{url}</Text>
+          );
+          uLastIdx = uMatch.index + url.length;
+        }
+        if (uLastIdx < part.length) {
+          const after = part.substring(uLastIdx);
+          const style = isBold ? [baseStyle, { fontWeight: 'bold' as const }] : baseStyle;
+          urlParts.push(<Text key={`${keyPrefix}-b${i}-t${uLastIdx}`} style={style}>{after}</Text>);
+        }
+        return urlParts;
+      });
+    };
+
+    // Step 3: Render a [Sources: X, Y] chunk as inline tappable links
+    const renderSourcesChunk = (names: string[], keyPrefix: string): React.ReactNode => {
+      return (
+        <Text key={keyPrefix} style={[baseStyle, { fontSize: 13, color: colors.subText }]}>
+          {'('}
+          {names.map((name: string, idx: number) => {
+            const info = sourceUrlMap[name] || sourceUrlMap[name.toUpperCase()];
+            return (
+              <Text key={`${keyPrefix}-s${idx}`}>
+                {idx > 0 && ', '}
+                {info ? (
+                  <Text
+                    style={{ color: colors.primary, textDecorationLine: 'underline' as const }}
+                    onPress={() => handleCitationPress(info.url)}
+                    accessibilityRole="link"
+                    accessibilityLabel={`Source: ${info.title}`}
+                  >{name}</Text>
+                ) : (
+                  <Text>{name}</Text>
+                )}
+              </Text>
+            );
+          })}
+          {')'}
+        </Text>
+      );
+    };
+
     return (
       <Text style={baseStyle}>
-        {parts.map((part, i) =>
-          i % 2 === 1
-            ? <Text key={i} style={[baseStyle, { fontWeight: 'bold' }]}>{part}</Text>
-            : part
+        {chunks.map((chunk, i) =>
+          chunk.type === 'sources'
+            ? renderSourcesChunk(chunk.names, `c${i}`)
+            : renderTextChunk(chunk.value, `c${i}`)
         )}
       </Text>
     );
@@ -296,17 +413,24 @@ const ChatScreen = () => {
 
   const renderCitations = (citations?: Citation[]) => {
     if (!citations || citations.length === 0) return null;
+
+    // Separate citation types:
+    // - health_education: rendered inline via [Sources: X, Y] in renderMarkdownText
+    // - everything else (curated resources, therapist referrals, web resources): shown as cards
+    const resourceCards = citations.filter(c => c.citation_type !== 'health_education');
+    
+    if (resourceCards.length === 0) return null;
     
     return (
       <View style={styles.citationsContainer}>
         <Text style={[styles.citationsHeader, { color: colors.subText }]}>
-          Sources:
+          Resources:
         </Text>
         <Text style={[styles.citationDisclaimer, { color: colors.subText }]}>
         The following resources provide additional information. 
         Always consult a healthcare professional for medical advice.
         </Text>
-        {citations.map((citation, index) => (
+        {resourceCards.map((citation, index) => (
           <TouchableOpacity
             key={citation.id || index.toString()}
             onPress={() => handleCitationPress(citation.url)}
@@ -372,7 +496,7 @@ const ChatScreen = () => {
                 {item.text}
               </Text>
             ) : (
-              renderMarkdownText(item.text, { fontSize: 16, color: colors.text, lineHeight: 22 })
+              renderMarkdownText(item.text, { fontSize: 16, color: colors.text, lineHeight: 22 }, item.citations)
             )}
           </View>
           {item.sender === 'ai' && renderCitations(item.citations)}

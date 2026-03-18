@@ -259,22 +259,12 @@ const ChatScreen = () => {
     );
   };
   
-  // Renders AI message text with two preprocessing steps:
-  // 1. Strips [Sources: ...] inline citations — these are redundant since
-  //    citation cards are rendered below the bubble via renderCitations()
-  // 2. Parses **bold** markdown into actual bold Text spans
+  // Strips [Sources: ...] from bubble text (redundant since citation cards show below)
+  // and renders **bold** markdown as actual bold Text spans.
   const renderMarkdownText = (text: string, baseStyle: object) => {
-    // Step 1: remove [Sources: ...] or [Source: ...] patterns (case-insensitive)
     const clean = text.replace(/\[Sources?:[^\]]+\]/gi, '').replace(/\s{2,}/g, ' ').trim();
-
-    // Step 2: split on **bold** markers
     const parts = clean.split(/\*\*(.*?)\*\*/g);
-
-    // No bold markers — return a single Text node (fast path)
-    if (parts.length === 1) {
-      return <Text style={baseStyle}>{clean}</Text>;
-    }
-
+    if (parts.length === 1) return <Text style={baseStyle}>{clean}</Text>;
     return (
       <Text style={baseStyle}>
         {parts.map((part, i) =>
@@ -305,7 +295,6 @@ const ChatScreen = () => {
   };
 
   const renderCitations = (citations?: Citation[]) => {
-    console.log('[Citations] received:', JSON.stringify(citations));
     if (!citations || citations.length === 0) return null;
     
     return (
@@ -379,24 +368,14 @@ const ChatScreen = () => {
             ]}
           >
             {isUser ? (
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: colors.text,
-                  lineHeight: 22,
-                }}
-              >
+              <Text style={{ fontSize: 16, color: colors.text, lineHeight: 22 }}>
                 {item.text}
               </Text>
             ) : (
-              renderMarkdownText(item.text, {
-                fontSize: 16,
-                color: colors.text,
-                lineHeight: 22,
-              })
+              renderMarkdownText(item.text, { fontSize: 16, color: colors.text, lineHeight: 22 })
             )}
-            {item.sender === 'ai' && renderCitations(item.citations)}
           </View>
+          {item.sender === 'ai' && renderCitations(item.citations)}
           <Text style={[styles.timestamp, { color: colors.subText }]}>
             {new Date(item.timestamp).toLocaleTimeString([], {
               hour: "2-digit",
@@ -685,7 +664,7 @@ const ChatScreen = () => {
           <View style={introStyles.bulletList}>
             <IntroBullet
               outerBg="#e8f4f5"
-              dotColor="#1aabba"
+              dotColor="#4a9fa5"
               boldText="Longitudinal memory."
               text=" Remembers your mood trends, journal themes and past conversations \u2014 not just this session."
             />
@@ -802,7 +781,7 @@ const introStyles = StyleSheet.create({
   headlineTeal: {
     fontSize: 13,
     fontWeight: "500",
-    color: "#1aabba",
+    color: "#4a9fa5",
     marginBottom: 8,
   },
   subtext: {
@@ -846,7 +825,7 @@ const introStyles = StyleSheet.create({
     color: "#1a1a1a",
   },
   primaryButton: {
-    backgroundColor: "#1aabba",
+    backgroundColor: "#4a9fa5",
     borderRadius: 20,
     paddingVertical: 9,
     alignItems: "center",
