@@ -387,13 +387,13 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
     letterSpacing: -0.5,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   subtitle: {
     fontSize: isIPad ? 15 : 13,
     textAlign: "center",
     marginTop: 0,
-    marginBottom: 16,
+    marginBottom: 24,
   },
 
   // Mood card
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     padding: 14,
     paddingTop: 12,
-    marginBottom: 12,
+    marginBottom: 24,
   },
   moodLabel: {
     fontSize: 12,
@@ -436,14 +436,14 @@ const styles = StyleSheet.create({
   // Chat CTA
   chatCta: {
     borderRadius: 24,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 24,
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 24,
   },
   chatCtaText: {
     color: "#FFFFFF",
-    fontSize: isIPad ? 16 : 14,
+    fontSize: isIPad ? 20 : 16,
     fontWeight: "600",
   },
 
@@ -451,14 +451,14 @@ const styles = StyleSheet.create({
   activityCard: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 0.5,
-    padding: 12,
-    marginBottom: 14,
+    padding: 18,
+    marginBottom: 24,
   },
   activityIconArea: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     borderRadius: 10,
     backgroundColor: "rgba(26, 171, 186, 0.12)",
     justifyContent: "center",
@@ -466,18 +466,18 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   activityEmoji: {
-    fontSize: 16,
+    fontSize: 20,
   },
   activityTextArea: {
     flex: 1,
     marginRight: 8,
   },
   activityLabel: {
-    fontSize: 10,
+    fontSize: 12,
     marginBottom: 1,
   },
   activityTitle: {
-    fontSize: isIPad ? 14 : 13,
+    fontSize: isIPad ? 18 : 14,
     fontWeight: "700",
   },
   activityDescription: {
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
   },
   startButtonText: {
     color: "#FFFFFF",
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "600",
   },
 
@@ -534,15 +534,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   quickActionIcon: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 6,
   },
   quickActionEmoji: {
-    fontSize: 16,
+    fontSize: 20,
   },
   quickActionLabel: {
     fontSize: 12,

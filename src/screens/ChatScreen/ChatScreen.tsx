@@ -1055,7 +1055,7 @@ const styles = StyleSheet.create({
     //backgroundColor: "#FAF8F5",
   },
   sendBtn: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#1aabba", // "#007AFF",
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 20,

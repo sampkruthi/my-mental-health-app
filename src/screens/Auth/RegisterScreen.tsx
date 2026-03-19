@@ -626,7 +626,7 @@ const styles = StyleSheet.create({
     color: "#7F8C8D",
   },
   activeTabText: {
-    color: "#5B9ACD",
+    color: "#1aabba",
   },
   inputSection: {
     marginBottom: 12,
@@ -694,7 +694,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   termsLink: {
-    color: "#5B9ACD",
+    color: "#1aabba",
     fontWeight: "600",
   },
   createButton: {
