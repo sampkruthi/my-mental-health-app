@@ -272,21 +272,46 @@ const ChatScreen = () => {
     // Build a lookup from source short names to citation URLs
     // e.g. "NIMH" -> "https://www.nimh.nih.gov/...", "APA" -> "https://www.apa.org/..."
     const sourceUrlMap: Record<string, { url: string; title: string }> = {};
+
+    // Fallback map: common health organizations the LLM might cite in [Sources: ...]
+    // even when no matching citation object is attached (e.g. the LLM cites "Mayo Clinic"
+    // but only NIMH and APA citation cards were attached). These are general landing pages.
+    const KNOWN_SOURCES: Record<string, { url: string; title: string }> = {
+      'NIMH':             { url: 'https://www.nimh.nih.gov/health', title: 'NIMH' },
+      'APA':              { url: 'https://www.apa.org/topics', title: 'APA' },
+      'MAYO CLINIC':      { url: 'https://www.mayoclinic.org/diseases-conditions', title: 'Mayo Clinic' },
+      'HELPGUIDE':        { url: 'https://www.helpguide.org', title: 'HelpGuide' },
+      'NAMI':             { url: 'https://www.nami.org/About-Mental-Illness', title: 'NAMI' },
+      'CDC':              { url: 'https://www.cdc.gov/mental-health', title: 'CDC' },
+      'SAMHSA':           { url: 'https://findtreatment.gov/', title: 'SAMHSA' },
+      'HARVARD HEALTH':   { url: 'https://www.health.harvard.edu', title: 'Harvard Health' },
+      'SLEEP FOUNDATION': { url: 'https://www.sleepfoundation.org', title: 'Sleep Foundation' },
+      'WHO':              { url: 'https://www.who.int/health-topics/mental-health', title: 'WHO' },
+    };
+    // Seed with fallbacks (citation-specific URLs will overwrite these below)
+    Object.entries(KNOWN_SOURCES).forEach(([key, val]) => {
+      sourceUrlMap[key] = val;
+      sourceUrlMap[key.toLowerCase()] = val;
+      // Also seed title-case versions: "Nimh" etc.
+      sourceUrlMap[key.charAt(0) + key.slice(1).toLowerCase()] = val;
+    });
+
+    // Overwrite with actual citation URLs (more specific than fallbacks)
     if (citations) {
       for (const c of citations) {
-        if (c.citation_type === 'health_education' && c.url) {
-          // Map organization name
-          if (c.organization) {
-            sourceUrlMap[c.organization.toUpperCase()] = { url: c.url, title: c.title };
-            sourceUrlMap[c.organization] = { url: c.url, title: c.title };
-          }
-          // Extract abbreviation from title like "Anxiety Disorders — NIMH" -> "NIMH"
-          const dashMatch = c.title?.match(/—\s*(.+)$/);
-          if (dashMatch) {
-            const abbrev = dashMatch[1].trim();
-            sourceUrlMap[abbrev.toUpperCase()] = { url: c.url, title: c.title };
-            sourceUrlMap[abbrev] = { url: c.url, title: c.title };
-          }
+        if (!c.url) continue;
+        // Index every citation by organization name and title abbreviation
+        // so [Sources: NIMH, SAMHSA, APA] can resolve regardless of citation_type
+        if (c.organization) {
+          sourceUrlMap[c.organization.toUpperCase()] = { url: c.url, title: c.title };
+          sourceUrlMap[c.organization] = { url: c.url, title: c.title };
+        }
+        // Extract abbreviation from title like "Anxiety Disorders — NIMH" -> "NIMH"
+        const dashMatch = c.title?.match(/—\s*(.+)$/);
+        if (dashMatch) {
+          const abbrev = dashMatch[1].trim();
+          sourceUrlMap[abbrev.toUpperCase()] = { url: c.url, title: c.title };
+          sourceUrlMap[abbrev] = { url: c.url, title: c.title };
         }
       }
     }
@@ -1055,7 +1080,7 @@ const styles = StyleSheet.create({
     //backgroundColor: "#FAF8F5",
   },
   sendBtn: {
-    backgroundColor: "#1aabba", // "#007AFF",
+    backgroundColor: "#007AFF",
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 20,

@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
   StatusBar,
   Platform,
+  ScrollView
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
@@ -101,6 +102,7 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
           { left: slideAnim, backgroundColor: colors.cardBackground },
         ]}
       >
+        <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
         {/* User Name Header */}
         <TouchableOpacity
           style={[styles.drawerItem, styles.drawerUserItem]}
@@ -210,6 +212,7 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
             👋 Logout
           </Text>
         </TouchableOpacity>
+        </ScrollView>
       </Animated.View>
 
       {/* Main Content */}
