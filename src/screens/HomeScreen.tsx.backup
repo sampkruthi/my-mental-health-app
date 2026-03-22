@@ -67,9 +67,9 @@ const MOOD_OPTIONS = [
 
 
 const QUICK_ACTIONS = [
-  { key: "journal" as const, label: "Journal", emoji: "\uD83D\uDCD3", color: "#e8f4f5" },
-  { key: "progressdashboard" as const, label: "Progress", emoji: "\uD83D\uDCC8", color: "#f0f5ff" },
-  { key: "resources" as const, label: "Resources", emoji: "\uD83D\uDCDA", color: "#fff0e6" },
+  { key: "journal" as const, label: "Journal", emoji: "\uD83D\uDCD3" },
+  { key: "reminders" as const, label: "Reminders", emoji: "\uD83D\uDCC5" },
+  { key: "resources" as const, label: "Resources", emoji: "\uD83D\uDCDA" },
 ];
 
 function selectTodayActivity(
@@ -276,25 +276,17 @@ const HomeScreen = () => {
             ]}
           >
             <View style={styles.activitySkeleton}>
-              <View style={[styles.skeletonIcon, { backgroundColor: "#e8f4f5" }]} />
+              <View style={styles.skeletonIcon} />
               <View style={styles.skeletonTextArea}>
-                <View
-                  style={[
-                    styles.skeletonLine,
-                    { width: "40%", backgroundColor: "#e8f4f5" },
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.skeletonLine,
-                    { width: "70%", backgroundColor: "#e8f4f5" },
-                  ]}
-                />
+                <View style={[styles.skeletonLine, { width: "40%" }]} />
+                <View style={[styles.skeletonLine, { width: "70%" }]} />
               </View>
             </View>
           </View>
         ) : todayActivity ? (
-          <View
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={handleActivityPress}
             style={[
               styles.activityCard,
               {
@@ -328,14 +320,12 @@ const HomeScreen = () => {
                 {todayActivity.description}
               </Text>
             </View>
-            <TouchableOpacity
+            <View
               style={[styles.startButton, { backgroundColor: colors.primary }]}
-              onPress={handleActivityPress}
-              activeOpacity={0.8}
             >
               <Text style={styles.startButtonText}>Start</Text>
-            </TouchableOpacity>
-          </View>
+            </View>
+          </TouchableOpacity>
         ) : null}
 
         {/* 5. QUICK ACTION ROW */}
@@ -356,7 +346,7 @@ const HomeScreen = () => {
               <View
                 style={[
                   styles.quickActionIcon,
-                  { backgroundColor: action.color },
+                  { backgroundColor: colors.primary + '18' },
                 ]}
               >
                 <Text style={styles.quickActionEmoji}>{action.emoji}</Text>
@@ -390,19 +380,20 @@ const styles = StyleSheet.create({
     fontSize: isIPad ? 14 : 12,
     textAlign: "center",
     fontWeight: "500",
-    marginBottom: 4,
+    marginBottom: 8,
   },
   greeting: {
     fontSize: isIPad ? 26 : 22,
     fontWeight: "700",
     textAlign: "center",
     letterSpacing: -0.5,
+    marginBottom: 6,
   },
   subtitle: {
     fontSize: isIPad ? 15 : 13,
     textAlign: "center",
-    marginTop: 2,
-    marginBottom: 14,
+    marginTop: 0,
+    marginBottom: 24,
   },
 
   // Mood card
@@ -411,7 +402,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     padding: 14,
     paddingTop: 12,
-    marginBottom: 12,
+    marginBottom: 24,
   },
   moodLabel: {
     fontSize: 12,
@@ -445,14 +436,14 @@ const styles = StyleSheet.create({
   // Chat CTA
   chatCta: {
     borderRadius: 24,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 24,
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 24,
   },
   chatCtaText: {
     color: "#FFFFFF",
-    fontSize: isIPad ? 16 : 14,
+    fontSize: isIPad ? 20 : 16,
     fontWeight: "600",
   },
 
@@ -460,33 +451,33 @@ const styles = StyleSheet.create({
   activityCard: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 0.5,
-    padding: 12,
-    marginBottom: 14,
+    padding: 18,
+    marginBottom: 24,
   },
   activityIconArea: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     borderRadius: 10,
-    backgroundColor: "#e8f4f5",
+    backgroundColor: "rgba(26, 171, 186, 0.12)",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 10,
   },
   activityEmoji: {
-    fontSize: 16,
+    fontSize: 20,
   },
   activityTextArea: {
     flex: 1,
     marginRight: 8,
   },
   activityLabel: {
-    fontSize: 10,
+    fontSize: 12,
     marginBottom: 1,
   },
   activityTitle: {
-    fontSize: isIPad ? 14 : 13,
+    fontSize: isIPad ? 18 : 14,
     fontWeight: "700",
   },
   activityDescription: {
@@ -500,7 +491,7 @@ const styles = StyleSheet.create({
   },
   startButtonText: {
     color: "#FFFFFF",
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "600",
   },
 
@@ -515,6 +506,7 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 10,
     marginRight: 10,
+    backgroundColor: "rgba(26, 171, 186, 0.12)",
   },
   skeletonTextArea: {
     flex: 1,
@@ -523,6 +515,7 @@ const styles = StyleSheet.create({
   skeletonLine: {
     height: 10,
     borderRadius: 5,
+    backgroundColor: "rgba(26, 171, 186, 0.12)",
   },
 
   // Quick actions
@@ -530,7 +523,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 10,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   quickActionCard: {
     flex: 1,
@@ -541,15 +534,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   quickActionIcon: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 6,
   },
   quickActionEmoji: {
-    fontSize: 16,
+    fontSize: 20,
   },
   quickActionLabel: {
     fontSize: 12,

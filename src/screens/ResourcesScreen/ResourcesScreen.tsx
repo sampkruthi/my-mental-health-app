@@ -4,7 +4,7 @@
 // 2. Upgrades to RAG recommendations when ready (smooth transition)
 // 3. No blank screen, perceived as much faster!
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -16,7 +16,8 @@ import {
   Linking,
   ActivityIndicator,
   TouchableOpacity,
-  Platform
+  Platform,
+  Animated,
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
@@ -27,6 +28,7 @@ import Layout from "../../components/UI/layout";
 import { Button } from "../../components/UI/Button";
 import { useFetchContentRec, useFetchContentRecWithRAG } from "../../api/hooks";
 import { ResourceRec, ResourceRecRAG, RAGRecommendation } from "../../api/types";
+import { storage } from "../../utils/storage";
 
 const isIPad = Platform.OS === 'ios' && Platform.isPad; 
 
@@ -70,6 +72,36 @@ const ResourcesScreen = () => {
 
   const [selectedResource, setSelectedResource] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
+
+  // First-time resources intro
+  const [showResourcesIntro, setShowResourcesIntro] = useState(false);
+  const introSlideAnim = useRef(new Animated.Value(Dimensions.get("window").height)).current;
+
+  useEffect(() => {
+    storage.getItem("hasSeenResourcesIntro").then((value) => {
+      if (!value) {
+        setShowResourcesIntro(true);
+        Animated.spring(introSlideAnim, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 50,
+          friction: 9,
+        }).start();
+      }
+    });
+  }, []);
+
+  const dismissResourcesIntro = () => {
+    Animated.spring(introSlideAnim, {
+      toValue: Dimensions.get("window").height,
+      useNativeDriver: true,
+      tension: 50,
+      friction: 9,
+    }).start(() => {
+      setShowResourcesIntro(false);
+    });
+    storage.setItem("hasSeenResourcesIntro", "true");
+  };
 
   // Debug logs
   console.log('🔍 Resources Status:', {
@@ -387,6 +419,80 @@ const ResourcesScreen = () => {
           </ScrollView>
         </View>
       </Modal>
+
+      {/* First-time resources intro */}
+      <Modal
+        visible={showResourcesIntro}
+        transparent={true}
+        animationType="none"
+        statusBarTranslucent={true}
+      >
+        <TouchableOpacity
+          style={resourcesIntroStyles.overlay}
+          activeOpacity={1}
+          onPress={dismissResourcesIntro}
+        />
+        <Animated.View
+          style={[
+            resourcesIntroStyles.sheet,
+            { transform: [{ translateY: introSlideAnim }] },
+          ]}
+        >
+          <View style={resourcesIntroStyles.handleContainer}>
+            <View style={resourcesIntroStyles.handle} />
+          </View>
+
+          <Text style={resourcesIntroStyles.emoji}>📚</Text>
+
+          <Text style={resourcesIntroStyles.headline}>
+            Curated just for you
+          </Text>
+
+          <Text style={resourcesIntroStyles.subtext}>
+            These resources are personalized based on your chat conversations,
+            journal entries, and mood history — so they stay relevant to what
+            you're actually going through.
+          </Text>
+
+          <View style={resourcesIntroStyles.featureList}>
+            <View style={resourcesIntroStyles.featureRow}>
+              <Text style={resourcesIntroStyles.featureIcon}>💬</Text>
+              <Text style={resourcesIntroStyles.featureText}>
+                <Text style={resourcesIntroStyles.featureBold}>Chat-informed.</Text>
+                {" "}Topics from your conversations shape what's recommended.
+              </Text>
+            </View>
+            <View style={resourcesIntroStyles.featureRow}>
+              <Text style={resourcesIntroStyles.featureIcon}>📓</Text>
+              <Text style={resourcesIntroStyles.featureText}>
+                <Text style={resourcesIntroStyles.featureBold}>Journal-aware.</Text>
+                {" "}Themes from your journal entries are factored in.
+              </Text>
+            </View>
+            <View style={resourcesIntroStyles.featureRow}>
+              <Text style={resourcesIntroStyles.featureIcon}>😊</Text>
+              <Text style={resourcesIntroStyles.featureText}>
+                <Text style={resourcesIntroStyles.featureBold}>Mood-sensitive.</Text>
+                {" "}Your mood trends help surface the most helpful content.
+              </Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={resourcesIntroStyles.primaryButton}
+            onPress={dismissResourcesIntro}
+            activeOpacity={0.8}
+          >
+            <Text style={resourcesIntroStyles.primaryButtonText}>Explore resources</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={dismissResourcesIntro}>
+            <Text style={resourcesIntroStyles.secondaryLink}>
+              Don't show this again
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </Modal>
     </Layout>
   );
 };
@@ -680,6 +786,102 @@ const styles = StyleSheet.create({
   },
 
 
+});
+
+const resourcesIntroStyles = StyleSheet.create({
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  sheet: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 28,
+    paddingTop: 16,
+    paddingBottom: 40,
+    maxHeight: "85%",
+  },
+  handleContainer: {
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#D1D5DB",
+  },
+  emoji: {
+    fontSize: 40,
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  headline: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#1a1a1a",
+    textAlign: "center",
+    marginBottom: 12,
+    letterSpacing: -0.5,
+  },
+  subtext: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: "#6B7280",
+    textAlign: "center",
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  featureList: {
+    marginBottom: 28,
+    gap: 16,
+  },
+  featureRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  featureIcon: {
+    fontSize: 20,
+    marginTop: 1,
+  },
+  featureText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#4B5563",
+  },
+  featureBold: {
+    fontWeight: "700",
+    color: "#1a1a1a",
+  },
+  primaryButton: {
+    backgroundColor: "#1aabba",
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  primaryButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  secondaryLink: {
+    textAlign: "center",
+    fontSize: 14,
+    color: "#9CA3AF",
+    paddingVertical: 8,
+  },
 });
 
 export default ResourcesScreen;

@@ -6,8 +6,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
-  Dimensions,
   ActivityIndicator,
+  ScrollView,
+  useWindowDimensions,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -25,9 +26,6 @@ import { RootStackParamList } from "../navigation/AppNavigator";
 import { storage } from "../utils/storage";
 import { useQueryClient } from "@tanstack/react-query";
 import type { GuidedActivity, MoodLog } from "../api/types";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const isIPad = Platform.OS === "ios" && SCREEN_WIDTH >= 768;
 
 // --- Helpers ---
 
@@ -68,7 +66,7 @@ const MOOD_OPTIONS = [
 
 const QUICK_ACTIONS = [
   { key: "journal" as const, label: "Journal", emoji: "\uD83D\uDCD3" },
-  { key: "progressdashboard" as const, label: "Progress", emoji: "\uD83D\uDCC8" },
+  { key: "reminders" as const, label: "Reminders", emoji: "\uD83D\uDCC5" },
   { key: "resources" as const, label: "Resources", emoji: "\uD83D\uDCDA" },
 ];
 
@@ -134,6 +132,12 @@ const HomeScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const queryClient = useQueryClient();
+  const { width, height } = useWindowDimensions();
+  
+  // Responsive breakpoints
+  const isTablet = width >= 768;
+  const isSmallPhone = height < 700; // iPhone SE, small Androids
+  const spacing = isSmallPhone ? 16 : isTablet ? 28 : 20;
 
   // Data fetching
   const { data: profile } = useFetchUserProfile(token);
@@ -195,19 +199,27 @@ const HomeScreen = () => {
       title="Home"
       onNavigate={(screen) => navigation.navigate(screen as never)}
     >
-      <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <ScrollView 
+        style={[styles.screen, { backgroundColor: colors.background }]}
+        contentContainerStyle={{ 
+          paddingHorizontal: isTablet ? 32 : 16,
+          paddingTop: isSmallPhone ? 8 : 12,
+          paddingBottom: 24,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* 1. GREETING SECTION */}
-        <Text style={[styles.dateText, { color: colors.subText }]}>
+        <Text style={[styles.dateText, { color: colors.subText, fontSize: isTablet ? 14 : 12 }]}>
           {new Date().toLocaleDateString("en-US", {
             weekday: "long",
             month: "long",
             day: "numeric",
           })}
         </Text>
-        <Text style={[styles.greeting, { color: colors.text }]}>
+        <Text style={[styles.greeting, { color: colors.text, fontSize: isTablet ? 26 : 22 }]}>
           Good {timeOfDay}, {firstName}
         </Text>
-        <Text style={[styles.subtitle, { color: colors.subText }]}>
+        <Text style={[styles.subtitle, { color: colors.subText, marginBottom: spacing }]}>
           How are you feeling today?
         </Text>
 
@@ -218,6 +230,7 @@ const HomeScreen = () => {
             {
               backgroundColor: colors.cardBackground,
               borderColor: "#e0e0e0",
+              marginBottom: spacing,
             },
           ]}
         >
@@ -245,7 +258,7 @@ const HomeScreen = () => {
                     disabled={logMoodMutation.isPending}
                     activeOpacity={0.6}
                   >
-                    <Text style={styles.moodEmoji}>{mood.emoji}</Text>
+                    <Text style={[styles.moodEmoji, { fontSize: isTablet ? 32 : 28 }]}>{mood.emoji}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -255,11 +268,11 @@ const HomeScreen = () => {
 
         {/* 3. CHAT CTA */}
         <TouchableOpacity
-          style={[styles.chatCta, { backgroundColor: colors.primary }]}
+          style={[styles.chatCta, { backgroundColor: colors.primary, marginBottom: spacing }]}
           onPress={() => navigation.navigate("chat")}
           activeOpacity={0.8}
         >
-          <Text style={styles.chatCtaText}>
+          <Text style={[styles.chatCtaText, { fontSize: isTablet ? 20 : 16 }]}>
             Start a conversation with Bodhira
           </Text>
         </TouchableOpacity>
@@ -284,7 +297,9 @@ const HomeScreen = () => {
             </View>
           </View>
         ) : todayActivity ? (
-          <View
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={handleActivityPress}
             style={[
               styles.activityCard,
               {
@@ -303,7 +318,7 @@ const HomeScreen = () => {
                 Today's activity
               </Text>
               <Text
-                style={[styles.activityTitle, { color: colors.text }]}
+                style={[styles.activityTitle, { color: colors.text, fontSize: isTablet ? 18 : 14 }]}
                 numberOfLines={1}
               >
                 {todayActivity.title}
@@ -318,14 +333,12 @@ const HomeScreen = () => {
                 {todayActivity.description}
               </Text>
             </View>
-            <TouchableOpacity
+            <View
               style={[styles.startButton, { backgroundColor: colors.primary }]}
-              onPress={handleActivityPress}
-              activeOpacity={0.8}
             >
               <Text style={styles.startButtonText}>Start</Text>
-            </TouchableOpacity>
-          </View>
+            </View>
+          </TouchableOpacity>
         ) : null}
 
         {/* 5. QUICK ACTION ROW */}
@@ -361,7 +374,7 @@ const HomeScreen = () => {
           ))}
         </View>
 
-      </View>
+      </ScrollView>
     </Layout>
   );
 };
@@ -371,29 +384,27 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    paddingHorizontal: isIPad ? 32 : 16,
-    paddingTop: 12,
   },
 
   // Greeting
   dateText: {
-    fontSize: isIPad ? 14 : 12,
+    fontSize: 12,
     textAlign: "center",
     fontWeight: "500",
     marginBottom: 8,
   },
   greeting: {
-    fontSize: isIPad ? 26 : 22,
+    fontSize: 22,
     fontWeight: "700",
     textAlign: "center",
     letterSpacing: -0.5,
     marginBottom: 6,
   },
   subtitle: {
-    fontSize: isIPad ? 15 : 13,
+    fontSize: 13,
     textAlign: "center",
     marginTop: 0,
-    marginBottom: 24,
+    // marginBottom set inline via spacing
   },
 
   // Mood card
@@ -402,7 +413,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     padding: 14,
     paddingTop: 12,
-    marginBottom: 24,
+    // marginBottom set inline via spacing
   },
   moodLabel: {
     fontSize: 12,
@@ -417,7 +428,7 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   moodEmoji: {
-    fontSize: isIPad ? 32 : 28,
+    fontSize: 28,
   },
   moodLoggedRow: {
     flexDirection: "row",
@@ -439,11 +450,11 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 24,
     alignItems: "center",
-    marginBottom: 24,
+    // marginBottom set inline via spacing
   },
   chatCtaText: {
     color: "#FFFFFF",
-    fontSize: isIPad ? 20 : 16,
+    fontSize: 16,
     fontWeight: "600",
   },
 
@@ -454,7 +465,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 0.5,
     padding: 18,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   activityIconArea: {
     width: 40,
@@ -477,7 +488,7 @@ const styles = StyleSheet.create({
     marginBottom: 1,
   },
   activityTitle: {
-    fontSize: isIPad ? 18 : 14,
+    fontSize: 14,
     fontWeight: "700",
   },
   activityDescription: {

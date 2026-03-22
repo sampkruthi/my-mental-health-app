@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
     color: "#7F8C8D",
   },
   activeTabText: {
-    color: "#5B9ACD",
+    color: "#1aabba",
   },
   inputSection: {
     marginBottom: 20,
@@ -591,7 +591,7 @@ const styles = StyleSheet.create({
   },
   forgotPasswordText: {
     fontSize: 14,
-    color: "#5B9ACD",
+    color: "#1aabba",
     fontWeight: "500",
   },
   errorContainer: {

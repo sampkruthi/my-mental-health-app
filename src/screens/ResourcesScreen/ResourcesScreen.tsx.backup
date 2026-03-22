@@ -5,22 +5,22 @@
 // 3. No blank screen, perceived as much faster!
 
 import React, { useState } from "react";
-import { 
-  View, 
-  Text, 
-  Image, 
-  FlatList, 
-  Modal, 
-  ScrollView, 
-  Dimensions, 
-  StyleSheet, 
+import {
+  View,
+  Text,
+  FlatList,
+  Modal,
+  ScrollView,
+  Dimensions,
+  StyleSheet,
   Linking,
   ActivityIndicator,
-  TouchableOpacity
+  TouchableOpacity,
+  Platform
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation/AppNavigator";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Layout from "../../components/UI/layout";
@@ -28,18 +28,22 @@ import { Button } from "../../components/UI/Button";
 import { useFetchContentRec, useFetchContentRecWithRAG } from "../../api/hooks";
 import { ResourceRec, ResourceRecRAG, RAGRecommendation } from "../../api/types";
 
+const isIPad = Platform.OS === 'ios' && Platform.isPad; 
+
 const { width } = Dimensions.get("window");
 
 const ResourcesScreen = () => {
   const { colors } = useTheme();
   const { token } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, 'resources'>>();
+  const filterParam = route.params?.filter;
 
   // OPTIMIZATION 1: Load fast recommendations immediately (no LLM, ~100ms)
-  const { 
-    data: quickRecs = [], 
-    isLoading: isLoadingQuick 
-  } = useFetchContentRec(token, { limit: 10 });
+  const {
+    data: quickRecs = [],
+    isLoading: isLoadingQuick
+  } = useFetchContentRec(token, { q: filterParam, limit: 10 });
 
   // OPTIMIZATION 2: Load RAG recommendations in background (with LLM, ~400ms with Haiku)
   const {
@@ -100,18 +104,84 @@ const ResourcesScreen = () => {
     return colorMap[type.toUpperCase()] || '#E5E7EB';
   };
 
-  const getDefaultThumbnail = (contentType: string) => {
-    const placeholders: Record<string, string> = {
-      'article': 'https://via.placeholder.com/200/4CAF50/FFFFFF?text=Article',
-      'video': 'https://via.placeholder.com/200/F44336/FFFFFF?text=Video',
-      'podcast': 'https://via.placeholder.com/200/FFC107/FFFFFF?text=Podcast',
+  const renderPersonalizedSummary = () => {
+    if (!ragSummary) return null;
+  
+    // Build a lookup map of title → url from recommendations
+    const titleToUrl: Record<string, string> = {};
+    ragData.recommendations.forEach((rec) => {
+      titleToUrl[rec.title] = rec.url;
+      // Also add lowercase version for fuzzy matching
+      titleToUrl[rec.title.toLowerCase()] = rec.url;
+    });
+
+    const findUrl = (mentionedTitle: string): string | undefined => {
+      // 1. Exact match
+      if (titleToUrl[mentionedTitle]) return titleToUrl[mentionedTitle];
+      
+      // 2. Case-insensitive match
+      const lower = mentionedTitle.toLowerCase();
+      if (titleToUrl[lower]) return titleToUrl[lower];
+      
+      // 3. Partial match — find recommendation whose title contains this text
+      const match = ragData.recommendations.find(rec => 
+        rec.title.toLowerCase().includes(lower) || 
+        lower.includes(rec.title.toLowerCase())
+      );
+      return match?.url;
     };
-    return placeholders[contentType.toLowerCase()] || 'https://via.placeholder.com/200/9E9E9E/FFFFFF?text=Resource';
+  
+    // Split summary by [[Title]] markers
+    const parts = ragSummary.split(/\[\[(.+?)\]\]/g);
+    // parts alternates between: plain text, title, plain text, title...
+  
+    return (
+      <View style={[styles.summaryBox, { backgroundColor: colors.cardBackground }]}>
+        <Text style={[styles.summaryLabel, { color: colors.text }]}>
+          ✨ Personalized for You
+        </Text>
+        <Text style={[styles.disclaimer, { color: colors.subText }]}>
+          These resources are for informational purposes only. Always consult a
+          healthcare professional for medical advice.
+        </Text>
+        <Text style={[styles.summaryText, { color: colors.subText }]}>
+          {parts.map((part, index) => {
+            // Even indexes are plain text, odd indexes are titles
+            if (index % 2 === 0) {
+              return <Text key={index}>{part}</Text>;
+            }
+  
+            // This is a [[Title]] — find its URL
+            const url = findUrl(part) || findUrl(part.toLowerCase());
+  
+            if (url) {
+              return (
+                <Text
+                  key={index}
+                  style={[styles.summaryLink, { color: colors.primary }]}
+                  onPress={() => Linking.openURL(url)}
+                >
+                  {part}
+                </Text>
+              );
+            }
+  
+            // Title mentioned but no URL match — render as bold non-link
+            return (
+              <Text key={index} style={styles.summaryLinkNoUrl}>
+                {part}
+              </Text>
+            );
+          })}
+        </Text>
+      </View>
+    );
   };
+
+
 
   const renderCard = ({ item }: { item: any }) => {
     const resourceType = getResourceType(item);
-    const thumbnailUrl = item.thumbnail || getDefaultThumbnail(item.content_type);
 
     // Determine if this is RAG or quick rec
     const isRAGRec = 'relevance_score' in item;
@@ -119,14 +189,6 @@ const ResourcesScreen = () => {
 
     return (
       <View style={[styles.card, { backgroundColor: colors.cardBackground || "#f0f4ff" }]}>
-        <View style={styles.thumbnailContainer}>
-          <Image
-            source={{ uri: thumbnailUrl }}
-            style={styles.thumbnail}
-            onError={() => console.log('Failed to load image:', thumbnailUrl)}
-          />
-        </View>
-
         <View style={styles.cardContent}>
           <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
             {item.title}
@@ -167,10 +229,24 @@ const ResourcesScreen = () => {
           <Text style={[styles.score, { color: colors.subText }]}>
             Relevance: {(displayScore * 100).toFixed(0)}%
           </Text>
+          <View style={styles.cardFooter}>
+          <TouchableOpacity
+            style={styles.openLinkButton}
+            onPress={() => Linking.openURL(item.url)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.openLinkText, { color: colors.primary }]}>
+              Tap to open →
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleOpen(item)}>
+            <Text style={[styles.detailsText, { color: colors.subText }]}>
+              Details
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-          <View style={{ marginTop: 12, width: 80 }}>
-            <Button title="Open" onPress={() => handleOpen(item)} />
-          </View>
+          
         </View>
       </View>
     );
@@ -229,23 +305,13 @@ const ResourcesScreen = () => {
             </View>
           ) : (
             <View>
+              {/* Show RAG personalized summary at the top when available */}
+                {renderPersonalizedSummary()} 
               {resources.map((item, index) => (
                 <View key={`resource-${item.id || `temp-${index}`}`}>
                   {renderCard({ item })}
                 </View>
               ))}
-            </View>
-          )}
-
-          {/* Show RAG personalized summary when available (smooth fade-in) */}
-          {ragSummary && resources.length > 0 && (
-            <View style={[styles.summaryBox, { backgroundColor: colors.cardBackground || "#f0f4ff" }]}>
-              <Text style={[styles.summaryLabel, { color: colors.text }]}>
-                ✨ Personalized for You
-              </Text>
-              <Text style={[styles.summaryText, { color: colors.subText }]}>
-                {ragSummary}
-              </Text>
             </View>
           )}
         </View>
@@ -257,12 +323,7 @@ const ResourcesScreen = () => {
           <ScrollView>
             {selectedResource && (
               <>
-                <Image 
-                  source={{ uri: selectedResource.thumbnail || getDefaultThumbnail(selectedResource.content_type) }} 
-                  style={styles.modalThumbnail}
-                />
-
-                <Text style={[styles.modalTitle, { color: colors.text }]}>
+                <Text style={[styles.modalTitle, { color: colors.text, marginTop: 40 }]}>
                   {selectedResource.title}
                 </Text>
                 
@@ -335,7 +396,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    width: width > 800 ? 900 : "100%",
+    maxWidth: isIPad ? 700 : undefined,
+    width: "100%",
     alignSelf: "center",
     padding: 16,
   },
@@ -360,68 +422,70 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   header: {
-    fontSize: 24,
+    fontSize: 26,  // Changed from 24
     fontWeight: "bold",
-    marginBottom: 16,
+    marginBottom: 20,  // Changed from 16
     paddingHorizontal: 4,
+    letterSpacing: -0.5,  // ADD
   },
-  // NEW: Upgrading banner
+  
+  // Upgrading banner - make it more noticeable
   upgradingBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
+    padding: 14,  // Changed from 12
+    borderRadius: 12,  // Changed from 8
     marginBottom: 16,
+    // ADD border:
+    borderWidth: 1,
+    borderColor: 'rgba(102, 182, 163, 0.2)',
   },
+  
   upgradingText: {
     marginLeft: 10,
     fontSize: 14,
     fontStyle: 'italic',
+    fontWeight: '500',  // ADD
   },
+  
+  // Card - add visual depth
   card: {
-    flexDirection: "row",
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 18,
     marginBottom: 16,
-    alignItems: "flex-start",
+    // ADD shadow:
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
-  thumbnailContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginRight: 12,
-    overflow: 'hidden',
-    backgroundColor: '#E5E7EB',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexShrink: 0,
-  },
-  thumbnail: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
+  
   cardContent: {
     flex: 1,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 17,  // Changed from 16
     fontWeight: "bold",
-    marginBottom: 6,
+    marginBottom: 8,  // Changed from 6
+    lineHeight: 22,  // ADD
   },
+  
   cardBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: 10,  // Changed from 8
+    paddingVertical: 5,  // Changed from 4
+    borderRadius: 8,  // Changed from 6
     marginTop: 4,
     marginBottom: 8,
     alignSelf: "flex-start",
   },
+  
   badgeText: {
-    fontSize: 11,
+    fontSize: 12,  // Changed from 11
     fontWeight: '600',
     color: '#065f46',
   },
+
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -438,9 +502,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   score: {
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: 13,
+    marginTop: 6,
     fontStyle: 'italic',
+    fontWeight: '500',
   },
   cardDescription: {
     fontSize: 14,
@@ -450,20 +515,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: '#FFF9E6',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 12,  // Changed from 10
+    paddingVertical: 10,  // Changed from 8
+    borderRadius: 10,  // Changed from 8
     marginTop: 8,
     marginBottom: 8,
+    borderLeftWidth: 3,  // ADD
+    borderLeftColor: '#FFC107',  // ADD
   },
+  
   reasonIcon: {
-    fontSize: 14,
-    marginRight: 6,
+    fontSize: 16,  // Changed from 14
+    marginRight: 8,  // Changed from 6
   },
+  
   reasonText: {
-    fontSize: 12,
+    fontSize: 13,  // Changed from 12
     flex: 1,
-    lineHeight: 16,
+    lineHeight: 18,  // Changed from 16
     fontStyle: 'italic',
   },
   
@@ -471,13 +540,6 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     padding: 20,
-  },
-  modalThumbnail: {
-    width: '100%',
-    height: 200,
-    borderRadius: 12,
-    marginTop: 40,
-    marginBottom: 16,
   },
   modalTitle: {
     fontSize: 24,
@@ -511,9 +573,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   modalDescription: {
-    fontSize: 16,
-    marginBottom: 16,
-    lineHeight: 24,
+    fontSize: 17,
+    marginBottom: 20,
+    lineHeight: 26,
   },
   modalScore: {
     fontSize: 14,
@@ -521,46 +583,103 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   linkButton: {
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 16,
+    borderRadius: 16,
     alignItems: 'center',
     marginBottom: 12,
+    // ADD shadow:
+    shadowColor: "#5B9EB3",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   linkButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,  // Changed from 16
+    fontWeight: '700',  // Changed from 600
+    letterSpacing: 0.5,  // ADD
   },
+  
   closeButton: {
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 16,  // Changed from 14
+    borderRadius: 16,  // Changed from 12
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 2,  // Changed from 1
     marginBottom: 20,
   },
+  
   closeButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,  // Changed from 16
+    fontWeight: '700',  // Changed from 600
+    letterSpacing: 0.5,  // ADD
   },
-
-  // RAG Summary Box Styles
+  
+  // RAG Summary Box - make it stand out more
   summaryBox: {
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 8,
+    padding: 20,  // Changed from 16
+    borderRadius: 16,  // Changed from 12
+    marginTop: 12,  // Changed from 8
     marginBottom: 16,
     borderLeftWidth: 4,
-    borderLeftColor: '#5B9ACD',
+    borderLeftColor: "#1aabba",  // Use theme color instead of hardcoded Updating from 5B9EB3 for consistency
+    // ADD shadow:
+    shadowColor: "#5B9EB3",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
   },
+  
   summaryLabel: {
-    fontSize: 15,
+    fontSize: 17,  // Changed from 15
     fontWeight: '700',
-    marginBottom: 10,
+    marginBottom: 12,  // Changed from 10
+    letterSpacing: -0.3,  // ADD
   },
+  
   summaryText: {
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 15,  // Changed from 14
+    lineHeight: 24,  // Changed from 22
   },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E8E8E8',
+  },
+  openLinkButton: {
+    paddingVertical: 4,
+  },
+  openLinkText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  detailsText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  disclaimer: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 8,
+  },
+
+  summaryLink: {
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
+  summaryLinkNoUrl: {
+    fontWeight: '700',
+  },
+
+
 });
 
 export default ResourcesScreen;

@@ -1,9 +1,10 @@
 // src/screens/GuidedActivitiesScreen.tsx
 import React, { useEffect, useState } from "react";
 import { View, Text, Image, FlatList, Modal, ScrollView, StyleSheet, Platform, TouchableOpacity } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
 import { Audio } from "expo-av";
+import { useAuth } from "../../context/AuthContext";
 
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation/AppNavigator";
@@ -17,8 +18,10 @@ const isIPad = Platform.OS === "ios" && Platform.isPad;
 
 const GuidedActivitiesScreen = () => {
   const { colors } = useTheme();
+  const { token } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { data: activities = [], isLoading } = useFetchActivities("token"); // replace with real token
+  const { data: activities = [], isLoading } = useFetchActivities(token); // replace with real token
+  const insets = useSafeAreaInsets();
 
   const [selectedActivity, setSelectedActivity] = useState<GuidedActivity | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -119,9 +122,13 @@ const GuidedActivitiesScreen = () => {
         )}
 
         <Modal visible={modalVisible} animationType="slide">
-          <SafeAreaView
-            style={{ flex: 1, backgroundColor: colors.background }}
-            edges={["top", "bottom"]}
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colors.background,
+              paddingTop: insets.top,
+              paddingBottom: insets.bottom,
+            }}
           >
             <View style={[styles.modalHeader, { borderBottomColor: colors.inputBorder }]}>
               <Text
@@ -173,7 +180,7 @@ const GuidedActivitiesScreen = () => {
                 </>
               )}
             </ScrollView>
-          </SafeAreaView>
+          </View>
         </Modal>
       </View>
     </Layout>

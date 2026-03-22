@@ -698,7 +698,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   createButton: {
-    backgroundColor: "#5B9ACD",
+    backgroundColor: "#1aabba",
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
@@ -778,7 +778,7 @@ const styles = StyleSheet.create({
   },
   signInLink: {
     fontSize: 14,
-    color: "#5B9ACD",
+    color: "#1aabba",
     fontWeight: "600",
   },
 });
