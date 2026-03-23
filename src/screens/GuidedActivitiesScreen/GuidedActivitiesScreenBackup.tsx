@@ -1,8 +1,10 @@
 // src/screens/GuidedActivitiesScreen.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, Image, FlatList, Modal, ScrollView, StyleSheet, Platform, TouchableOpacity } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
+import { Audio } from "expo-av";
+import { useAuth } from "../../context/AuthContext";
 
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation/AppNavigator";
@@ -16,18 +18,73 @@ const isIPad = Platform.OS === "ios" && Platform.isPad;
 
 const GuidedActivitiesScreen = () => {
   const { colors } = useTheme();
+  const { token } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { data: activities = [], isLoading } = useFetchActivities("token"); // replace with real token
+  const { data: activities = [], isLoading } = useFetchActivities(token); // replace with real token
+  const insets = useSafeAreaInsets();
 
   const [selectedActivity, setSelectedActivity] = useState<GuidedActivity | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
 
   const handleStart = (activity: GuidedActivity) => {
     setSelectedActivity(activity);
     setModalVisible(true);
   };
 
+  useEffect(() => {
+    return () => {
+      if (sound) {
+        sound.unloadAsync().catch(() => {});
+      }
+    };
+  }, [sound]);
+
+  const handleToggleAudio = async () => {
+    if (!selectedActivity?.audioUrl) {
+      return;
+    }
+
+    try {
+      if (!sound) {
+        setIsLoadingAudio(true);
+        const { sound: createdSound } = await Audio.Sound.createAsync(
+          { uri: selectedActivity.audioUrl },
+          { shouldPlay: true }
+        );
+        setSound(createdSound);
+        setIsPlaying(true);
+        setIsLoadingAudio(false);
+        return;
+      }
+
+      const status = await sound.getStatusAsync();
+      if (!status.isLoaded) {
+        setIsPlaying(false);
+        return;
+      }
+      if (status.isPlaying) {
+        await sound.pauseAsync();
+        setIsPlaying(false);
+      } else {
+        await sound.playAsync();
+        setIsPlaying(true);
+      }
+    } catch (_error) {
+      setIsLoadingAudio(false);
+      setIsPlaying(false);
+    }
+  };
+
   const handleDone = () => {
+    if (sound) {
+      sound.stopAsync().catch(() => {});
+      sound.unloadAsync().catch(() => {});
+      setSound(null);
+      setIsPlaying(false);
+    }
     setModalVisible(false);
     setSelectedActivity(null);
   };
@@ -65,9 +122,13 @@ const GuidedActivitiesScreen = () => {
         )}
 
         <Modal visible={modalVisible} animationType="slide">
-          <SafeAreaView
-            style={{ flex: 1, backgroundColor: colors.background }}
-            edges={["top", "bottom"]}
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colors.background,
+              paddingTop: insets.top,
+              paddingBottom: insets.bottom,
+            }}
           >
             <View style={[styles.modalHeader, { borderBottomColor: colors.inputBorder }]}>
               <Text
@@ -90,6 +151,21 @@ const GuidedActivitiesScreen = () => {
                   <Text style={[styles.modalTitle, { color: colors.text }]}>
                     {selectedActivity.title}
                   </Text>
+                  {selectedActivity.audioUrl && (
+                    <TouchableOpacity
+                      style={[styles.audioButton, { backgroundColor: colors.cardBackground }]}
+                      onPress={handleToggleAudio}
+                      disabled={isLoadingAudio}
+                    >
+                      <Text style={[styles.audioButtonText, { color: colors.text }]}>
+                        {isLoadingAudio
+                          ? "Loading audio..."
+                          : isPlaying
+                          ? "Pause Audio"
+                          : "Play Audio"}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                   {selectedActivity.steps?.map((step, index) => (
                     <View key={index} style={styles.stepContainer}>
                       <Text style={[styles.stepTitle, { color: colors.text }]}>
@@ -104,7 +180,7 @@ const GuidedActivitiesScreen = () => {
                 </>
               )}
             </ScrollView>
-          </SafeAreaView>
+          </View>
         </Modal>
       </View>
     </Layout>
@@ -194,6 +270,19 @@ const styles = StyleSheet.create({
   },
   closeButtonText: {
     fontSize: 18,
+    fontWeight: "600",
+  },
+  audioButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    marginBottom: 16,
+    alignSelf: "flex-start",
+  },
+  audioButtonText: {
+    fontSize: 14,
     fontWeight: "600",
   },
 });

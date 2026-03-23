@@ -15,6 +15,7 @@ import {
   Linking,
   Alert,
   Animated,
+  Modal,
 } from "react-native";
 import { useChatStore } from "../../stores/chatStore";
 import { useAuth } from "../../context/AuthContext";
@@ -290,6 +291,7 @@ const ChatScreen = () => {
       // Commonly cited by the LLM but not in the core 7 Tavily domains
       'IOCDF':                  { url: 'https://iocdf.org', title: 'IOCDF' },
       'INTERNATIONAL OCD FOUNDATION': { url: 'https://iocdf.org', title: 'IOCDF' },
+      'National Institute of Mental Health': { url: 'https://www.nimh.nih.gov/health', title: 'NIMH' },
       'ADAA':                   { url: 'https://adaa.org', title: 'ADAA' },
       'ANXIETY AND DEPRESSION ASSOCIATION': { url: 'https://adaa.org', title: 'ADAA' },
       'PSYCHOLOGY TODAY':       { url: 'https://www.psychologytoday.com', title: 'Psychology Today' },
@@ -774,10 +776,18 @@ const ChatScreen = () => {
               multiline
               blurOnSubmit={false}
               autoFocus={false}
-              returnKeyType="default"
+              returnKeyType="send"
+              onSubmitEditing={handleSend}
+              onKeyPress={(e) => {
+                // On web/desktop: Enter sends, Shift+Enter adds newline
+                if (Platform.OS === 'web' && e.nativeEvent.key === 'Enter' && !e.nativeEvent.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
             />
 
-            <TouchableOpacity testID="chat_send" onPress={handleSend} style={styles.sendBtn}>
+            <TouchableOpacity testID="chat_send" onPress={handleSend} style={[styles.sendBtn, { backgroundColor: colors.primary }]}>
               <Text style={styles.sendText}>→</Text>
             </TouchableOpacity>
           </View>
@@ -790,84 +800,87 @@ const ChatScreen = () => {
         </KeyboardAvoidingView>
       </View>
     </Layout>
-    {/* First-time chat intro bottom sheet */}
-    {showChatIntro && (
-      <>
+    {/* First-time chat intro — Modal ensures it renders above everything on all platforms */}
+    <Modal
+      visible={showChatIntro}
+      transparent={true}
+      animationType="none"
+      statusBarTranslucent={true}
+    >
+      <TouchableOpacity
+        style={introStyles.overlay}
+        activeOpacity={1}
+        onPress={dismissChatIntro}
+      />
+      <Animated.View
+        style={[
+          introStyles.sheet,
+          { transform: [{ translateY: introSlideAnim }] },
+        ]}
+      >
+        {/* Drag handle */}
+        <View style={introStyles.handleContainer}>
+          <View style={introStyles.handle} />
+        </View>
+
+        {/* Headline */}
+        <Text style={introStyles.headlineDark}>Built to support you.</Text>
+        <Text style={introStyles.headlineTeal}>
+          Designed to know its own limits.
+        </Text>
+
+        {/* Subtext */}
+        <Text style={introStyles.subtext}>
+          Bodhira is different from a general AI. It connects your mood,
+          journal and conversations to build a picture of your wellbeing over
+          time {"\u2014"} and it has hard limits that protect you.
+        </Text>
+
+        {/* Feature bullets */}
+        <View style={introStyles.bulletList}>
+          <IntroBullet
+            outerBg="#e8f4f5"
+            dotColor="#4a9fa5"
+            boldText="Longitudinal memory."
+            text=" Remembers your mood trends, journal themes and past conversations \u2014 not just this session."
+          />
+          <IntroBullet
+            outerBg="#fff0e6"
+            dotColor="#e07030"
+            boldText="Architecturally safe."
+            text=" Cannot diagnose you or suggest medication \u2014 these are hard constraints, not just instructions."
+          />
+          <IntroBullet
+            outerBg="#ffeaea"
+            dotColor="#e04040"
+            boldText="Crisis-aware."
+            text=" Detects distress signals and connects you to real support \u2014 988 Lifeline, Crisis Text Line \u2014 immediately."
+          />
+          <IntroBullet
+            outerBg="#f0f5ff"
+            dotColor="#4060d0"
+            boldText="Proactively helpful."
+            text=" Surfaces curated resources when it notices a pattern \u2014 before you think to ask."
+          />
+        </View>
+
+        {/* Primary button */}
         <TouchableOpacity
-          style={introStyles.overlay}
-          activeOpacity={1}
+          style={introStyles.primaryButton}
           onPress={dismissChatIntro}
-        />
-        <Animated.View
-          style={[
-            introStyles.sheet,
-            { transform: [{ translateY: introSlideAnim }] },
-          ]}
+          activeOpacity={0.8}
         >
-          {/* Drag handle */}
-          <View style={introStyles.handleContainer}>
-            <View style={introStyles.handle} />
-          </View>
+          <Text style={introStyles.primaryButtonText}>Start chatting</Text>
+        </TouchableOpacity>
 
-          {/* Headline */}
-          <Text style={introStyles.headlineDark}>Built to support you.</Text>
-          <Text style={introStyles.headlineTeal}>
-            Designed to know its own limits.
+        {/* Secondary link */}
+        <TouchableOpacity onPress={dismissChatIntro}>
+          <Text style={introStyles.secondaryLink}>
+            Don't show this again
           </Text>
-
-          {/* Subtext */}
-          <Text style={introStyles.subtext}>
-            Bodhira is different from a general AI. It connects your mood,
-            journal and conversations to build a picture of your wellbeing over
-            time {"\u2014"} and it has hard limits that protect you.
-          </Text>
-
-          {/* Feature bullets */}
-          <View style={introStyles.bulletList}>
-            <IntroBullet
-              outerBg="#e8f4f5"
-              dotColor="#4a9fa5"
-              boldText="Longitudinal memory."
-              text=" Remembers your mood trends, journal themes and past conversations \u2014 not just this session."
-            />
-            <IntroBullet
-              outerBg="#fff0e6"
-              dotColor="#e07030"
-              boldText="Architecturally safe."
-              text=" Cannot diagnose you or suggest medication \u2014 these are hard constraints, not just instructions."
-            />
-            <IntroBullet
-              outerBg="#ffeaea"
-              dotColor="#e04040"
-              boldText="Crisis-aware."
-              text=" Detects distress signals and connects you to real support \u2014 988 Lifeline, Crisis Text Line \u2014 immediately."
-            />
-            <IntroBullet
-              outerBg="#f0f5ff"
-              dotColor="#4060d0"
-              boldText="Proactively helpful."
-              text=" Surfaces curated resources when it notices a pattern \u2014 before you think to ask."
-            />
-          </View>
-
-          {/* Primary button */}
-          <TouchableOpacity
-            style={introStyles.primaryButton}
-            onPress={dismissChatIntro}
-            activeOpacity={0.8}
-          >
-            <Text style={introStyles.primaryButtonText}>Start chatting</Text>
-          </TouchableOpacity>
-
-          {/* Secondary link */}
-          <TouchableOpacity onPress={dismissChatIntro}>
-            <Text style={introStyles.secondaryLink}>
-              Don't show this again
-            </Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </>
-    )}
+        </TouchableOpacity>
+      </Animated.View>
+    </Modal>
     {alertComponent}
     </MenuProvider>
   );
@@ -1036,16 +1049,17 @@ const styles = StyleSheet.create({
   },
   messageContainer: { 
     marginVertical: 2, 
-    maxWidth: "85%",
     flexShrink: 1
   },
   messageLeft: { 
     alignSelf: "flex-start",
-    alignItems: 'flex-start', 
+    alignItems: 'flex-start',
+    maxWidth: "95%",   // AI messages: use nearly full width for long responses
   },
   messageRight: { 
     alignSelf: "flex-end",
-    alignItems: 'flex-end', 
+    alignItems: 'flex-end',
+    maxWidth: "80%",   // User messages: shorter, right-aligned
   },
   bubble: { 
     padding: 12, //changed from 10 -> 16 for more padding
@@ -1093,24 +1107,9 @@ const styles = StyleSheet.create({
     //backgroundColor: "#FAF8F5",
   },
   sendBtn: {
-    backgroundColor: '#1aabba', // "#007AFF",
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 20,
-    /*
-    backgroundColor: "#66B6A3",
-    width: 44,  // ADD: explicit width
-    height: 44,  // ADD: explicit height
-    borderRadius: 22,  // HALF of width/height for perfect circle
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 4,  // ADD: space from input
-    // ADD shadow to make it pop:
-    shadowColor: "#66B6A3",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4, */
   },
   sendText: { 
     color: "#fff", 

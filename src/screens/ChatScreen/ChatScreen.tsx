@@ -150,14 +150,14 @@ const ChatScreen = () => {
     }
   }, [initialHistory, initialLoadDone]);
 
-  //Scroll to bottom when messages change: Single scroll-to-end source of truth. Increased delay 100ms→200ms, added clearTimeout cleanup,
-  // animated=false on first load so initial render doesn't flicker
-
+  //Scroll to bottom when messages change
   useEffect(() => {
     if (flatListRef.current && messages.length > 0 && initialLoadDone) {
+      // Android needs more time for layout measurement after keyboard resize
+      const delay = Platform.OS === 'android' ? 300 : 100;
       const timer = setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: messages.length > 1 });
-      }, 200);
+      }, delay);
       return () => clearTimeout(timer);
     }
   }, [messages.length, initialLoadDone]);
@@ -191,6 +191,22 @@ const ChatScreen = () => {
       setIsLoadingMore(false);
     }
   };
+
+  // Sort messages by timestamp to prevent order issues from race conditions
+  // between addMessage, prependMessages, and React Query cache invalidation
+  const sortedMessages = React.useMemo(() => {
+    return [...messages].sort((a, b) => {
+      // Primary sort: by timestamp
+      const timeA = new Date(a.timestamp).getTime();
+      const timeB = new Date(b.timestamp).getTime();
+      if (timeA !== timeB) return timeA - timeB;
+      // Secondary sort: by numeric id (database order) for same-timestamp messages
+      const idA = parseInt(a.id);
+      const idB = parseInt(b.id);
+      if (!isNaN(idA) && !isNaN(idB)) return idA - idB;
+      return 0;
+    });
+  }, [messages]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -291,6 +307,7 @@ const ChatScreen = () => {
       // Commonly cited by the LLM but not in the core 7 Tavily domains
       'IOCDF':                  { url: 'https://iocdf.org', title: 'IOCDF' },
       'INTERNATIONAL OCD FOUNDATION': { url: 'https://iocdf.org', title: 'IOCDF' },
+      'National Institute of Mental Health': { url: 'https://www.nimh.nih.gov/health', title: 'NIMH' },
       'ADAA':                   { url: 'https://adaa.org', title: 'ADAA' },
       'ANXIETY AND DEPRESSION ASSOCIATION': { url: 'https://adaa.org', title: 'ADAA' },
       'PSYCHOLOGY TODAY':       { url: 'https://www.psychologytoday.com', title: 'Psychology Today' },
@@ -698,7 +715,7 @@ const ChatScreen = () => {
             { /* FlatList takes up all available space */}
           <FlatList
             ref={flatListRef}
-            data={messages}
+            data={sortedMessages}
             renderItem={renderMessage}
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={[
@@ -707,22 +724,6 @@ const ChatScreen = () => {
             ]}
             ListHeaderComponent={renderListHeader}
             ListFooterComponent={renderListFooter}
-            //onContentSizeChange fires after Flatlist finishes rendering content, more reliable than
-            //setTimeout alone
-            onContentSizeChange={() => {
-              if (Platform.OS === 'android') {
-                // Android needs a longer delay — layout measurement happens after
-                // keyboard resize, so scrollToEnd fires too early without this
-                setTimeout(() => {
-                  flatListRef.current?.scrollToEnd({ animated: false });
-                }, 150);
-              } else {
-                flatListRef.current?.scrollToEnd({ animated: false });
-              }
-            }}
-            onLayout={() => {
-              flatListRef.current?.scrollToEnd({ animated: false });
-            }}
             onScrollBeginDrag={() => {
               // Only load more when user explicitly scrolls to top
             }}
@@ -739,8 +740,6 @@ const ChatScreen = () => {
             keyboardDismissMode="on-drag"
             maintainVisibleContentPosition={{
                 minIndexForVisible: 0, 
-                // autoscrollToTopThreshold removed (set to undefined) — value of 10 was
-                // auto-scrolling upward when new messages arrived, fighting scrollToEnd calls
                 autoscrollToTopThreshold: undefined,
               }}
           />
@@ -1033,6 +1032,7 @@ const styles = StyleSheet.create({
   chatContainer: { 
     padding: 10,
     flexGrow: 1,
+    justifyContent: 'flex-end',
   },
   loadMoreContainer: {
     paddingVertical: 16,
