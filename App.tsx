@@ -9,6 +9,10 @@ import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { ThemeProvider } from "./src/context/ThemeContext";
 import ToastHost from "./src/components/UI/ToastHost";
 
+// Fonts
+import { useFonts as useManrope, Manrope_400Regular, Manrope_600SemiBold, Manrope_700Bold } from "@expo-google-fonts/manrope";
+import { useFonts as useInter, Inter_400Regular, Inter_600SemiBold } from "@expo-google-fonts/inter";
+
 // Import API services
 import { setApiService, realApiService } from "./services/api";
 import { mockApiService } from "./services/mockApi";
@@ -191,6 +195,25 @@ function AppContent({ navigationRef }: { navigationRef: React.RefObject<Navigati
 
 export default function App() {
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
+
+  const [manropeLoaded] = useManrope({
+    Manrope_400Regular,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
+  });
+  const [interLoaded] = useInter({
+    Inter_400Regular,
+    Inter_600SemiBold,
+  });
+
+  if (!manropeLoaded || !interLoaded) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#1AABBA" />
+      </View>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>

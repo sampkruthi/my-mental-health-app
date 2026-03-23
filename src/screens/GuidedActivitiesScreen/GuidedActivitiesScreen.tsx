@@ -101,6 +101,11 @@ const GuidedActivitiesScreen = () => {
         <Text style={[styles.cardDescription, { color: colors.onSurfaceVariant }]} numberOfLines={2}>
           {item.description}
         </Text>
+        {item.audioUrl && (
+          <Text style={[styles.audioGuidedLabel, { color: colors.onSurfaceVariant }]}>
+            Audio Guided
+          </Text>
+        )}
         <View style={{ marginTop: 12, width: 80 }}>
           <TouchableOpacity onPress={() => handleStart(item)} activeOpacity={0.8}>
             <LinearGradient
@@ -129,7 +134,7 @@ const GuidedActivitiesScreen = () => {
             data={activities.slice(0, 5)}
             keyExtractor={(item) => item.id}
             renderItem={renderCard}
-            contentContainerStyle={{ paddingBottom: 20 }}
+            contentContainerStyle={{ paddingBottom: 32 }}
           />
         )}
 
@@ -162,6 +167,9 @@ const GuidedActivitiesScreen = () => {
             >
               {selectedActivity && (
                 <>
+                  <Text style={[styles.modalSubtitle, { color: colors.onSurfaceVariant }]}>
+                    {selectedActivity.type?.toUpperCase()}
+                  </Text>
                   <Text style={[styles.modalTitle, { color: colors.onSurface }]}>
                     {selectedActivity.title}
                   </Text>
@@ -214,15 +222,19 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   header: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontFamily: "Manrope_700Bold",
+    fontSize: 28,
+    letterSpacing: -0.04 * 28, // -1.12
+    paddingTop: 18, // optical center: ~4px extra top vs bottom
+    paddingBottom: 14,
     marginBottom: 16,
   },
   card: {
     flexDirection: "row",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    marginBottom: 20, // 20px gap between cards
     alignItems: "center",
   },
   thumbnail: {
@@ -235,11 +247,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardTitle: {
+    fontFamily: "Manrope_600SemiBold",
     fontSize: 18,
-    fontWeight: "bold",
   },
   cardBadge: {
-    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.08 * 11, // 0.88
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
@@ -247,18 +262,25 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   cardDescription: {
-    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    fontSize: 15,
+    lineHeight: 15 * 1.6, // 24
+    marginTop: 4,
+  },
+  audioGuidedLabel: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
     marginTop: 4,
   },
   startButton: {
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: 9999, // fully rounded pill
     alignItems: "center",
   },
   startButtonText: {
+    fontFamily: "Inter_600SemiBold",
     fontSize: 14,
-    fontWeight: "600",
     color: "#ffffff",
   },
   modalContainer: {
@@ -266,19 +288,29 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontFamily: "Manrope_700Bold",
+    fontSize: 28,
+    letterSpacing: -0.04 * 28, // -1.12
     marginBottom: 16,
+  },
+  modalSubtitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 0.1 * 12, // 1.2
+    marginBottom: 12,
   },
   stepContainer: {
     marginBottom: 12,
   },
   stepTitle: {
-    fontWeight: "600",
+    fontFamily: "Manrope_600SemiBold",
     marginBottom: 4,
   },
   stepText: {
-    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    fontSize: 15,
+    lineHeight: 15 * 1.6, // 24
   },
   modalHeader: {
     flexDirection: "row",
@@ -288,8 +320,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   modalHeaderTitle: {
+    fontFamily: "Inter_400Regular",
     fontSize: 14,
-    fontWeight: "500",
     flex: 1,
     marginRight: 12,
   },
@@ -298,7 +330,7 @@ const styles = StyleSheet.create({
   },
   closeButtonText: {
     fontSize: 18,
-    fontWeight: "600",
+    fontFamily: "Manrope_600SemiBold",
   },
   audioButton: {
     paddingVertical: 10,
@@ -308,18 +340,18 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   audioButtonText: {
+    fontFamily: "Inter_600SemiBold",
     fontSize: 14,
-    fontWeight: "600",
   },
   endSessionButton: {
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: 9999, // pill shape to match Start button
     alignItems: "center",
   },
   endSessionButtonText: {
+    fontFamily: "Inter_600SemiBold",
     fontSize: 14,
-    fontWeight: "600",
   },
 });
 
