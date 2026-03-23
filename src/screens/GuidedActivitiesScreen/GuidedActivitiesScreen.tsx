@@ -5,6 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { useTheme } from "../../context/ThemeContext";
 import { Audio } from "expo-av";
 import { useAuth } from "../../context/AuthContext";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation/AppNavigator";
@@ -90,16 +91,27 @@ const GuidedActivitiesScreen = () => {
   };
 
   const renderCard = ({ item }: { item: GuidedActivity }) => (
-    <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
+    <View style={[styles.card, { backgroundColor: colors.surfaceContainerLow }]}>
       {item.thumbnail && <Image source={item.thumbnail} style={styles.thumbnail} />}
       <View style={styles.cardContent}>
-        <Text style={[styles.cardTitle, { color: colors.text }]}>{item.title}</Text>
-        <Text style={[styles.cardBadge, { backgroundColor: "#DCFCE7" }]}>{item.type}</Text>
-        <Text style={[styles.cardDescription, { color: colors.subText }]} numberOfLines={2}>
+        <Text style={[styles.cardTitle, { color: colors.onSurface }]}>{item.title}</Text>
+        <Text style={[styles.cardBadge, { backgroundColor: colors.primaryContainer, color: colors.onPrimaryContainer }]}>
+          {item.type}
+        </Text>
+        <Text style={[styles.cardDescription, { color: colors.onSurfaceVariant }]} numberOfLines={2}>
           {item.description}
         </Text>
         <View style={{ marginTop: 12, width: 80 }}>
-          <Button title="Start" onPress={() => handleStart(item)} />
+          <TouchableOpacity onPress={() => handleStart(item)} activeOpacity={0.8}>
+            <LinearGradient
+              colors={["#1AABBA", "#a8e4e0"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.startButton}
+            >
+              <Text style={styles.startButtonText}>Start</Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -107,11 +119,11 @@ const GuidedActivitiesScreen = () => {
 
   return (
     <Layout title="Guided Activities" onNavigate={(screen) => navigation.navigate(screen as never)}>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Text style={[styles.header, { color: colors.text }]}>Recommended Exercises</Text>
+      <View style={[styles.container, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.header, { color: colors.primary }]}>Recommended Exercises</Text>
 
         {isLoading ? (
-          <Text style={{ color: colors.subText }}>Loading...</Text>
+          <Text style={{ color: colors.onSurfaceVariant }}>Loading...</Text>
         ) : (
           <FlatList
             data={activities.slice(0, 5)}
@@ -122,42 +134,44 @@ const GuidedActivitiesScreen = () => {
         )}
 
         <Modal visible={modalVisible} animationType="slide">
-          <View
+          <LinearGradient
+            colors={["#ffffff", "#fbf9f2"]}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
             style={{
               flex: 1,
-              backgroundColor: colors.background,
               paddingTop: insets.top,
               paddingBottom: insets.bottom,
             }}
           >
-            <View style={[styles.modalHeader, { borderBottomColor: colors.inputBorder }]}>
+            <View style={styles.modalHeader}>
               <Text
-                style={[styles.modalHeaderTitle, { color: colors.subText }]}
+                style={[styles.modalHeaderTitle, { color: colors.onSurfaceVariant }]}
                 numberOfLines={1}
               >
                 {selectedActivity?.title}
               </Text>
               <TouchableOpacity onPress={handleDone} style={styles.closeButton}>
-                <Text style={[styles.closeButtonText, { color: colors.text }]}>✕</Text>
+                <Text style={[styles.closeButtonText, { color: colors.onSurface }]}>✕</Text>
               </TouchableOpacity>
             </View>
 
             <ScrollView
-              style={[styles.modalContainer, { backgroundColor: colors.background }]}
+              style={styles.modalContainer}
               contentContainerStyle={{ paddingBottom: 40 }}
             >
               {selectedActivity && (
                 <>
-                  <Text style={[styles.modalTitle, { color: colors.text }]}>
+                  <Text style={[styles.modalTitle, { color: colors.onSurface }]}>
                     {selectedActivity.title}
                   </Text>
                   {selectedActivity.audioUrl && (
                     <TouchableOpacity
-                      style={[styles.audioButton, { backgroundColor: colors.cardBackground }]}
+                      style={[styles.audioButton, { backgroundColor: "rgba(26, 171, 186, 0.08)" }]}
                       onPress={handleToggleAudio}
                       disabled={isLoadingAudio}
                     >
-                      <Text style={[styles.audioButtonText, { color: colors.text }]}>
+                      <Text style={[styles.audioButtonText, { color: colors.onSurface }]}>
                         {isLoadingAudio
                           ? "Loading audio..."
                           : isPlaying
@@ -168,19 +182,23 @@ const GuidedActivitiesScreen = () => {
                   )}
                   {selectedActivity.steps?.map((step, index) => (
                     <View key={index} style={styles.stepContainer}>
-                      <Text style={[styles.stepTitle, { color: colors.text }]}>
+                      <Text style={[styles.stepTitle, { color: colors.onSurface }]}>
                         Step {index + 1}
                       </Text>
-                      <Text style={[styles.stepText, { color: colors.subText }]}>{step}</Text>
+                      <Text style={[styles.stepText, { color: colors.onSurfaceVariant }]}>{step}</Text>
                     </View>
                   ))}
                   <View style={{ marginTop: 16 }}>
-                    <Button title="Done" onPress={handleDone} />
+                    <TouchableOpacity onPress={handleDone} activeOpacity={0.8}>
+                      <View style={[styles.endSessionButton, { backgroundColor: colors.primary }]}>
+                        <Text style={[styles.endSessionButtonText, { color: colors.onPrimary }]}>Done</Text>
+                      </View>
+                    </TouchableOpacity>
                   </View>
                 </>
               )}
             </ScrollView>
-          </View>
+          </LinearGradient>
         </Modal>
       </View>
     </Layout>
@@ -232,6 +250,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 4,
   },
+  startButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  startButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#ffffff",
+  },
   modalContainer: {
     flex: 1,
     padding: 20,
@@ -257,7 +286,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 14,
-    borderBottomWidth: 1,
   },
   modalHeaderTitle: {
     fontSize: 14,
@@ -276,12 +304,20 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
     marginBottom: 16,
     alignSelf: "flex-start",
   },
   audioButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  endSessionButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  endSessionButtonText: {
     fontSize: 14,
     fontWeight: "600",
   },
