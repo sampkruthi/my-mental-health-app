@@ -125,7 +125,7 @@ const GuidedActivitiesScreen = () => {
   return (
     <Layout title="Guided Activities" onNavigate={(screen) => navigation.navigate(screen as never)}>
       <View style={[styles.container, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.header, { color: colors.primary }]}>Recommended Exercises</Text>
+        <Text style={[styles.header, { color: colors.text }]}>Recommended Exercises</Text>
 
         {isLoading ? (
           <Text style={{ color: colors.onSurfaceVariant }}>Loading...</Text>
@@ -222,7 +222,9 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   header: {
-    fontFamily: "Manrope_700Bold",
+    //fontFamily: "Manrope_700Bold", //commenting manrope
+    fontFamily: "System",
+    fontWeight: "700" as const,
     fontSize: 28,
     letterSpacing: -0.04 * 28, // -1.12
     paddingTop: 18, // optical center: ~4px extra top vs bottom
@@ -247,11 +249,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardTitle: {
-    fontFamily: "Manrope_600SemiBold",
+    //fontFamily: "Manrope_600SemiBold", //commenting manrope
+    fontFamily: "System",
+    fontWeight: "bold",
     fontSize: 18,
   },
   cardBadge: {
-    fontFamily: "Inter_600SemiBold",
+    //fontFamily: "Inter_600SemiBold",
+    //fontSize: 11,
+    //textTransform: "uppercase", //commenting manrope
+    fontFamily: "System",
+    fontWeight: "600" as const,
     fontSize: 11,
     textTransform: "uppercase",
     letterSpacing: 0.08 * 11, // 0.88
@@ -262,13 +270,15 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   cardDescription: {
-    fontFamily: "Inter_400Regular",
+    fontFamily: "System",
+    //fontWeight: "400" as const,
     fontSize: 15,
     lineHeight: 15 * 1.6, // 24
     marginTop: 4,
   },
   audioGuidedLabel: {
-    fontFamily: "Inter_400Regular",
+    fontFamily: "System",
+    fontWeight: "400" as const,
     fontSize: 13,
     marginTop: 4,
   },
@@ -279,7 +289,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   startButtonText: {
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "System",
+    fontWeight: "600" as const,
     fontSize: 14,
     color: "#ffffff",
   },
@@ -288,13 +299,16 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalTitle: {
-    fontFamily: "Manrope_700Bold",
+    //fontFamily: "Manrope_700Bold",
+    fontFamily: "System",
+    fontWeight: "700" as const,
     fontSize: 28,
     letterSpacing: -0.04 * 28, // -1.12
     marginBottom: 16,
   },
   modalSubtitle: {
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "System",
+    fontWeight: "600" as const,
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: 0.1 * 12, // 1.2
@@ -304,11 +318,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   stepTitle: {
-    fontFamily: "Manrope_600SemiBold",
+    //fontFamily: "Manrope_600SemiBold", //commenting manrope
+    fontWeight: "600",
     marginBottom: 4,
   },
   stepText: {
-    fontFamily: "Inter_400Regular",
+    //fontFamily: "Inter_400Regular",  //commenting manrope
+    fontFamily: "System",
+    fontWeight: "400" as const,
     fontSize: 15,
     lineHeight: 15 * 1.6, // 24
   },
@@ -320,7 +337,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   modalHeaderTitle: {
-    fontFamily: "Inter_400Regular",
+    fontFamily: "System",
+    fontWeight: "400" as const,
     fontSize: 14,
     flex: 1,
     marginRight: 12,
@@ -330,7 +348,10 @@ const styles = StyleSheet.create({
   },
   closeButtonText: {
     fontSize: 18,
-    fontFamily: "Manrope_600SemiBold",
+    //fontFamily: "Manrope_600SemiBold",
+    fontFamily: "System",
+    fontWeight: "600" as const,
+
   },
   audioButton: {
     paddingVertical: 10,
@@ -340,7 +361,8 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   audioButtonText: {
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "System",
+    fontWeight: "600" as const,
     fontSize: 14,
   },
   endSessionButton: {
@@ -350,8 +372,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   endSessionButtonText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
+    fontFamily: "System",
+    fontWeight: "600" as const,
   },
 });
 
