@@ -1,11 +1,23 @@
 // src/screens/GuidedActivitiesScreen.tsx
-import React, { useEffect, useState } from "react";
-import { View, Text, Image, FlatList, Modal, ScrollView, StyleSheet, Platform, TouchableOpacity } from "react-native";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import {
+  View,
+  Text,
+  Image,
+  FlatList,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+  Animated,
+} from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
 import { Audio } from "expo-av";
 import { useAuth } from "../../context/AuthContext";
 import { LinearGradient } from "expo-linear-gradient";
+import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from "react-native-svg";
 
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../../navigation/AppNavigator";
@@ -17,11 +29,213 @@ import Layout from "../../components/UI/layout";
 
 const isIPad = Platform.OS === "ios" && Platform.isPad;
 
+// Progress ring constants
+const RING_SIZE = 180;
+const RING_CENTER = RING_SIZE / 2; // 90
+const RING_RADIUS = 84;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS; // ~527.79
+const RING_STROKE_WIDTH = 4;
+
+
+// ── Animated Start Button with press scale ──
+const AnimatedStartButton = ({ onPress }: { onPress: () => void }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.timing(scaleAnim, {
+      toValue: 0.97,
+      duration: 150,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.timing(scaleAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
+      >
+        <View style={{ overflow: "hidden", borderRadius: 9999 }}>
+          <LinearGradient
+            colors={["#1AABBA", "#a8e4e0"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.startButton}
+          >
+            <Text style={styles.startButtonText}>Start</Text>
+          </LinearGradient>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+// ── Progress Ring Player Component ──
+const ProgressRingPlayer = ({
+  isPlaying,
+  onTogglePlay,
+  progress,
+  phaseLabel,
+  timerText,
+  colors,
+}: {
+  isPlaying: boolean;
+  onTogglePlay: () => void;
+  progress: number; // 0 to 1
+  phaseLabel: string;
+  timerText: string;
+  colors: any;
+}) => {
+  const dashoffset = RING_CIRCUMFERENCE - RING_CIRCUMFERENCE * progress;
+  const phaseLabelOpacity = useRef(new Animated.Value(1)).current;
+  const prevPhaseRef = useRef(phaseLabel);
+
+  // Crossfade phase label
+  useEffect(() => {
+    if (prevPhaseRef.current !== phaseLabel) {
+      prevPhaseRef.current = phaseLabel;
+      Animated.sequence([
+        Animated.timing(phaseLabelOpacity, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(phaseLabelOpacity, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [phaseLabel]);
+
+  const playButtonScaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.timing(playButtonScaleAnim, {
+      toValue: 0.97,
+      duration: 150,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.timing(playButtonScaleAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <View style={styles.progressRingContainer}>
+      {/* Timer Pill */}
+      <View style={styles.timerPill}>
+        <Text style={[styles.timerPillIcon, { color: colors.primary }]}>⏱</Text>
+        <Text style={[styles.timerPillText, { color: colors.onSurface }]}>{timerText}</Text>
+      </View>
+
+      {/* Phase Label */}
+      <Animated.Text
+        style={[
+          styles.phaseLabel,
+          { color: colors.onSurfaceVariant, opacity: phaseLabelOpacity },
+        ]}
+      >
+        {phaseLabel}
+      </Animated.Text>
+
+      {/* Ring + Play/Pause */}
+      <View style={styles.ringWrapper}>
+        <Svg
+          width={RING_SIZE}
+          height={RING_SIZE}
+          style={{ transform: [{ rotate: "-90deg" }] }}
+        >
+          <Defs>
+            <SvgLinearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor={colors.primary} />
+              <Stop offset="1" stopColor={colors.primaryFixedDim} />
+            </SvgLinearGradient>
+          </Defs>
+          {/* Track */}
+          <Circle
+            cx={RING_CENTER}
+            cy={RING_CENTER}
+            r={RING_RADIUS}
+            stroke={`${colors.primary}1F`} // 12% opacity
+            strokeWidth={RING_STROKE_WIDTH}
+            fill="none"
+          />
+          {/* Active arc */}
+          <Circle
+            cx={RING_CENTER}
+            cy={RING_CENTER}
+            r={RING_RADIUS}
+            stroke="url(#ringGrad)"
+            strokeWidth={RING_STROKE_WIDTH}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={RING_CIRCUMFERENCE}
+            strokeDashoffset={dashoffset}
+          />
+        </Svg>
+
+        {/* Play/Pause Button centered inside ring */}
+        <Animated.View
+          style={[
+            styles.playPauseButton,
+            { transform: [{ scale: playButtonScaleAnim }] },
+          ]}
+        >
+          <TouchableOpacity
+            onPress={onTogglePlay}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            activeOpacity={1}
+          >
+            <LinearGradient
+              colors={["#1AABBA", "#3bbfb2"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.playPauseGradient}
+            >
+              {isPlaying ? (
+                // Pause icon: two rounded rectangles
+                <View style={styles.pauseIconContainer}>
+                  <View style={styles.pauseBar} />
+                  <View style={styles.pauseBar} />
+                </View>
+              ) : (
+                // Play icon: triangle shifted 2px right for optical centering
+                <View style={styles.playIconContainer}>
+                  <View style={styles.playTriangle} />
+                </View>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+    </View>
+  );
+};
+
+// ── Main Screen ──
 const GuidedActivitiesScreen = () => {
   const { colors } = useTheme();
   const { token } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { data: activities = [], isLoading } = useFetchActivities(token); // replace with real token
+  const { data: activities = [], isLoading } = useFetchActivities(token);
   const insets = useSafeAreaInsets();
 
   const [selectedActivity, setSelectedActivity] = useState<GuidedActivity | null>(null);
@@ -30,9 +244,54 @@ const GuidedActivitiesScreen = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
 
+  // Session timer state
+  const [sessionActive, setSessionActive] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const totalDuration = selectedActivity?.audioDurationSeconds || selectedActivity?.duration || 300; // default 5 min
+
+  const progress = totalDuration > 0 ? Math.min(elapsedSeconds / totalDuration, 1) : 0;
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const getPhaseLabel = () => {
+    if (!sessionActive && elapsedSeconds === 0) return "TAP TO BEGIN";
+    if (!isPlaying && sessionActive) return "PAUSED";
+    return "";
+  };
+
+  // Timer tick
+  useEffect(() => {
+    if (isPlaying && sessionActive) {
+      timerRef.current = setInterval(() => {
+        setElapsedSeconds((prev) => {
+          if (prev + 1 >= totalDuration) {
+            clearInterval(timerRef.current!);
+            setIsPlaying(false);
+            setSessionActive(false);
+            return totalDuration;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isPlaying, sessionActive, totalDuration]);
+
   const handleStart = (activity: GuidedActivity) => {
     setSelectedActivity(activity);
     setModalVisible(true);
+    setElapsedSeconds(0);
+    setSessionActive(false);
   };
 
   useEffect(() => {
@@ -43,55 +302,67 @@ const GuidedActivitiesScreen = () => {
     };
   }, [sound]);
 
-  const handleToggleAudio = async () => {
-    if (!selectedActivity?.audioUrl) {
+  const handleTogglePlay = useCallback(async () => {
+    if (!sessionActive) {
+      // First tap — start session
+      setSessionActive(true);
+      setIsPlaying(true);
+
+      // Also start audio if available
+      if (selectedActivity?.audioUrl && !sound) {
+        try {
+          setIsLoadingAudio(true);
+          const { sound: createdSound } = await Audio.Sound.createAsync(
+            { uri: selectedActivity.audioUrl },
+            { shouldPlay: true }
+          );
+          setSound(createdSound);
+          setIsLoadingAudio(false);
+        } catch (_error) {
+          setIsLoadingAudio(false);
+        }
+      }
       return;
     }
 
-    try {
-      if (!sound) {
-        setIsLoadingAudio(true);
-        const { sound: createdSound } = await Audio.Sound.createAsync(
-          { uri: selectedActivity.audioUrl },
-          { shouldPlay: true }
-        );
-        setSound(createdSound);
-        setIsPlaying(true);
-        setIsLoadingAudio(false);
-        return;
-      }
-
-      const status = await sound.getStatusAsync();
-      if (!status.isLoaded) {
-        setIsPlaying(false);
-        return;
-      }
-      if (status.isPlaying) {
-        await sound.pauseAsync();
-        setIsPlaying(false);
-      } else {
-        await sound.playAsync();
-        setIsPlaying(true);
-      }
-    } catch (_error) {
-      setIsLoadingAudio(false);
+    // Toggle play/pause
+    if (isPlaying) {
       setIsPlaying(false);
+      if (sound) {
+        const status = await sound.getStatusAsync();
+        if (status.isLoaded && status.isPlaying) {
+          await sound.pauseAsync();
+        }
+      }
+    } else {
+      setIsPlaying(true);
+      if (sound) {
+        const status = await sound.getStatusAsync();
+        if (status.isLoaded && !status.isPlaying) {
+          await sound.playAsync();
+        }
+      }
     }
-  };
+  }, [sessionActive, isPlaying, sound, selectedActivity]);
 
   const handleDone = () => {
     if (sound) {
       sound.stopAsync().catch(() => {});
       sound.unloadAsync().catch(() => {});
       setSound(null);
-      setIsPlaying(false);
     }
+    setIsPlaying(false);
+    setSessionActive(false);
+    setElapsedSeconds(0);
+    setCurrentPhaseIndex(0);
+    setPhaseElapsed(0);
+    if (timerRef.current) clearInterval(timerRef.current);
     setModalVisible(false);
     setSelectedActivity(null);
   };
 
   const renderCard = ({ item }: { item: GuidedActivity }) => (
-    <View style={[styles.card, { backgroundColor: colors.surfaceContainerLow }]}>
+    <View style={[styles.card, { backgroundColor: colors.surfaceContainerLow }, colors.shadowSoft]}>
       {item.thumbnail && <Image source={item.thumbnail} style={styles.thumbnail} />}
       <View style={styles.cardContent}>
         <Text style={[styles.cardTitle, { color: colors.onSurface }]}>{item.title}</Text>
@@ -107,16 +378,7 @@ const GuidedActivitiesScreen = () => {
           </Text>
         )}
         <View style={{ marginTop: 12, width: 80 }}>
-          <TouchableOpacity onPress={() => handleStart(item)} activeOpacity={0.8}>
-            <LinearGradient
-              colors={["#1AABBA", "#a8e4e0"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.startButton}
-            >
-              <Text style={styles.startButtonText}>Start</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+          <AnimatedStartButton onPress={() => handleStart(item)} />
         </View>
       </View>
     </View>
@@ -163,7 +425,7 @@ const GuidedActivitiesScreen = () => {
 
             <ScrollView
               style={styles.modalContainer}
-              contentContainerStyle={{ paddingBottom: 40 }}
+              contentContainerStyle={{ paddingBottom: 40, alignItems: "center" }}
             >
               {selectedActivity && (
                 <>
@@ -173,33 +435,30 @@ const GuidedActivitiesScreen = () => {
                   <Text style={[styles.modalTitle, { color: colors.onSurface }]}>
                     {selectedActivity.title}
                   </Text>
-                  {selectedActivity.audioUrl && (
-                    <TouchableOpacity
-                      style={[styles.audioButton, { backgroundColor: "rgba(26, 171, 186, 0.08)" }]}
-                      onPress={handleToggleAudio}
-                      disabled={isLoadingAudio}
-                    >
-                      <Text style={[styles.audioButtonText, { color: colors.onSurface }]}>
-                        {isLoadingAudio
-                          ? "Loading audio..."
-                          : isPlaying
-                          ? "Pause Audio"
-                          : "Play Audio"}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
+
+                  {/* Progress Ring Player */}
+                  <ProgressRingPlayer
+                    isPlaying={isPlaying}
+                    onTogglePlay={handleTogglePlay}
+                    progress={progress}
+                    phaseLabel={getPhaseLabel()}
+                    timerText={formatTime(totalDuration - elapsedSeconds)}
+                    colors={colors}
+                  />
+
                   {selectedActivity.steps?.map((step, index) => (
-                    <View key={index} style={styles.stepContainer}>
+                    <View key={index} style={[styles.stepContainer, { alignSelf: "stretch" }]}>
                       <Text style={[styles.stepTitle, { color: colors.onSurface }]}>
                         Step {index + 1}
                       </Text>
                       <Text style={[styles.stepText, { color: colors.onSurfaceVariant }]}>{step}</Text>
                     </View>
                   ))}
-                  <View style={{ marginTop: 16 }}>
+
+                  <View style={{ marginTop: 16, alignSelf: "stretch" }}>
                     <TouchableOpacity onPress={handleDone} activeOpacity={0.8}>
                       <View style={[styles.endSessionButton, { backgroundColor: colors.primary }]}>
-                        <Text style={[styles.endSessionButtonText, { color: colors.onPrimary }]}>Done</Text>
+                        <Text style={[styles.endSessionButtonText, { color: colors.onPrimary }]}>End Session</Text>
                       </View>
                     </TouchableOpacity>
                   </View>
@@ -222,12 +481,11 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   header: {
-    //fontFamily: "Manrope_700Bold", //commenting manrope
     fontFamily: "System",
     fontWeight: "700" as const,
     fontSize: 28,
-    letterSpacing: -0.04 * 28, // -1.12
-    paddingTop: 18, // optical center: ~4px extra top vs bottom
+    letterSpacing: -0.04 * 28,
+    paddingTop: 18,
     paddingBottom: 14,
     marginBottom: 16,
   },
@@ -236,8 +494,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     paddingHorizontal: 20,
     paddingVertical: 18,
-    marginBottom: 20, // 20px gap between cards
+    marginBottom: 20,
     alignItems: "center",
+    // shadowSoft applied via theme token in renderCard
   },
   thumbnail: {
     width: 64,
@@ -249,20 +508,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardTitle: {
-    //fontFamily: "Manrope_600SemiBold", //commenting manrope
     fontFamily: "System",
     fontWeight: "bold",
     fontSize: 18,
   },
   cardBadge: {
-    //fontFamily: "Inter_600SemiBold",
-    //fontSize: 11,
-    //textTransform: "uppercase", //commenting manrope
     fontFamily: "System",
     fontWeight: "600" as const,
     fontSize: 11,
     textTransform: "uppercase",
-    letterSpacing: 0.08 * 11, // 0.88
+    letterSpacing: 0.08 * 11,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
@@ -271,9 +526,8 @@ const styles = StyleSheet.create({
   },
   cardDescription: {
     fontFamily: "System",
-    //fontWeight: "400" as const,
     fontSize: 15,
-    lineHeight: 15 * 1.6, // 24
+    lineHeight: 15 * 1.6,
     marginTop: 4,
   },
   audioGuidedLabel: {
@@ -285,7 +539,6 @@ const styles = StyleSheet.create({
   startButton: {
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderRadius: 9999, // fully rounded pill
     alignItems: "center",
   },
   startButtonText: {
@@ -299,35 +552,34 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalTitle: {
-    //fontFamily: "Manrope_700Bold",
     fontFamily: "System",
     fontWeight: "700" as const,
     fontSize: 28,
-    letterSpacing: -0.04 * 28, // -1.12
-    marginBottom: 16,
+    letterSpacing: -0.04 * 28,
+    marginBottom: 24,
+    textAlign: "center",
   },
   modalSubtitle: {
     fontFamily: "System",
     fontWeight: "600" as const,
     fontSize: 12,
     textTransform: "uppercase",
-    letterSpacing: 0.1 * 12, // 1.2
+    letterSpacing: 0.1 * 12,
     marginBottom: 12,
+    textAlign: "center",
   },
   stepContainer: {
     marginBottom: 12,
   },
   stepTitle: {
-    //fontFamily: "Manrope_600SemiBold", //commenting manrope
-    fontWeight: "600",
+    fontWeight: "600" as const,
     marginBottom: 4,
   },
   stepText: {
-    //fontFamily: "Inter_400Regular",  //commenting manrope
     fontFamily: "System",
     fontWeight: "400" as const,
     fontSize: 15,
-    lineHeight: 15 * 1.6, // 24
+    lineHeight: 15 * 1.6,
   },
   modalHeader: {
     flexDirection: "row",
@@ -348,10 +600,8 @@ const styles = StyleSheet.create({
   },
   closeButtonText: {
     fontSize: 18,
-    //fontFamily: "Manrope_600SemiBold",
     fontFamily: "System",
     fontWeight: "600" as const,
-
   },
   audioButton: {
     paddingVertical: 10,
@@ -368,12 +618,91 @@ const styles = StyleSheet.create({
   endSessionButton: {
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderRadius: 9999, // pill shape to match Start button
+    borderRadius: 16,
+    height: 52,
     alignItems: "center",
+    justifyContent: "center",
   },
   endSessionButtonText: {
     fontFamily: "System",
     fontWeight: "600" as const,
+    fontSize: 16,
+    color: "#ffffff",
+  },
+
+  // ── Progress Ring Player styles ──
+  progressRingContainer: {
+    alignItems: "center",
+    marginVertical: 24,
+  },
+  timerPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(26, 171, 186, 0.08)",
+    borderRadius: 9999,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginBottom: 12,
+  },
+  timerPillIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  timerPillText: {
+    fontFamily: "System",
+    fontWeight: "600" as const,
+    fontSize: 22,
+  },
+  phaseLabel: {
+    fontFamily: "System",
+    fontWeight: "500" as const,
+    fontSize: 14,
+    textTransform: "uppercase",
+    letterSpacing: 0.05 * 14,
+    marginBottom: 16,
+  },
+  ringWrapper: {
+    width: RING_SIZE,
+    height: RING_SIZE,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  playPauseButton: {
+    position: "absolute",
+  },
+  playPauseGradient: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pauseIconContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  pauseBar: {
+    width: 6,
+    height: 22,
+    borderRadius: 3,
+    backgroundColor: "#ffffff",
+  },
+  playIconContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 2, // optical centering shift
+  },
+  playTriangle: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 18,
+    borderTopWidth: 12,
+    borderBottomWidth: 12,
+    borderLeftColor: "#ffffff",
+    borderTopColor: "transparent",
+    borderBottomColor: "transparent",
   },
 });
 
