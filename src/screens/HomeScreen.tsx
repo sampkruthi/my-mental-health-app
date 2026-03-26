@@ -202,6 +202,8 @@ const HomeScreen = () => {
       <ScrollView 
         style={[styles.screen, { backgroundColor: colors.background }]}
         contentContainerStyle={{ 
+          flexGrow: 1,
+          justifyContent: 'center',
           paddingHorizontal: isTablet ? 32 : 16,
           paddingTop: isSmallPhone ? 8 : 12,
           paddingBottom: 24,

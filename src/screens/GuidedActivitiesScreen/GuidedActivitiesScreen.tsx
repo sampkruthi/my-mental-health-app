@@ -249,7 +249,7 @@ const GuidedActivitiesScreen = () => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const totalDuration = selectedActivity?.audioDurationSeconds || selectedActivity?.duration || 300; // default 5 min
+  const totalDuration = selectedActivity?.audioDurationSeconds || selectedActivity?.duration || 60; // default 5 min
 
   const progress = totalDuration > 0 ? Math.min(elapsedSeconds / totalDuration, 1) : 0;
 
@@ -354,8 +354,6 @@ const GuidedActivitiesScreen = () => {
     setIsPlaying(false);
     setSessionActive(false);
     setElapsedSeconds(0);
-    setCurrentPhaseIndex(0);
-    setPhaseElapsed(0);
     if (timerRef.current) clearInterval(timerRef.current);
     setModalVisible(false);
     setSelectedActivity(null);
@@ -445,15 +443,6 @@ const GuidedActivitiesScreen = () => {
                     timerText={formatTime(totalDuration - elapsedSeconds)}
                     colors={colors}
                   />
-
-                  {selectedActivity.steps?.map((step, index) => (
-                    <View key={index} style={[styles.stepContainer, { alignSelf: "stretch" }]}>
-                      <Text style={[styles.stepTitle, { color: colors.onSurface }]}>
-                        Step {index + 1}
-                      </Text>
-                      <Text style={[styles.stepText, { color: colors.onSurfaceVariant }]}>{step}</Text>
-                    </View>
-                  ))}
 
                   <View style={{ marginTop: 16, alignSelf: "stretch" }}>
                     <TouchableOpacity onPress={handleDone} activeOpacity={0.8}>
