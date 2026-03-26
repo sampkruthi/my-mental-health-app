@@ -265,7 +265,7 @@ const HomeScreen = () => {
           </View>
         </View>
         <TouchableOpacity
-          onPress={() => navigation.navigate("moodhistory")}
+          onPress={() => navigation.navigate("mood")}
           style={{ alignSelf: 'center', marginBottom: sectionSpacing }}
           activeOpacity={0.7}
         >

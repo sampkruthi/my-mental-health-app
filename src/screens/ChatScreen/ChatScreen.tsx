@@ -604,7 +604,6 @@ const ChatScreen = () => {
           style={{ flex: 1, backgroundColor: colors.background }}
           contentContainerStyle={disclaimerStyles.container}
         >
-          <Text style={[disclaimerStyles.icon]}>⚠️</Text>
           <Text style={[disclaimerStyles.heading, { color: colors.text }]}>
             Important Information
           </Text>
@@ -618,34 +617,45 @@ const ChatScreen = () => {
             </Text>
             <View style={disclaimerStyles.resourceList}>
               <TouchableOpacity onPress={() => Linking.openURL("tel:911")}>
-                <Text style={[disclaimerStyles.resourceItem, { color: colors.text }]}>
-                  🚨 <Text style={disclaimerStyles.resourceBold}>Emergency Services:</Text> 911
+                <Text style={[disclaimerStyles.resourceItem, { color: "#007AFF" }]}>
+                  <Text style={disclaimerStyles.resourceBold}>Emergency Services:</Text> 911
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => Linking.openURL("tel:988")}>
-                <Text style={[disclaimerStyles.resourceItem, { color: colors.text }]}>
-                  📞 <Text style={disclaimerStyles.resourceBold}>Crisis Lifeline:</Text> 988 (Suicide & Crisis Lifeline)
+                <Text style={[disclaimerStyles.resourceItem, { color: "#007AFF" }]}>
+                  <Text style={disclaimerStyles.resourceBold}>Crisis Lifeline:</Text> 988 (Suicide & Crisis Lifeline)
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => Linking.openURL("sms:741741?body=HOME")}>
-                <Text style={[disclaimerStyles.resourceItem, { color: colors.text }]}>
-                  💬 <Text style={disclaimerStyles.resourceBold}>Crisis Text Line:</Text> Text HOME to 741741
+                <Text style={[disclaimerStyles.resourceItem, { color: "#007AFF" }]}>
+                  <Text style={disclaimerStyles.resourceBold}>Crisis Text Line:</Text> Text HOME to 741741
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => Linking.openURL("https://findahelpline.com/")}>
+                <Text style={[disclaimerStyles.resourceItem, { color: "#007AFF" }]}>
+                  <Text style={disclaimerStyles.resourceBold}>International helplines:</Text> Find all helplines around the world
                 </Text>
               </TouchableOpacity>
             </View>
-          </View>
 
-          <View style={[disclaimerStyles.card, { backgroundColor: colors.cardBackground }]}>
-            <Text style={[disclaimerStyles.cardTitle, { color: colors.text }]}>
+            <Text
+              style={[
+                disclaimerStyles.cardTitle,
+                { color: colors.text, marginTop: 8 },
+              ]}
+            >
               Your Privacy & Data
             </Text>
             <Text style={[disclaimerStyles.cardText, { color: colors.subText }]}>
-              🔒 Your data is encrypted and no personal information is shared with anyone.
+              Your data is encrypted and no personal information is shared with anyone.
             </Text>
-          </View>
 
-          <View style={[disclaimerStyles.card, { backgroundColor: colors.cardBackground }]}>
-            <Text style={[disclaimerStyles.cardTitle, { color: colors.text }]}>
+            <Text
+              style={[
+                disclaimerStyles.cardTitle,
+                { color: colors.text, marginTop: 8 },
+              ]}
+            >
               Usage Notice
             </Text>
             <Text style={[disclaimerStyles.cardText, { color: colors.subText }]}>
@@ -1268,14 +1278,10 @@ const disclaimerStyles = StyleSheet.create({
     padding: 24,
     alignItems: "center",
   },
-  icon: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
   heading: {
     fontSize: 22,
     fontWeight: "700",
-    marginBottom: 20,
+    marginBottom: 14,
     textAlign: "center",
   },
   card: {
