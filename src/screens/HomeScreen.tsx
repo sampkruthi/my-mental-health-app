@@ -175,11 +175,14 @@ const HomeScreen = () => {
 
 
   // Handlers
+  const [moodJustLogged, setMoodJustLogged] = useState(false);
+
   const handleLogMood = async (score: number) => {
-    if (todaysMood) return; // Already logged today
     try {
       await logMoodMutation.mutateAsync({ score });
       queryClient.invalidateQueries({ queryKey: ["mood"] });
+      setMoodJustLogged(true);
+      setTimeout(() => setMoodJustLogged(false), 3000);
     } catch (error) {
       console.error("[HomeScreen] Failed to log mood:", error);
     }
@@ -232,41 +235,42 @@ const HomeScreen = () => {
             {
               backgroundColor: colors.cardBackground,
               borderColor: "#e0e0e0",
-              marginBottom: spacing,
+              marginBottom: 8,
             },
           ]}
         >
-          {todaysMood ? (
-            <View style={styles.moodLoggedRow}>
-              <Text style={[styles.moodLoggedText, { color: colors.subText }]}>
-                Mood logged today {"\u2713"}
-              </Text>
-              <Text style={styles.moodLoggedEmoji}>
-                {MOOD_OPTIONS.find((m) => m.score === todaysMood.mood_score)
-                  ?.emoji || "\uD83D\uDE42"}
-              </Text>
-            </View>
+          {moodJustLogged ? (
+            <Text style={[styles.moodSuccessText, { color: colors.primary }]}>
+              Mood logged successfully ✓
+            </Text>
           ) : (
-            <>
-              <Text style={[styles.moodLabel, { color: colors.subText }]}>
-                Log your mood
-              </Text>
-              <View style={styles.moodRow}>
-                {MOOD_OPTIONS.map((mood) => (
-                  <TouchableOpacity
-                    key={mood.score}
-                    onPress={() => handleLogMood(mood.score)}
-                    style={styles.moodButton}
-                    disabled={logMoodMutation.isPending}
-                    activeOpacity={0.6}
-                  >
-                    <Text style={[styles.moodEmoji, { fontSize: isTablet ? 32 : 28 }]}>{mood.emoji}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
+            <Text style={[styles.moodLabel, { color: colors.subText }]}>
+              Log your mood
+            </Text>
           )}
+          <View style={styles.moodRow}>
+            {MOOD_OPTIONS.map((mood) => (
+              <TouchableOpacity
+                key={mood.score}
+                onPress={() => handleLogMood(mood.score)}
+                style={styles.moodButton}
+                disabled={logMoodMutation.isPending}
+                activeOpacity={0.6}
+              >
+                <Text style={[styles.moodEmoji, { fontSize: isTablet ? 32 : 28 }]}>{mood.emoji}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("moodhistory")}
+          style={{ alignSelf: 'center', marginBottom: spacing }}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.moodHistoryLink, { color: colors.primary }]}>
+            View mood history →
+          </Text>
+        </TouchableOpacity>
 
         {/* 3. CHAT CTA */}
         <TouchableOpacity
@@ -432,18 +436,14 @@ const styles = StyleSheet.create({
   moodEmoji: {
     fontSize: 28,
   },
-  moodLoggedRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+  moodSuccessText: {
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 10,
   },
-  moodLoggedText: {
-    fontSize: 14,
+  moodHistoryLink: {
+    fontSize: 13,
     fontWeight: "500",
-  },
-  moodLoggedEmoji: {
-    fontSize: 22,
   },
 
   // Chat CTA
