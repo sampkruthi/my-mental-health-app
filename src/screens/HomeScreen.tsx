@@ -270,7 +270,7 @@ const HomeScreen = () => {
           activeOpacity={0.7}
         >
           <Text style={[styles.moodHistoryLink, { color: colors.primary }]}>
-            View mood history →
+            View mood history
           </Text>
         </TouchableOpacity>
 
