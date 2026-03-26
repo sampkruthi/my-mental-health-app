@@ -137,6 +137,8 @@ const HomeScreen = () => {
   // Responsive breakpoints
   const isTablet = width >= 768;
   const isSmallPhone = height < 700; // iPhone SE, small Androids
+  // Section spacing scales with screen height (~3% of height, clamped)
+  const sectionSpacing = Math.min(Math.max(Math.round(height * 0.03), 20), 36);
   const spacing = isSmallPhone ? 16 : isTablet ? 28 : 20;
 
   // Data fetching
@@ -224,7 +226,7 @@ const HomeScreen = () => {
         <Text style={[styles.greeting, { color: colors.text, fontSize: isTablet ? 26 : 22 }]}>
           Good {timeOfDay}, {firstName}
         </Text>
-        <Text style={[styles.subtitle, { color: colors.subText, marginBottom: spacing }]}>
+        <Text style={[styles.subtitle, { color: colors.subText, marginBottom: sectionSpacing }]}>
           How are you feeling today?
         </Text>
 
@@ -264,7 +266,7 @@ const HomeScreen = () => {
         </View>
         <TouchableOpacity
           onPress={() => navigation.navigate("moodhistory")}
-          style={{ alignSelf: 'center', marginBottom: spacing }}
+          style={{ alignSelf: 'center', marginBottom: sectionSpacing }}
           activeOpacity={0.7}
         >
           <Text style={[styles.moodHistoryLink, { color: colors.primary }]}>
@@ -274,7 +276,7 @@ const HomeScreen = () => {
 
         {/* 3. CHAT CTA */}
         <TouchableOpacity
-          style={[styles.chatCta, { backgroundColor: colors.primary, marginBottom: spacing }]}
+          style={[styles.chatCta, { backgroundColor: colors.primary, marginBottom: sectionSpacing }]}
           onPress={() => navigation.navigate("chat")}
           activeOpacity={0.8}
         >
@@ -291,6 +293,7 @@ const HomeScreen = () => {
               {
                 backgroundColor: colors.cardBackground,
                 borderColor: "#e0e0e0",
+                marginBottom: sectionSpacing,
               },
             ]}
           >
@@ -311,6 +314,7 @@ const HomeScreen = () => {
               {
                 backgroundColor: colors.cardBackground,
                 borderColor: "#e0e0e0",
+                marginBottom: sectionSpacing,
               },
             ]}
           >
@@ -467,7 +471,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 0.5,
     padding: 18,
-    marginBottom: 20,
   },
   activityIconArea: {
     width: 40,
