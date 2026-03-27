@@ -70,6 +70,7 @@ const MoodHistoryScreen = () => {
                         year: "numeric",
                         hour: "2-digit",
                         minute: "2-digit",
+                        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                       })
                     : "-"}
                 </Text>

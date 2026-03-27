@@ -159,20 +159,31 @@ const MoodTrackerScreen = () => {
           <LineChart
             data={{
               labels: recentMoods.map((m) =>
-                new Date(m.timestamp).toLocaleDateString("en-US", { 
-                  month: "short", 
-                  day: "numeric" 
+                new Date(m.timestamp).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 })
               ),
               datasets: [
                 {
                   data: recentMoods.map((m) => m.mood_score),
                 },
+                {
+                  data: [1], // min value anchor
+                  withDots: false,
+                },
+                {
+                  data: [5], // max value anchor
+                  withDots: false,
+                },
               ],
             }}
             width={Math.min(screenWidth - 30, 900)}
             height={screenWidth < 400 ? 180 : 220}
             yAxisInterval={1}
+            segments={4}
+            fromZero={false}
             chartConfig={{
               backgroundGradientFrom: "#fff",
               backgroundGradientTo: "#fff",
