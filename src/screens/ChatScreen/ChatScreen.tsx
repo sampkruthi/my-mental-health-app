@@ -1274,22 +1274,23 @@ const TypingIndicator = () => (
 
 const disclaimerStyles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    padding: 24,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 24,
     alignItems: "center",
   },
   heading: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "700",
-    marginBottom: 14,
+    marginBottom: 10,
     textAlign: "center",
   },
   card: {
     width: "100%",
     maxWidth: 500,
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    padding: 16,
+    marginBottom: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -1297,20 +1298,20 @@ const disclaimerStyles = StyleSheet.create({
     elevation: 2,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   cardText: {
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 13,
+    lineHeight: 20,
   },
   resourceList: {
-    marginTop: 12,
+    marginTop: 8,
   },
   resourceItem: {
-    fontSize: 14,
-    lineHeight: 28,
+    fontSize: 13,
+    lineHeight: 24,
   },
   resourceBold: {
     fontWeight: "700",
@@ -1318,11 +1319,11 @@ const disclaimerStyles = StyleSheet.create({
   continueButton: {
     width: "100%",
     maxWidth: 500,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
-    marginTop: 8,
-    marginBottom: 32,
+    marginTop: 4,
+    marginBottom: 16,
   },
   continueButtonText: {
     color: "#FFFFFF",
