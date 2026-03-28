@@ -64,12 +64,10 @@ const MoodHistoryScreen = () => {
               >
                 <Text style={[styles.date, { color: colors.subText }]}>
                   {item.timestamp
-                    ? new Date(item.timestamp).toLocaleString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
+                    ? new Date(item.timestamp).toLocaleString([], {
                         hour: "2-digit",
                         minute: "2-digit",
+                        hour12: true,
                         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                       })
                     : "-"}

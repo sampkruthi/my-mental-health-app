@@ -62,6 +62,9 @@ export const storage = {
           SecureStore.deleteItemAsync(STORAGE_KEYS.USER_ID).catch(() => {}),
           SecureStore.deleteItemAsync('bodhira_apple_user_id').catch(() => {}),
           SecureStore.deleteItemAsync('bodhira_auth_provider').catch(() => {}),
+          SecureStore.deleteItemAsync('hasSeenChatIntro').catch(() => {}),
+          SecureStore.deleteItemAsync('hasSeenResourcesIntro').catch(() => {}),
+          SecureStore.deleteItemAsync('lastCompletedActivityId').catch(() => {}),
         ]);
       }
     } catch (error) {
