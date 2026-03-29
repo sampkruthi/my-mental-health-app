@@ -3,7 +3,7 @@ module.exports = {
   expo: {
     name: "Bodhira",
     slug: "my-mental-health-app",
-    version: "1.0",
+    version: "1.2.0",
     orientation: "portrait",
     icon: "./assets/bodhira_app_icon_1024.png",
     userInterfaceStyle: "light",
@@ -16,6 +16,7 @@ module.exports = {
     },
     ios: {
       bundleIdentifier: "com.Bodhira.mentalhealthassistant",
+      buildNumber: "1",
       supportsTablet: true,
       icon: "./assets/bodhira_ios_icon_cream.png",
       googleServicesFile: process.env.GOOGLE_SERVICE_INFO_PLIST || "./GoogleService-Info.plist",
