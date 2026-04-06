@@ -7,6 +7,7 @@ import { useNavigationState, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation/AppNavigator";
 import type { NavigationState, Route } from "@react-navigation/native";
+import analytics from "../../../analytics";
 
 type NavKeys = keyof RootStackParamList;
 
@@ -56,7 +57,10 @@ const BottomNav: React.FC = () => {
       <TouchableOpacity
         key={tab.name}
         style={[styles.button, { width: tabWidth }]}
-        onPress={() => navigation.navigate(tab.name)}
+        onPress={() => 
+        { analytics.bottomNavTapped(tab.name);  
+          navigation.navigate(tab.name)}
+        }
         accessibilityLabel={`${tab.label} tab`}
       >
         <Ionicons name={tab.icon} size={isIPad ? 28 : 22} color={color} />

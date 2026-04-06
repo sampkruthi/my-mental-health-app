@@ -33,6 +33,8 @@ import { getApiService } from "../../../services/api";
 import { Menu, MenuOptions, MenuOption, MenuTrigger, MenuProvider } from 'react-native-popup-menu';
 import { useQueryClient } from "@tanstack/react-query";
 import { storage } from "../../utils/storage";
+import { analytics } from '../../../analytics';
+
 
 const { width, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -106,6 +108,7 @@ const ChatScreen = () => {
   useEffect(() => {
     storage.getItem("hasSeenChatIntro").then((value) => {
       if (!value) {
+        analytics.chatIntroViewed();  
         setShowChatIntro(true);
         Animated.spring(introSlideAnim, {
           toValue: 0,
@@ -116,8 +119,14 @@ const ChatScreen = () => {
       }
     });
   }, []);
+  
+  useEffect(() => {
+    analytics.screenViewed('Chat');
+  }, []);
+  
 
   const dismissChatIntro = () => {
+    analytics.chatIntroDismissed();
     Animated.spring(introSlideAnim, {
       toValue: SCREEN_HEIGHT,
       useNativeDriver: true,
@@ -221,12 +230,19 @@ const ChatScreen = () => {
     addMessage(userMessage);
     setInput("");
     setIsTyping(true);
+    analytics.chatMessageSent(userMessage.text.length);
+
 
     try {
       const botReply = await sendChat({ text: userMessage.text });
       addMessage(botReply);
       //Invalidate history cache so next time a user visits, it fetches fresh data instead of stale data
       queryClient.invalidateQueries({queryKey: ["chat", "history"]});
+      analytics.chatResponseReceived(
+        botReply.text.length,
+        !!(botReply.citations && botReply.citations.length > 0)
+      );
+      
     } catch (error) {
       console.error("Send failed:", error);
     } finally {
@@ -250,6 +266,7 @@ const ChatScreen = () => {
             try {
               const api = getApiService();
               await api.clearChatHistory();
+              analytics.chatHistoryCleared();
 
               // Clear local state
               setMessages([]);
@@ -461,6 +478,7 @@ const ChatScreen = () => {
         // Skipping canOpenURL — unreliable for https:// on Android 11+ without
         // a <queries> manifest entry. Direct openURL with error handling is sufficient.
         await Linking.openURL(url);
+        analytics.resourceLinkOpened( url);  
       }
     } catch (error) {
       console.error("[ChatScreen] Failed to open citation URL:", url, error);
@@ -666,7 +684,10 @@ const ChatScreen = () => {
           <TouchableOpacity
             testID="chat_disclaimer_continue"
             style={[disclaimerStyles.continueButton, { backgroundColor: colors.primary }]}
-            onPress={() => setDisclaimerAccepted(true)}
+            onPress={() => 
+            { analytics.chatDisclaimerAccepted();  
+              setDisclaimerAccepted(true)}
+            }
           >
             <Text style={disclaimerStyles.continueButtonText}>I Understand. Continue</Text>
           </TouchableOpacity>

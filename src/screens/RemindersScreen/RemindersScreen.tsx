@@ -1,5 +1,5 @@
 // src/screens/RemindersScreen/RemindersScreen.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -28,6 +28,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { SPACING, TYPOGRAPHY, BORDER_RADIUS, SHADOWS } from "../../constants/styles";
 import type { Reminder1 as Reminder, NewReminder } from "../../api/types";
 import Toast from "../../components/UI/Toast";
+import { analytics } from '../../../analytics';
 
 const { width } = Dimensions.get("window");
 const isIPad = Platform.OS === 'ios' && Platform.isPad;
@@ -49,6 +50,11 @@ const ReminderScreen = () => {
   const remindersQuery = useFetchReminders(token);
   const addMutation = useAddReminder(token);
   const deleteMutation = useDeleteReminder(token);
+
+  useEffect(() => {
+    analytics.screenViewed('Reminders');
+  }, []);
+  
 
   // Form state
   const [type, setType] = useState("");

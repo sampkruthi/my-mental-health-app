@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { useFetchUserProfile } from "../../api/hooks";
+import analytics from "../../../analytics";
 
 import BottomNav from "./BottomNav";
 //import AppLogo from "../../images/Meditating_logo.png";
@@ -48,6 +49,7 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
+    analytics.drawerMenuOpened();  
     Animated.timing(slideAnim, {
       toValue: menuOpen ? -250 : 0,
       duration: 300,

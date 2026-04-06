@@ -1,5 +1,5 @@
 // src/screens/ProgressDashboardScreen/ProgressDashboardScreen.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ScrollView, StyleSheet, View, Text, ActivityIndicator, Dimensions, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -8,6 +8,7 @@ import Layout from '../../components/UI/layout';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useFetchProgressDashboard } from '../../api/hooks';
+import { analytics } from '../../../analytics';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -22,6 +23,11 @@ export const ProgressDashboardScreen: React.FC = () => {
   console.log('🔍 ProgressDashboardScreen - isLoading:', isLoading);
   console.log('🔍 ProgressDashboardScreen - isError:', isError);
   console.log('🔍 ProgressDashboardScreen - progress:', progress);
+
+  useEffect(() => {
+    analytics.screenViewed('Progress');
+  }, []);
+  
 
   const getTrendEmoji = (trend: string) => {
     switch (trend) {

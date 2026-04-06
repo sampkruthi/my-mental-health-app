@@ -16,6 +16,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
+import { analytics } from '../../../analytics';
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useRegister, useGoogleLogin, useAppleLogin } from "../../api/hooks";
 import { useAuth } from "../../context/AuthContext";
@@ -171,6 +172,15 @@ const RegisterScreen: React.FC = () => {
       await signInWithToken(result.token, userId);
       console.log("[RegisterScreen] Google sign-up complete!");
       setToast({ message: "Signed in with Google successfully!", type: "success" });
+      analytics.identify(email);
+      analytics.signupCompleted('google');
+      analytics.setUserProfile({
+         name: name,
+         email: email,
+     signupMethod: 'google',
+    timezone: timezone,
+});
+
 
       // Non-critical: register for notifications (don't let this fail sign-in)
       registerDeviceForNotifications().catch((e) =>
@@ -249,6 +259,14 @@ const RegisterScreen: React.FC = () => {
 
       await signInWithToken(result.token, userId);
       console.log("[RegisterScreen] Apple sign-up complete!");
+      analytics.identify(email);
+      analytics.signupCompleted('apple');
+      analytics.setUserProfile({
+         name: fullName?.givenName || fullName?.familyName || "",
+         email: email,
+     signupMethod: 'apple',
+    timezone: timezone,
+});
 
       registerDeviceForNotifications().catch((e) =>
         console.warn("[RegisterScreen] Notification registration failed:", e)
@@ -320,6 +338,14 @@ const RegisterScreen: React.FC = () => {
       await registerDeviceForNotifications();
 
       setToast({ message: "Registered successfully!", type: "success" });
+      analytics.identify(email);
+      analytics.signupCompleted('apple');
+      analytics.setUserProfile({
+         name: name,
+         email: email,
+     signupMethod: 'email',
+      timezone: timezone,
+      });
     } catch (err: any) {
       console.error("Registration error:", err);
       const message =

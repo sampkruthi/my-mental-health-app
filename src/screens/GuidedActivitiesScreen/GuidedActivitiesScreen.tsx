@@ -26,6 +26,7 @@ import { GuidedActivity } from "../../api/types";
 import { useFetchActivities } from "../../api/hooks";
 import { Button } from "../../components/UI/Button";
 import Layout from "../../components/UI/layout";
+import { analytics } from '../../../analytics';
 
 const isIPad = Platform.OS === "ios" && Platform.isPad;
 
@@ -288,6 +289,7 @@ const GuidedActivitiesScreen = () => {
   }, [isPlaying, sessionActive, totalDuration]);
 
   const handleStart = (activity: GuidedActivity) => {
+    analytics.activityStarted(activity.title, activity.type);  
     setSelectedActivity(activity);
     setModalVisible(true);
     setElapsedSeconds(0);
@@ -301,6 +303,11 @@ const GuidedActivitiesScreen = () => {
       }
     };
   }, [sound]);
+
+  useEffect(() => {
+    analytics.screenViewed('Activities');
+  }, []);
+  
 
   const handleTogglePlay = useCallback(async () => {
     if (!sessionActive) {
@@ -318,6 +325,7 @@ const GuidedActivitiesScreen = () => {
           );
           setSound(createdSound);
           setIsLoadingAudio(false);
+          analytics.activityAudioPlayed(selectedActivity.title);
         } catch (_error) {
           setIsLoadingAudio(false);
         }
@@ -351,6 +359,7 @@ const GuidedActivitiesScreen = () => {
       sound.unloadAsync().catch(() => {});
       setSound(null);
     }
+    analytics.activityCompleted(selectedActivity?.title || '', selectedActivity?.type || '');  
     setIsPlaying(false);
     setSessionActive(false);
     setElapsedSeconds(0);

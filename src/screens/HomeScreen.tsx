@@ -11,6 +11,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import { analytics } from '../../analytics';
 import {
   useFetchUserProfile,
   useFetchActivities,
@@ -39,35 +40,36 @@ const getTimeOfDay = (): string => {
 const getActivityEmoji = (type: string): string => {
   switch (type) {
     case "Breathing":
-      return "\uD83C\uDF2C\uFE0F";
+      return "🌬️";
     case "Meditation":
-      return "\uD83E\uDDD8";
+      return "🧘";
     case "Stretching":
-      return "\uD83E\uDD38";
+      return "🤸";
     case "Walking":
-      return "\uD83D\uDEB6";
+      return "🚶";
     case "Music":
-      return "\uD83C\uDFB5";
+      return "🎵";
     case "Exercise":
-      return "\uD83D\uDCAA";
+      return "💪";
     default:
-      return "\u2728";
+      return "✨";
+
   }
 };
 
 const MOOD_OPTIONS = [
-  { score: 1, emoji: "\uD83D\uDE1E" },
-  { score: 2, emoji: "\uD83D\uDE15" },
-  { score: 3, emoji: "\uD83D\uDE10" },
-  { score: 4, emoji: "\uD83D\uDE42" },
-  { score: 5, emoji: "\uD83D\uDE04" },
+  { score: 1, emoji: "😞" },
+  { score: 2, emoji: "😕" },
+  { score: 3, emoji: "😐" },
+  { score: 4, emoji: "🙂" },
+  { score: 5, emoji: "😄" },
 ];
 
 
 const QUICK_ACTIONS = [
-  { key: "journal" as const, label: "Journal", emoji: "\uD83D\uDCD3" },
-  { key: "reminders" as const, label: "Reminders", emoji: "\uD83D\uDCC5" },
-  { key: "resources" as const, label: "Resources", emoji: "\uD83D\uDCDA" },
+  { key: "journal" as const, label: "Journal", emoji: "📓" },
+  { key: "reminders" as const, label: "Reminders", emoji: "📅" },
+  { key: "resources" as const, label: "Resources", emoji: "📚"  },
 ];
 
 function selectTodayActivity(
@@ -153,6 +155,9 @@ const HomeScreen = () => {
   // Local state
   const [lastCompletedId, setLastCompletedId] = useState<string | null>(null);
 
+  useEffect(() => {
+    analytics.screenViewed('Home');
+  }, []);
   // Load last completed activity ID from storage
   useEffect(() => {
     storage.getItem("lastCompletedActivityId").then((id) => {
@@ -182,6 +187,7 @@ const HomeScreen = () => {
   const handleLogMood = async (score: number) => {
     try {
       await logMoodMutation.mutateAsync({ score });
+      analytics.moodLogged(score); 
       queryClient.invalidateQueries({ queryKey: ["mood"] });
       setMoodJustLogged(true);
       setTimeout(() => setMoodJustLogged(false), 3000);
@@ -192,6 +198,7 @@ const HomeScreen = () => {
 
   const handleActivityPress = () => {
     if (todayActivity) {
+      analytics.activityStarted(todayActivity.title, todayActivity.type);  
       navigation.navigate("activities", { activityId: todayActivity.id });
     } else {
       navigation.navigate("activities");
@@ -277,7 +284,10 @@ const HomeScreen = () => {
         {/* 3. CHAT CTA */}
         <TouchableOpacity
           style={[styles.chatCta, { backgroundColor: colors.primary, marginBottom: sectionSpacing }]}
-          onPress={() => navigation.navigate("chat")}
+          onPress={() => {
+            analytics.track('chat_cta_tapped');  
+             navigation.navigate("chat")
+            }}
           activeOpacity={0.8}
         >
           <Text style={[styles.chatCtaText, { fontSize: isTablet ? 20 : 16 }]}>
@@ -363,7 +373,10 @@ const HomeScreen = () => {
                   borderColor: "#e0e0e0",
                 },
               ]}
-              onPress={() => navigation.navigate(action.key as never)}
+              onPress={() => {
+                analytics.bottomNavTapped(action.key);
+                navigation.navigate(action.key as never)
+              }}
               activeOpacity={0.7}
             >
               <View

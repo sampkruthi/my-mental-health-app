@@ -34,6 +34,7 @@ import {
 } from "@react-native-google-signin/google-signin";
 import { getUserTimezone } from "../../utils/timezoneUtils";
 import { jwtDecode } from "jwt-decode";
+import { analytics } from '../../../analytics';
 
 const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || "";
 const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS || "";
@@ -175,6 +176,8 @@ export default function LoginScreen() {
 
       await signInWithToken(result.token, userId);
       console.log("[LoginScreen] Google sign-in complete!");
+      analytics.identify(email);
+      analytics.loginCompleted('google');
 
       // Non-critical: register for notifications (don't let this fail sign-in)
       registerDeviceForNotifications().catch((e) =>
@@ -254,6 +257,8 @@ export default function LoginScreen() {
 
       await signInWithToken(result.token, userId, appleUserId);
       console.log("[LoginScreen] Apple sign-in complete!");
+      analytics.identify(email);
+      analytics.loginCompleted('apple');
 
       registerDeviceForNotifications().catch((e) =>
         console.warn("[LoginScreen] Notification registration failed:", e)
@@ -284,10 +289,13 @@ export default function LoginScreen() {
       const result = await loginMutation.mutateAsync({ email, password });
       console.log("[LoginScreen] Login mutation result:", result);
 
+
       if (result?.token) {
         await signIn(email, password, result.token);
         await registerDeviceForNotifications();
         console.log("[LoginScreen] User signed in successfully");
+        analytics.identify(email);
+      analytics.loginCompleted('email');
 
       }
     } catch (e) {

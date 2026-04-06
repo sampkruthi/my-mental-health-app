@@ -233,19 +233,40 @@ export function handleNotificationResponse(
 
   console.log('[NotificationService] Handling notification response with data:', data);
 
-  if (data?.type === 'reminder') {
+  if (!navigator) {
+    console.warn('[NotificationService] No navigator available to handle notification tap');
+    return;
+  }
+
+   // Determine target screen based on notification type
+   let targetScreen: string | null = null;
+
+   if (data?.type === 'wellness_nudge') {
+     // Wellness nudge — the backend sends the target screen in data.screen
+     targetScreen = String(data.screen || "Home");
+     console.log(`[NotificationService] Wellness nudge tapped: category=${data.category}, navigating to ${targetScreen}`);
+ 
+   } else if (data?.type === 'reminder') {
     const reminderType = String(data.reminder_type || data.reminderType || "").toLowerCase();
     console.log(`[NotificationService] Reminder notification tapped: ${reminderType}`);
-    if (!navigator) {
-      console.warn('[NotificationService] No navigator available to handle reminder tap');
-      return;
-    }
+   
     let targetScreen = "reminders";
     if (reminderType === 'journaling' || reminderType === 'journal') {
       targetScreen = "journal";
     } else if (reminderType === 'activity' || reminderType === 'activities') {
       targetScreen = "activities";
     }
+  } 
+  else if (data?.screen) {
+    // Generic fallback — any notification with a screen field
+    targetScreen = String(data.screen);
+    console.log(`[NotificationService] Generic notification tapped, navigating to ${targetScreen}`);
+  }
+
+  if (!targetScreen) {
+    console.log('[NotificationService] No target screen determined, ignoring tap');
+    return;
+  }
 
     if (!isAuthenticated) {
       storage.setItem(PENDING_NOTIFICATION_ROUTE_KEY, targetScreen).catch(() => {});
@@ -255,7 +276,6 @@ export function handleNotificationResponse(
 
     navigator.navigate(targetScreen);
   }
-}
 
 export async function consumePendingNotificationRoute(): Promise<string | null> {
   const route = await storage.getItem(PENDING_NOTIFICATION_ROUTE_KEY);

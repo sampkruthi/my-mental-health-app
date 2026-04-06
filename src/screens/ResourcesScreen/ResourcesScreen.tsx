@@ -29,6 +29,7 @@ import { Button } from "../../components/UI/Button";
 import { useFetchContentRec, useFetchContentRecWithRAG } from "../../api/hooks";
 import { ResourceRec, ResourceRecRAG, RAGRecommendation } from "../../api/types";
 import { storage } from "../../utils/storage";
+import { analytics } from '../../../analytics';
 
 const isIPad = Platform.OS === 'ios' && Platform.isPad; 
 
@@ -81,6 +82,7 @@ const ResourcesScreen = () => {
     storage.getItem("hasSeenResourcesIntro").then((value) => {
       if (!value) {
         setShowResourcesIntro(true);
+        analytics.resourcesIntroViewed();
         Animated.spring(introSlideAnim, {
           toValue: 0,
           useNativeDriver: true,
@@ -99,12 +101,18 @@ const ResourcesScreen = () => {
       friction: 9,
     }).start(() => {
       setShowResourcesIntro(false);
+      analytics.resourcesIntroDismissed();
     });
     storage.setItem("hasSeenResourcesIntro", "true");
   };
 
+  useEffect(() => {
+    analytics.screenViewed('Resources');
+  }, []);
+  
+
   // Debug logs
-  console.log('🔍 Resources Status:', {
+  console.log('Resources Status:', {
     quickRecsCount: quickRecs.length,
     ragRecsCount: ragData?.recommendations?.length || 0,
     isLoadingQuick,
@@ -114,6 +122,12 @@ const ResourcesScreen = () => {
   });
 
   const handleOpen = (resource: any) => {
+    analytics.resourceViewed(
+      resource.title,
+      resource.content_type,
+      resource.relevance_score
+    );
+  
     setSelectedResource(resource);
     setModalVisible(true);
   };
@@ -191,7 +205,9 @@ const ResourcesScreen = () => {
                 <Text
                   key={index}
                   style={[styles.summaryLink, { color: colors.primary }]}
-                  onPress={() => Linking.openURL(url)}
+                  onPress={() => 
+                    
+                    Linking.openURL(url)}
                 >
                   {part}
                 </Text>
@@ -264,7 +280,10 @@ const ResourcesScreen = () => {
           <View style={styles.cardFooter}>
           <TouchableOpacity
             style={styles.openLinkButton}
-            onPress={() => Linking.openURL(item.url)}
+            onPress={() => {
+              analytics.resourceLinkOpened(item.url);
+              Linking.openURL(item.url)}
+            }
             activeOpacity={0.7}
           >
             <Text style={[styles.openLinkText, { color: colors.primary }]}>

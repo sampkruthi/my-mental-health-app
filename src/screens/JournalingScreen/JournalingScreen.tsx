@@ -1,5 +1,5 @@
 // src/screens/JournalingScreen.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -30,6 +30,7 @@ import { useTheme } from "../../context/ThemeContext";
 import type { JournalEntry } from "../../api/types";
 import { SPACING, TYPOGRAPHY, BORDER_RADIUS, SHADOWS } from "../../constants/styles";
 import Svg, { Line, Circle, Path } from "react-native-svg";
+import { analytics } from '../../../analytics';
 
 const { width } = Dimensions.get("window");
 const isIPad = Platform.OS === 'ios' && Platform.isPad;
@@ -47,6 +48,10 @@ const JournalingScreen = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
+  useEffect(() => {
+    analytics.screenViewed('Journal');
+  }, []);
+  
   const handleSave = () => {
     if (!draft.trim()) return;
     logMutation.mutate(
@@ -55,6 +60,7 @@ const JournalingScreen = () => {
         onSuccess: () => {
           clearDraft();
           setToast({ message: "Journal entry saved!", type: "success" });
+          analytics.journalEntryCreated(draft.trim().split(' ').length);
         },
         onError: () => {
           setToast({ message: "Failed to save entry. Please try again", type: "error" });

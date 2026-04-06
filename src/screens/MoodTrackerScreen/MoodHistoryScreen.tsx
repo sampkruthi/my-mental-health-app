@@ -1,5 +1,5 @@
 // src/screens/MoodHistoryScreen.tsx
-import React from "react";
+import React, {useEffect } from "react";
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from "react-native";
 import Layout from "../../components/UI/layout";
 import { useTheme } from "../../context/ThemeContext";
@@ -10,11 +10,16 @@ import { useFetchMoodHistory } from "../../api/hooks";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../navigation/AppNavigator";
+import { analytics } from '../../../analytics';
 
 const MoodHistoryScreen = () => {
   const { colors } = useTheme();
   const { token } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  useEffect(() => {
+    analytics.screenViewed('Mood');
+  }, []);
 
   const { data: moodHistory = [], isLoading, isError, error } = useFetchMoodHistory(token);
   console.log('Mood History Data:', moodHistory); // DEBUG
