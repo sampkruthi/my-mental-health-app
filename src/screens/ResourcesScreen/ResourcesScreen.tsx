@@ -81,6 +81,7 @@ const ResourcesScreen = () => {
   const introSlideAnim = useRef(new Animated.Value(Dimensions.get("window").height)).current;
 
   useEffect(() => {
+    const timer = setTimeout(() => {
     storage.getItem("hasSeenResourcesIntro").then((value) => {
       if (!value) {
         setShowResourcesIntro(true);
@@ -92,8 +93,13 @@ const ResourcesScreen = () => {
           friction: 9,
         }).start();
       }
-    });
-  }, []);
+    }).catch(() => {
+      // SecureStore failed — don't show intro to avoid annoying the user
+      console.warn('[ResourcesScreen] SecureStore read failed for hasSeenResourcesIntro');
+  });
+}, 500);
+return () => clearTimeout(timer);
+}, []);
 
   const dismissResourcesIntro = () => {
     Animated.spring(introSlideAnim, {
@@ -115,12 +121,12 @@ const ResourcesScreen = () => {
 
   // Debug logs
   console.log('Resources Status:', {
-    quickRecsCount: quickRecs.length,
+    //quickRecsCount: quickRecs.length,
     ragRecsCount: ragData?.recommendations?.length || 0,
-    isLoadingQuick,
+    //isLoadingQuick,
     isLoadingRAG,
-    hasRAGResults,
-    usingRAG: hasRAGResults
+    //hasRAGResults,
+    //usingRAG: hasRAGResults
   });
 
   const handleOpen = (resource: any) => {
@@ -328,7 +334,7 @@ const ResourcesScreen = () => {
           <Text style={[styles.header, { color: colors.text }]}>Recommended Resources</Text>
 
           {/* OPTIMIZATION: Show loading indicator for RAG while displaying quick recs */}
-          {isLoadingRAG && quickRecs.length > 0 && (
+          {isLoadingRAG && (
             <View style={[styles.upgradingBanner, { backgroundColor: colors.cardBackground || "#f0f4ff" }]}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={[styles.upgradingText, { color: colors.subText }]}>

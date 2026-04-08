@@ -28,6 +28,8 @@ import { storage } from "../utils/storage";
 import { useQueryClient } from "@tanstack/react-query";
 import type { GuidedActivity, MoodLog } from "../api/types";
 
+const isIPad = Platform.OS === 'ios' && Platform.isPad; 
+
 // --- Helpers ---
 
 const getTimeOfDay = (): string => {
@@ -215,25 +217,39 @@ const HomeScreen = () => {
         style={[styles.screen, { backgroundColor: colors.background }]}
         contentContainerStyle={{ 
           flexGrow: 1,
-          justifyContent: 'center',
-          paddingHorizontal: isTablet ? 32 : 16,
-          paddingTop: isSmallPhone ? 8 : 12,
-          paddingBottom: 24,
+          paddingHorizontal: isTablet ? 48 : 16,
+          paddingTop: isTablet ? 32 : isSmallPhone ? 8 : 12,
+          paddingBottom: isTablet ? 40 : 24,
+          maxWidth: isTablet ? 600 : undefined,
+          alignSelf: isTablet ? 'center' as const : undefined,
+          width: isTablet ? '100%' : undefined,
         }}
         showsVerticalScrollIndicator={false}
       >
         {/* 1. GREETING SECTION */}
-        <Text style={[styles.dateText, { color: colors.subText, fontSize: isTablet ? 14 : 12 }]}>
+        <Text style={[styles.dateText, { 
+          color: colors.subText, 
+          fontSize: isTablet ? 16 : 12,
+          marginBottom: isTablet ? 12 : 8,
+        }]}>
           {new Date().toLocaleDateString("en-US", {
             weekday: "long",
             month: "long",
             day: "numeric",
           })}
         </Text>
-        <Text style={[styles.greeting, { color: colors.text, fontSize: isTablet ? 26 : 22 }]}>
+        <Text style={[styles.greeting, { 
+          color: colors.text, 
+          fontSize: isTablet ? 30 : 22,
+          marginBottom: isTablet ? 10 : 6,
+        }]}>
           Good {timeOfDay}, {firstName}
         </Text>
-        <Text style={[styles.subtitle, { color: colors.subText, marginBottom: sectionSpacing }]}>
+        <Text style={[styles.subtitle, { 
+          color: colors.subText, 
+          fontSize: isTablet ? 16 : 13,
+          marginBottom: sectionSpacing,
+        }]}>
           How are you feeling today?
         </Text>
 
@@ -245,6 +261,7 @@ const HomeScreen = () => {
               backgroundColor: colors.cardBackground,
               borderColor: "#e0e0e0",
               marginBottom: 8,
+              padding: isTablet ? 20 : 14,
             },
           ]}
         >
@@ -459,7 +476,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   moodHistoryLink: {
-    fontSize: 13,
+    fontSize: isIPad? 18 : 13,
     fontWeight: "500",
   },
 
@@ -481,9 +498,9 @@ const styles = StyleSheet.create({
   activityCard: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: isIPad ? 20: 16,
     borderWidth: 0.5,
-    padding: 18,
+    padding: isIPad ? 30: 18,
   },
   activityIconArea: {
     width: 40,
@@ -502,8 +519,8 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   activityLabel: {
-    fontSize: 12,
-    marginBottom: 1,
+    fontSize: isIPad? 16 : 12,
+    marginBottom: isIPad ? 2: 1,
   },
   activityTitle: {
     fontSize: 14,
@@ -551,24 +568,24 @@ const styles = StyleSheet.create({
   quickActionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 10,
-    marginBottom: 16,
+    gap: isIPad ? 14 : 10,
+    marginBottom: isIPad ? 20 :  16,
   },
   quickActionCard: {
     flex: 1,
     alignItems: "center",
     borderRadius: 12,
     borderWidth: 0.5,
-    paddingVertical: 12,
-    paddingHorizontal: 6,
+    paddingVertical: isIPad ? 18: 12,
+    paddingHorizontal: isIPad ? 10 : 6,
   },
   quickActionIcon: {
-    width: 36,
-    height: 36,
+    width: isIPad ? 42: 36,
+    height: isIPad ? 42 : 36,
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: isIPad ? 10: 6,
   },
   quickActionEmoji: {
     fontSize: 20,

@@ -7,6 +7,7 @@ export const lightTheme = {
   backgroundGradientEnd: "#f4f4eb",
   cardBackground:"#FFFFFF",// "#f4f4eb", 
   
+  
   /* Backgrounds Original before reworking activities in Claude
   background: "#FAF8F5",  // Changed from #F5F3EE (warmer cream)
   backgroundGradientStart: "#FAF8F5",
@@ -101,6 +102,7 @@ export const darkTheme = {
   backgroundGradientStart: "#1E1E1E",
   backgroundGradientEnd: "#2A2A2A",
   cardBackground: "#2A2A2A",
+  
 
   // Text colors
   text: "#F0F0F0",
@@ -109,7 +111,7 @@ export const darkTheme = {
   subText: "#BBBBBB",
 
   // Primary brand colors
-  primary: "#7B9AAF",
+  primary: "#1aabba",
   primaryDark: "#5B7C99",
   primaryContainer: "#1A3A3A",
   primaryFixedDim: "#3A6A68",

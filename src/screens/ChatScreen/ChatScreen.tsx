@@ -105,19 +105,26 @@ const ChatScreen = () => {
   }, []);
 
   // Check if user has seen the chat intro
+  // Small delay ensures SecureStore/keychain is ready after app launch
   useEffect(() => {
-    storage.getItem("hasSeenChatIntro").then((value) => {
-      if (!value) {
-        analytics.chatIntroViewed();  
-        setShowChatIntro(true);
-        Animated.spring(introSlideAnim, {
-          toValue: 0,
-          useNativeDriver: true,
-          tension: 50,
-          friction: 9,
-        }).start();
-      }
-    });
+    const timer = setTimeout(() => {
+      storage.getItem("hasSeenChatIntro").then((value) => {
+        if (value !== "true") {
+          analytics.chatIntroViewed();  
+          setShowChatIntro(true);
+          Animated.spring(introSlideAnim, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 50,
+            friction: 9,
+          }).start();
+        }
+      }).catch(() => {
+        // SecureStore failed — don't show intro to avoid annoying the user
+        console.warn('[ChatScreen] SecureStore read failed for hasSeenChatIntro');
+      });
+    }, 500);
+    return () => clearTimeout(timer);
   }, []);
   
   useEffect(() => {
@@ -159,17 +166,7 @@ const ChatScreen = () => {
     }
   }, [initialHistory, initialLoadDone]);
 
-  //Scroll to bottom when messages change
-  useEffect(() => {
-    if (flatListRef.current && messages.length > 0 && initialLoadDone) {
-      // Android needs more time for layout measurement after keyboard resize
-      const delay = Platform.OS === 'android' ? 300 : 100;
-      const timer = setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: messages.length > 1 });
-      }, delay);
-      return () => clearTimeout(timer);
-    }
-  }, [messages.length, initialLoadDone]);
+  // No scrollToEnd needed — inverted FlatList automatically shows newest messages at bottom
 
   const loadMoreMessages = async () => {
     if (!hasMore || isLoadingMore || !token) return;
@@ -203,17 +200,36 @@ const ChatScreen = () => {
 
   // Sort messages by timestamp to prevent order issues from race conditions
   // between addMessage, prependMessages, and React Query cache invalidation
+  // Sort messages chronologically for display.
+  // Uses inverted FlatList (newest at bottom, standard chat pattern).
+  // Inverted FlatList renders index 0 at the BOTTOM, so we sort DESCENDING.
+  //
+  // Robust timestamp parsing handles:
+  //   - ISO strings with/without timezone ("2025-03-23T04:10:04Z" vs "2025-03-23T04:10:04")
+  //   - Invalid/missing timestamps (fall back to insertion order via id)
+  //   - Device clock vs server clock differences (secondary sort by DB id)
   const sortedMessages = React.useMemo(() => {
+    const parseTime = (ts: string): number => {
+      if (!ts) return 0;
+      const t = new Date(ts).getTime();
+      return isNaN(t) ? 0 : t;
+    };
+
     return [...messages].sort((a, b) => {
-      // Primary sort: by timestamp
-      const timeA = new Date(a.timestamp).getTime();
-      const timeB = new Date(b.timestamp).getTime();
-      if (timeA !== timeB) return timeA - timeB;
-      // Secondary sort: by numeric id (database order) for same-timestamp messages
+      const timeA = parseTime(a.timestamp);
+      const timeB = parseTime(b.timestamp);
+
+      // If timestamps differ by more than 1 second, use timestamp order
+      if (Math.abs(timeA - timeB) > 1000) return timeB - timeA; // DESCENDING for inverted
+
+      // Same-second messages: use DB id (numeric) for stable ordering
+      // DB ids are sequential — user message id = N, bot reply id = N+1
       const idA = parseInt(a.id);
       const idB = parseInt(b.id);
-      if (!isNaN(idA) && !isNaN(idB)) return idA - idB;
-      return 0;
+      if (!isNaN(idA) && !isNaN(idB)) return idB - idA; // DESCENDING for inverted
+
+      // Fallback: Date.now() string ids sort lexicographically (still works for ordering)
+      return b.id.localeCompare(a.id); // DESCENDING for inverted
     });
   }, [messages]);
 
@@ -236,8 +252,10 @@ const ChatScreen = () => {
     try {
       const botReply = await sendChat({ text: userMessage.text });
       addMessage(botReply);
-      //Invalidate history cache so next time a user visits, it fetches fresh data instead of stale data
-      queryClient.invalidateQueries({queryKey: ["chat", "history"]});
+      // Don't invalidate chat history cache here — the store already has both messages.
+      // Invalidating triggers a refetch that causes unnecessary re-renders and can
+      // momentarily flash messages in wrong order. The next time the user opens the
+      // chat screen, useFetchChatHistory will get fresh data naturally.
       analytics.chatResponseReceived(
         botReply.text.length,
         !!(botReply.citations && botReply.citations.length > 0)
@@ -749,30 +767,23 @@ const ChatScreen = () => {
             data={sortedMessages}
             renderItem={renderMessage}
             keyExtractor={(item) => item.id.toString()}
+            inverted={true}
             contentContainerStyle={[
               styles.chatContainer,
               { paddingBottom: Platform.OS === 'android' ? 20 : 10 }
             ]}
-            ListHeaderComponent={renderListHeader}
-            ListFooterComponent={renderListFooter}
-            onScrollBeginDrag={() => {
-              // Only load more when user explicitly scrolls to top
-            }}
-
-            onScroll={(event) => {
-              //changing threshhold from < 100 to <=0 : old value triggered loadMoreMessages constantly while scrolling near top
-              const { contentOffset } = event.nativeEvent;
-              if (contentOffset.y <= 0 && hasMore && !isLoadingMore) {
+            ListHeaderComponent={renderListFooter}
+            ListFooterComponent={renderListHeader}
+            onEndReached={() => {
+              // In inverted FlatList, "end" is the TOP (oldest messages)
+              if (hasMore && !isLoadingMore) {
                 loadMoreMessages();
               }
             }}
+            onEndReachedThreshold={0.1}
             scrollEventThrottle={400}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
-            maintainVisibleContentPosition={{
-                minIndexForVisible: 0, 
-                autoscrollToTopThreshold: undefined,
-              }}
           />
 
           {/* Input row - positioned at bottom */}
@@ -862,7 +873,7 @@ const ChatScreen = () => {
         <Text style={introStyles.subtext}>
           Bodhira is different from a general AI. It connects your mood,
           journal and conversations to build a picture of your wellbeing over
-          time {"\u2014"} and it has hard limits that protect you.
+          time and it has hard limits that protect you.
         </Text>
 
         {/* Feature bullets */}
@@ -871,25 +882,25 @@ const ChatScreen = () => {
             outerBg="#e8f4f5"
             dotColor="#4a9fa5"
             boldText="Longitudinal memory."
-            text=" Remembers your mood trends, journal themes and past conversations \u2014 not just this session."
+            text=" Remembers your mood trends, journal themes and past conversations not just this session."
           />
           <IntroBullet
             outerBg="#fff0e6"
             dotColor="#e07030"
             boldText="Architecturally safe."
-            text=" Cannot diagnose you or suggest medication \u2014 these are hard constraints, not just instructions."
+            text=" Cannot diagnose you or suggest medications. These are hard constraints, not just instructions."
           />
           <IntroBullet
             outerBg="#ffeaea"
             dotColor="#e04040"
             boldText="Crisis-aware."
-            text=" Detects distress signals and connects you to real support \u2014 988 Lifeline, Crisis Text Line \u2014 immediately."
+            text=" Detects distress signals and provides you with real support information immediately."
           />
           <IntroBullet
             outerBg="#f0f5ff"
             dotColor="#4060d0"
             boldText="Proactively helpful."
-            text=" Surfaces curated resources when it notices a pattern \u2014 before you think to ask."
+            text=" Surfaces curated resources when it notices a pattern  before you think to ask."
           />
         </View>
 
@@ -962,87 +973,98 @@ const introStyles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 14,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 28,
+    paddingTop: 16,
+    paddingBottom: 40,
+    maxHeight: "85%",
     zIndex: 101,
   },
   handleContainer: {
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 16,
   },
   handle: {
-    width: 28,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: "#ddd",
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#D1D5DB",
   },
   headlineDark: {
-    fontSize: 13,
-    fontWeight: "500",
+    fontSize: 22,
+    fontWeight: "700",
     color: "#1a1a1a",
+    textAlign: "center",
+    letterSpacing: -0.5,
   },
   headlineTeal: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#4a9fa5",
-    marginBottom: 8,
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#1AABBA",
+    marginBottom: 12,
+    textAlign: "center",
+    letterSpacing: -0.5,
   },
   subtext: {
-    fontSize: 8.5,
-    color: "#666",
-    lineHeight: 8.5 * 1.5,
-    marginBottom: 10,
+    fontSize: 15,
+    color: "#6B7280",
+    lineHeight: 22,
+    marginBottom: 24,
+    textAlign: "center",
+    paddingHorizontal: 8,
   },
   bulletList: {
-    gap: 8,
-    marginBottom: 12,
+    gap: 16,
+    marginBottom: 28,
   },
   bulletRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 8,
+    gap: 12,
   },
   bulletOuter: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 1,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
     justifyContent: "center",
     alignItems: "center",
     marginTop: 1,
     flexShrink: 0,
   },
   bulletInner: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   bulletText: {
-    fontSize: 8,
-    color: "#444",
-    lineHeight: 8 * 1.45,
+    fontSize: 14,
+    color: "#4B5563",
+    lineHeight: 20,
     flex: 1,
   },
   bulletBold: {
-    fontWeight: "500",
+    fontWeight: "700",
     color: "#1a1a1a",
   },
   primaryButton: {
-    backgroundColor: "#4a9fa5",
-    borderRadius: 20,
-    paddingVertical: 9,
+    backgroundColor: "#1AABBA",
+    borderRadius: 14,
+    paddingVertical: 16,
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 12,
   },
   primaryButtonText: {
     color: "#FFFFFF",
-    fontSize: 9,
-    fontWeight: "500",
+    fontSize: 16,
+    fontWeight: "700",
   },
   secondaryLink: {
     textAlign: "center",
-    fontSize: 7,
+    fontSize: 14,
+    color: "#9CA3AF",
+    paddingVertical: 8,
     color: "#bbb",
     marginBottom: 6,
   },
@@ -1063,7 +1085,8 @@ const styles = StyleSheet.create({
   chatContainer: { 
     padding: 10,
     flexGrow: 1,
-    justifyContent: 'flex-end',
+    // Note: do NOT add justifyContent here — inverted FlatList handles
+    // bottom-pinning automatically. Adding flex-end breaks it.
   },
   loadMoreContainer: {
     paddingVertical: 16,

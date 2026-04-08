@@ -22,8 +22,9 @@ import BottomNav from "./BottomNav";
 //import AppLogo from "../../images/Meditating_logo.png";
 //import AppLogo from "../../images/MeditatingLogoBlueBG.png";
 import AppLogo from "../../images/MeditatingLogoTransparent.png";
-//import UserProfileIcon from "../../images/Gemini_profile_pic_transparent.png";
-import UserProfileIcon from "../../images/profilepic_transparent.png";
+import UserProfileIcon from "../../images/Gemini_profile_pic_transparent.png";
+//import UserProfileIcon from "../../images/profilepic_transparent.png";
+//import UserProfileIcon from "../../images/profile_pic_transparent_v3.png";
 
 import { Button } from "../UI/Button";
 import { Card } from "../UI/Card";
@@ -115,7 +116,15 @@ function Layout({ children, title, onNavigate, rightComponent }: LayoutProps) {
         >
           <Image
             source={UserProfileIcon}
-            style={[styles.userProfileImage, { width: isIPad ? 40 : 36, height: isIPad ? 40 : 36, backgroundColor: colors.cardBackground }]}
+            style={[styles.userProfileImage, 
+              { width: isIPad ? 36 : 32, height: isIPad ? 36 : 32, 
+                backgroundColor: 'transparent',
+                borderRadius: isIPad ? 20 : 18,
+                borderWidth: 1.5,
+                borderColor: colors.primary,
+                overflow: 'hidden',
+              
+              }]}
             resizeMode="contain"
           />
           <Text style={[styles.drawerUserName, { color: colors.text, fontSize: isIPad ? 18 : 16 }]}>
