@@ -26,7 +26,7 @@ import { RootStackParamList } from "../../navigation/AppNavigator";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Layout from "../../components/UI/layout";
 import { Button } from "../../components/UI/Button";
-import { useFetchContentRec, useFetchContentRecWithRAG } from "../../api/hooks";
+import {  useFetchContentRecWithRAG } from "../../api/hooks";
 import { ResourceRec, ResourceRecRAG, RAGRecommendation } from "../../api/types";
 import { storage } from "../../utils/storage";
 import { analytics } from '../../../analytics';
@@ -42,11 +42,13 @@ const ResourcesScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'resources'>>();
   const filterParam = route.params?.filter;
 
+  /* removing for not recommending random resources
   // OPTIMIZATION 1: Load fast recommendations immediately (no LLM, ~100ms)
   const {
     data: quickRecs = [],
     isLoading: isLoadingQuick
   } = useFetchContentRec(token, { q: filterParam, limit: 10 });
+*/
 
   // OPTIMIZATION 2: Load RAG recommendations in background (with LLM, ~400ms with Haiku)
   const {
@@ -63,13 +65,13 @@ const ResourcesScreen = () => {
 
   // OPTIMIZATION 3: Use RAG when available, fallback to quick recs
   // This creates a smooth upgrade: quick recs → RAG recs
-  const hasRAGResults = ragData?.recommendations && ragData.recommendations.length > 0;
-  const resources = hasRAGResults ? ragData.recommendations : quickRecs;
+  //const hasRAGResults = ragData?.recommendations && ragData.recommendations.length > 0;
+  const resources =  ragData.recommendations || [];
   const ragSummary = ragData?.personalized_summary || '';
 
   // Show loading state only if BOTH are loading (prevents flash)
-  const isLoading = isLoadingQuick && isLoadingRAG;
-  const isError = isRAGError && quickRecs.length === 0;
+  const isLoading = isLoadingRAG;
+  const isError = isRAGError ;//&& quickRecs.length === 0;
 
   const [selectedResource, setSelectedResource] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
