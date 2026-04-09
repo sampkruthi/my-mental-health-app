@@ -252,6 +252,13 @@ const GuidedActivitiesScreen = () => {
 
   const totalDuration = selectedActivity?.audioDurationSeconds || selectedActivity?.duration || 60; // default 5 min
 
+  // Configure audio to play even when iOS silent/mute switch is on
+  useEffect(() => {
+    Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+    });
+  }, []);
+  
   const progress = totalDuration > 0 ? Math.min(elapsedSeconds / totalDuration, 1) : 0;
 
   const formatTime = (seconds: number) => {

@@ -11,7 +11,8 @@ import {
   ScrollView,
   Alert,
   Platform,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  Keyboard
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Toast from "../../components/UI/Toast";
@@ -54,6 +55,7 @@ const JournalingScreen = () => {
   
   const handleSave = () => {
     if (!draft.trim()) return;
+    Keyboard.dismiss();
     logMutation.mutate(
       { content: draft },
       {
