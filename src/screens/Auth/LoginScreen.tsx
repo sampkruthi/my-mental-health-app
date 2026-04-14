@@ -38,7 +38,8 @@ import { analytics } from '../../../analytics';
 
 const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || "";
 const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS || "";
-const { width } = Dimensions.get("window");
+const { width: screenWidth } = Dimensions.get("window");
+const isMobileWeb = Platform.OS === "web" && screenWidth < 600;
 import { initializeNotifications } from '../../notificationService';
 import { getApiService } from '../../../services/api';
 const isIPad = Platform.OS === 'ios' && Platform.isPad;
@@ -502,17 +503,17 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: isIPad ? 80 : Platform.OS === "web" ? 50 : 20,
-    paddingVertical: isIPad ? 80 : Platform.OS === "web" ? 60 : 40,
+    paddingHorizontal: isIPad ? 80 : isMobileWeb ? 12 : Platform.OS === "web" ? 50 : 20,
+    paddingVertical: isIPad ? 80 : isMobileWeb ? 20 : Platform.OS === "web" ? 60 : 40,
   },
   card: {
-    width: isIPad ? "82%" : Platform.OS === "web" ? "80%" : "100%",
-    maxWidth: isIPad ? 780 : Platform.OS === "web" ? 700 : 600,
-    minHeight: Platform.OS === "web" ? 670 : undefined,
+    width: isIPad ? "82%" : isMobileWeb ? "100%" : Platform.OS === "web" ? "80%" : "100%",
+    maxWidth: isIPad ? 780 : isMobileWeb ? 500 : Platform.OS === "web" ? 700 : 600,
+    minHeight: isMobileWeb ? undefined : Platform.OS === "web" ? 670 : undefined,
     backgroundColor: "#FFFFFF",
-    borderRadius: 24,
-    paddingHorizontal: isIPad ? 56 : 24,
-    paddingVertical: isIPad? 50 : 40,
+    borderRadius: isMobileWeb ? 16 : 24,
+    paddingHorizontal: isIPad ? 56 : isMobileWeb ? 16 : 24,
+    paddingVertical: isIPad ? 50 : isMobileWeb ? 24 : 40,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -586,10 +587,15 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: "#2C2C2C",
+    ...(Platform.OS === "web" ? { outlineStyle: "none" } : {}),
   },
   eyeIcon: {
-    padding: 4,
-    marginLeft: 8,
+    padding: 8,
+    marginLeft: 4,
+    minWidth: 32,
+    minHeight: 32,
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
   },
   actionsRow: {
     flexDirection: "row",
