@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -34,10 +34,45 @@ import { Menu, MenuOptions, MenuOption, MenuTrigger, MenuProvider } from 'react-
 import { useQueryClient } from "@tanstack/react-query";
 import { storage } from "../../utils/storage";
 import { analytics } from '../../../analytics';
-
+import * as Sentry from "@sentry/react-native";
 
 const { width, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
+
+// Static lookup for known health sources — defined outside component to avoid recreation on every render
+const KNOWN_SOURCES: Record<string, { url: string; title: string }> = {
+  'NIMH':             { url: 'https://www.nimh.nih.gov/health', title: 'NIMH' },
+  'APA':              { url: 'https://www.apa.org/topics', title: 'APA' },
+  'MAYO CLINIC':      { url: 'https://www.mayoclinic.org/diseases-conditions', title: 'Mayo Clinic' },
+  'HELPGUIDE':        { url: 'https://www.helpguide.org', title: 'HelpGuide' },
+  'NAMI':             { url: 'https://www.nami.org/About-Mental-Illness', title: 'NAMI' },
+  'CDC':              { url: 'https://www.cdc.gov/mental-health', title: 'CDC' },
+  'SAMHSA':           { url: 'https://findtreatment.gov/', title: 'SAMHSA' },
+  'HARVARD HEALTH':   { url: 'https://www.health.harvard.edu', title: 'Harvard Health' },
+  'SLEEP FOUNDATION': { url: 'https://www.sleepfoundation.org', title: 'Sleep Foundation' },
+  'WHO':              { url: 'https://www.who.int/health-topics/mental-health', title: 'WHO' },
+  'IOCDF':                  { url: 'https://iocdf.org', title: 'IOCDF' },
+  'INTERNATIONAL OCD FOUNDATION': { url: 'https://iocdf.org', title: 'IOCDF' },
+  'National Institute of Mental Health': { url: 'https://www.nimh.nih.gov/health', title: 'NIMH' },
+  'ADAA':                   { url: 'https://adaa.org', title: 'ADAA' },
+  'ANXIETY AND DEPRESSION ASSOCIATION': { url: 'https://adaa.org', title: 'ADAA' },
+  'PSYCHOLOGY TODAY':       { url: 'https://www.psychologytoday.com', title: 'Psychology Today' },
+  'VERYWELL MIND':          { url: 'https://www.verywellmind.com', title: 'Verywell Mind' },
+  'VERYWELL':               { url: 'https://www.verywellmind.com', title: 'Verywell Mind' },
+  'MIND':                   { url: 'https://www.mind.org.uk', title: 'Mind' },
+  'CHADD':                  { url: 'https://chadd.org', title: 'CHADD' },
+  'DBSA':                   { url: 'https://www.dbsalliance.org', title: 'DBSA' },
+  'NEDA':                   { url: 'https://www.nationaleatingdisorders.org', title: 'NEDA' },
+  'PTSD FOUNDATION':        { url: 'https://www.ptsd.va.gov', title: 'VA PTSD' },
+};
+
+// Pre-build the lowercase/titlecase variants once, not on every render
+const KNOWN_SOURCES_MAP: Record<string, { url: string; title: string }> = {};
+Object.entries(KNOWN_SOURCES).forEach(([key, val]) => {
+  KNOWN_SOURCES_MAP[key] = val;
+  KNOWN_SOURCES_MAP[key.toLowerCase()] = val;
+  KNOWN_SOURCES_MAP[key.charAt(0) + key.slice(1).toLowerCase()] = val;
+});
 
 const ChatScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -53,6 +88,26 @@ const ChatScreen = () => {
   
 
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
+
+  // Check if disclaimer was accepted today
+  useEffect(() => {
+    storage.getItem("disclaimerAcceptedDate").then((dateStr) => {
+      if (dateStr) {
+        const acceptedDate = new Date(dateStr);
+        const now = new Date();
+        // Same calendar day = still valid
+        if (
+          acceptedDate.getFullYear() === now.getFullYear() &&
+          acceptedDate.getMonth() === now.getMonth() &&
+          acceptedDate.getDate() === now.getDate()
+        ) {
+          setDisclaimerAccepted(true);
+        }
+      }
+    }).catch(() => {
+      // Storage failed — show disclaimer as fallback
+    });
+  }, []);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
@@ -130,6 +185,7 @@ const ChatScreen = () => {
   useEffect(() => {
     analytics.screenViewed('Chat');
   }, []);
+
   
 
   const dismissChatIntro = () => {
@@ -147,7 +203,15 @@ const ChatScreen = () => {
 
   //Load initial history
   useEffect(() => {
+    try {
     if (initialHistory && !initialLoadDone) {
+      Sentry.addBreadcrumb({
+        category: "chat",
+        message: "Loading initial history",
+        data: { messageCount: initialHistory.messages?.length || 0, hasMore: initialHistory.has_more },
+        level: "info",
+      });
+
       if (initialHistory.messages.length > 0) {
         setMessages(initialHistory.messages);
         setHasMore(initialHistory.has_more);
@@ -164,10 +228,38 @@ const ChatScreen = () => {
       }
       setInitialLoadDone(true);
     }
-  }, [initialHistory, initialLoadDone]);
+  } catch (error) {
+    console.error("[ChatScreen] Error loading initial history:", error);
+    Sentry.captureException(error, {
+      tags: { screen: "ChatScreen", action: "loadInitialHistory" },
+      extra: { 
+        historyLength: initialHistory?.messages?.length,
+        historyData: JSON.stringify(initialHistory?.messages?.slice(0, 2)),
+      },
+    });
+    // Recover gracefully — show welcome message
+    setMessages([{
+      id: 'welcome-' + Date.now(),
+      sender: 'ai',
+      text: 'Hi! How are you doing today?',
+      timestamp: new Date().toISOString(),
+    }]);
+    setInitialLoadDone(true);
+  }
+}, [initialHistory, initialLoadDone]);
 
   // No scrollToEnd needed — inverted FlatList automatically shows newest messages at bottom
 
+  useEffect(() => {
+    if (messages.length > 0 && initialLoadDone) {
+      // Small delay to let the FlatList render the new item first
+      const timer = setTimeout(() => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [messages.length, initialLoadDone]);
+  
   const loadMoreMessages = async () => {
     if (!hasMore || isLoadingMore || !token) return;
 
@@ -193,6 +285,11 @@ const ChatScreen = () => {
       }
     } catch (error) {
       console.error("[ChatScreen] Error loading more messages:", error);
+      Sentry.captureException(error, {
+        tags: { screen: "ChatScreen", action: "loadMoreMessages" },
+        extra: { currentMessageCount: messages.length, hasMore },
+      });
+
     } finally {
       setIsLoadingMore(false);
     }
@@ -208,50 +305,51 @@ const ChatScreen = () => {
   //   - ISO strings with/without timezone ("2025-03-23T04:10:04Z" vs "2025-03-23T04:10:04")
   //   - Invalid/missing timestamps (fall back to insertion order via id)
   //   - Device clock vs server clock differences (secondary sort by DB id)
-  const sortedMessages = React.useMemo(() => {
-    const parseTime = (ts: string): number => {
-      if (!ts) return 0;
-      const t = new Date(ts).getTime();
-      return isNaN(t) ? 0 : t;
-    };
-
-    return [...messages].sort((a, b) => {
-      const timeA = parseTime(a.timestamp);
-      const timeB = parseTime(b.timestamp);
-
-      // If timestamps differ by more than 1 second, use timestamp order
-      if (Math.abs(timeA - timeB) > 1000) return timeB - timeA; // DESCENDING for inverted
-
-      // Same-second messages: use DB id (numeric) for stable ordering
-      // DB ids are sequential — user message id = N, bot reply id = N+1
-      const idA = parseInt(a.id);
-      const idB = parseInt(b.id);
-      if (!isNaN(idA) && !isNaN(idB)) return idB - idA; // DESCENDING for inverted
-
-      // Fallback: Date.now() string ids sort lexicographically (still works for ordering)
-      return b.id.localeCompare(a.id); // DESCENDING for inverted
-    });
+  
+  // For inverted FlatList: reverse the store order so newest is at index 0.
+  // The store maintains insertion order (oldest first), .reverse() flips it.
+  // No timestamp sorting — avoids clock-skew bugs entirely.
+  const displayMessages = React.useMemo(() => {
+    return [...messages].reverse(); 
   }, [messages]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
 
+    const tempId = `temp-${Date.now()}`;
     const userMessage: ChatMessage = {
-      id: Date.now().toString(),
+      id: tempId,//Date.now().toString(),
       sender: "user",
       text: input,
       timestamp: new Date().toISOString(),
     };
 
+    //Step 1 : Add user message
     addMessage(userMessage);
     setInput("");
+
+   // Step 2: Use requestAnimationFrame to let the UI "breathe" 
+  // This ensures the user message is rendered before we trigger the AI bubble
+  requestAnimationFrame(async () => {
     setIsTyping(true);
+
     analytics.chatMessageSent(userMessage.text.length);
+    Sentry.addBreadcrumb({
+      category: "chat",
+      message: "User sent message",
+      data: { messageLength: userMessage.text.length, messageCount: messages.length },
+      level: "info",
+    });
 
 
     try {
-      const botReply = await sendChat({ text: userMessage.text });
+      //Pass the localId to the mutation so we can track it
+      const botReply = await sendChat({ text: userMessage.text, localId: tempId });
       addMessage(botReply);
+
+      // SUCCESS: Your backend returns 'user_message_id' and 'assistant_message_id'
+      // Swap the user's temp message for the real one
+  
       // Don't invalidate chat history cache here — the store already has both messages.
       // Invalidating triggers a refetch that causes unnecessary re-renders and can
       // momentarily flash messages in wrong order. The next time the user opens the
@@ -260,13 +358,37 @@ const ChatScreen = () => {
         botReply.text.length,
         !!(botReply.citations && botReply.citations.length > 0)
       );
+
+      Sentry.addBreadcrumb({
+        category: "chat",
+        message: "Bot reply received",
+        data: { responseLength: botReply.text.length, hasCitations: !!(botReply.citations?.length) },
+        level: "info",
+      });
       
     } catch (error) {
       console.error("Send failed:", error);
+      Sentry.captureException(error, {
+        tags: { screen: "ChatScreen", action: "sendMessage" },
+        extra: { messageLength: userMessage.text.length, messageCount: messages.length },
+      });
+
+
+    // Show error message in chat so the user knows what happened
+      // Show error message in chat so the user knows what happened
+      const errorMessage: ChatMessage = {
+        id: 'error-' + Date.now(),
+        sender: 'ai',
+        text: "I'm sorry, I wasn't able to respond. Please try sending your message again.",
+        timestamp: new Date().toISOString(),
+      };
+      addMessage(errorMessage);
+
     } finally {
       setIsTyping(false);
     }
-  };
+  });
+};
 
   const handleClearChat = async () => {
     alert(
@@ -303,6 +425,9 @@ const ChatScreen = () => {
               alert("Success", "Chat history cleared");
             } catch (error) {
               console.error('Clear chat error:', error);
+              Sentry.captureException(error, {
+                tags: { screen: "ChatScreen", action: "clearChat" },
+              });
               alert("Error", "Failed to clear chat history. Please try again.");
             }
           }
@@ -320,47 +445,9 @@ const ChatScreen = () => {
   // to the citation objects and renders them as tappable links.
   // If no citation match is found, the source name is still shown as plain text
   // so the user sees the attribution.
-  const renderMarkdownText = (text: string, baseStyle: object, citations?: Citation[]) => {
-    // Build a lookup from source short names to citation URLs
-    // e.g. "NIMH" -> "https://www.nimh.nih.gov/...", "APA" -> "https://www.apa.org/..."
-    const sourceUrlMap: Record<string, { url: string; title: string }> = {};
-
-    // Fallback map: common health organizations the LLM might cite in [Sources: ...]
-    // even when no matching citation object is attached (e.g. the LLM cites "Mayo Clinic"
-    // but only NIMH and APA citation cards were attached). These are general landing pages.
-    const KNOWN_SOURCES: Record<string, { url: string; title: string }> = {
-      'NIMH':             { url: 'https://www.nimh.nih.gov/health', title: 'NIMH' },
-      'APA':              { url: 'https://www.apa.org/topics', title: 'APA' },
-      'MAYO CLINIC':      { url: 'https://www.mayoclinic.org/diseases-conditions', title: 'Mayo Clinic' },
-      'HELPGUIDE':        { url: 'https://www.helpguide.org', title: 'HelpGuide' },
-      'NAMI':             { url: 'https://www.nami.org/About-Mental-Illness', title: 'NAMI' },
-      'CDC':              { url: 'https://www.cdc.gov/mental-health', title: 'CDC' },
-      'SAMHSA':           { url: 'https://findtreatment.gov/', title: 'SAMHSA' },
-      'HARVARD HEALTH':   { url: 'https://www.health.harvard.edu', title: 'Harvard Health' },
-      'SLEEP FOUNDATION': { url: 'https://www.sleepfoundation.org', title: 'Sleep Foundation' },
-      'WHO':              { url: 'https://www.who.int/health-topics/mental-health', title: 'WHO' },
-      // Commonly cited by the LLM but not in the core 7 Tavily domains
-      'IOCDF':                  { url: 'https://iocdf.org', title: 'IOCDF' },
-      'INTERNATIONAL OCD FOUNDATION': { url: 'https://iocdf.org', title: 'IOCDF' },
-      'National Institute of Mental Health': { url: 'https://www.nimh.nih.gov/health', title: 'NIMH' },
-      'ADAA':                   { url: 'https://adaa.org', title: 'ADAA' },
-      'ANXIETY AND DEPRESSION ASSOCIATION': { url: 'https://adaa.org', title: 'ADAA' },
-      'PSYCHOLOGY TODAY':       { url: 'https://www.psychologytoday.com', title: 'Psychology Today' },
-      'VERYWELL MIND':          { url: 'https://www.verywellmind.com', title: 'Verywell Mind' },
-      'VERYWELL':               { url: 'https://www.verywellmind.com', title: 'Verywell Mind' },
-      'MIND':                   { url: 'https://www.mind.org.uk', title: 'Mind' },
-      'CHADD':                  { url: 'https://chadd.org', title: 'CHADD' },
-      'DBSA':                   { url: 'https://www.dbsalliance.org', title: 'DBSA' },
-      'NEDA':                   { url: 'https://www.nationaleatingdisorders.org', title: 'NEDA' },
-      'PTSD FOUNDATION':        { url: 'https://www.ptsd.va.gov', title: 'VA PTSD' },
-    };
-    // Seed with fallbacks (citation-specific URLs will overwrite these below)
-    Object.entries(KNOWN_SOURCES).forEach(([key, val]) => {
-      sourceUrlMap[key] = val;
-      sourceUrlMap[key.toLowerCase()] = val;
-      // Also seed title-case versions: "Nimh" etc.
-      sourceUrlMap[key.charAt(0) + key.slice(1).toLowerCase()] = val;
-    });
+  const renderMarkdownText = useCallback((text: string, baseStyle: object, citations?: Citation[]) => {
+    // Start with the pre-built static map
+    const sourceUrlMap: Record<string, { url: string; title: string }> = { ...KNOWN_SOURCES_MAP };
 
     // Overwrite with actual citation URLs (more specific than fallbacks)
     if (citations) {
@@ -482,9 +569,9 @@ const ChatScreen = () => {
         )}
       </Text>
     );
-  };
+  }, [colors]);
 
-  const handleCitationPress = async (url: string) => {
+  const handleCitationPress = useCallback(async (url: string) => {
     if (!url) return;
     try {
       if (Platform.OS === 'web') {
@@ -500,10 +587,14 @@ const ChatScreen = () => {
       }
     } catch (error) {
       console.error("[ChatScreen] Failed to open citation URL:", url, error);
+      Sentry.captureException(error, {
+        tags: { screen: "ChatScreen", action: "openCitationURL" },
+        extra: { url },
+      });
     }
-  };
+  }, []);
 
-  const renderCitations = (citations?: Citation[]) => {
+  const renderCitations = useCallback((citations?: Citation[]) => {
     if (!citations || citations.length === 0) return null;
 
     // Separate citation types:
@@ -556,56 +647,69 @@ const ChatScreen = () => {
         ))}
       </View>
     );
-  };
+  }, [colors]);
   
 
-  const renderMessage = ({ item }: { item: ChatMessage }) => {
-    const isUser = item.sender === "user";
+  const renderMessage = useCallback(({ item }: { item: ChatMessage }) => {
+    try {
+      const isUser = item.sender === "user";
 
-    return (
-      <View style={[
-        styles.messageRow,
-        isUser ? styles.messageRowUser : styles.messageRowAI
-      ]}>
-        <View
-          style={[
-            styles.messageContainer,
-            isUser ? styles.messageRight : styles.messageLeft,
-          ]}
-        >
+      return (
+        <View style={[
+          styles.messageRow,
+          isUser ? styles.messageRowUser : styles.messageRowAI
+        ]}>
           <View
             style={[
-              styles.bubble,
-              { backgroundColor: isUser ? colors.userBubble : colors.aiBubble,
-                // ADD: Different border radius for each side
-              borderBottomLeftRadius: isUser ? 20 : 6,
-              borderBottomRightRadius: isUser ? 6 : 20,
-               },
+              styles.messageContainer,
+              isUser ? styles.messageRight : styles.messageLeft,
             ]}
           >
-            {isUser ? (
-              <Text style={{ fontSize: 16, color: colors.text, lineHeight: 22 }}>
-                {item.text}
-              </Text>
-            ) : (
-              renderMarkdownText(item.text, { fontSize: 16, color: colors.text, lineHeight: 22 }, item.citations)
-            )}
+            <View
+              style={[
+                styles.bubble,
+                { backgroundColor: isUser ? colors.userBubble : colors.aiBubble,
+                  borderBottomLeftRadius: isUser ? 20 : 6,
+                  borderBottomRightRadius: isUser ? 6 : 20,
+                },
+              ]}
+            >
+              {isUser ? (
+                <Text style={{ fontSize: 16, color: colors.text, lineHeight: 22 }}>
+                  {item.text}
+                </Text>
+              ) : (
+                renderMarkdownText(item.text || "", { fontSize: 16, color: colors.text, lineHeight: 22 }, item.citations)
+              )}
+            </View>
+            {item.sender === 'ai' && renderCitations(item.citations)}
+            <Text style={[styles.timestamp, { color: colors.subText }]}>
+              {new Date(item.timestamp).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              })}
+            </Text>
           </View>
-          {item.sender === 'ai' && renderCitations(item.citations)}
-          <Text style={[styles.timestamp, { color: colors.subText }]}>
-            {new Date(item.timestamp).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true,
-              timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            })}
+        </View>
+      );
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { screen: "ChatScreen", action: "renderMessage" },
+        extra: { messageId: item?.id, sender: item?.sender, textLength: item?.text?.length },
+      });
+      return (
+        <View style={styles.messageRow}>
+          <Text style={{ color: colors.subText, fontStyle: 'italic', padding: 8 }}>
+            Unable to display this message
           </Text>
         </View>
-      </View>
-    );
-  };
+      );
+    }
+  }, [colors]);
 
-  const renderListHeader = () => {
+  const renderListHeader = useCallback(() => {
     if (!hasMore) return null;
     
     return (
@@ -621,16 +725,16 @@ const ChatScreen = () => {
         )}
       </View>
     );
-  };
+  }, [hasMore, isLoadingMore]);
 
-  const renderListFooter = () => {
+  const renderListFooter = useCallback(() => {
     return (
       <View>
         {isTyping && <TypingIndicator />}
         <View style={{ height: 20 }} />
       </View>
     );
-  };
+  }, [isTyping]);
 
   if (!disclaimerAccepted) {
     return (
@@ -702,10 +806,11 @@ const ChatScreen = () => {
           <TouchableOpacity
             testID="chat_disclaimer_continue"
             style={[disclaimerStyles.continueButton, { backgroundColor: colors.primary }]}
-            onPress={() => 
-            { analytics.chatDisclaimerAccepted();  
-              setDisclaimerAccepted(true)}
-            }
+            onPress={() => {
+              analytics.chatDisclaimerAccepted();
+              setDisclaimerAccepted(true);
+              storage.setItem("disclaimerAcceptedDate", new Date().toISOString()).catch(() => {});
+            }}
           >
             <Text style={disclaimerStyles.continueButtonText}>I Understand. Continue</Text>
           </TouchableOpacity>
@@ -764,7 +869,7 @@ const ChatScreen = () => {
             { /* FlatList takes up all available space */}
           <FlatList
             ref={flatListRef}
-            data={sortedMessages}
+            data={displayMessages}
             renderItem={renderMessage}
             keyExtractor={(item) => item.id.toString()}
             inverted={true}
@@ -784,6 +889,11 @@ const ChatScreen = () => {
             scrollEventThrottle={400}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
+            // Performance optimizations to prevent "ghosting" on app foreground
+            windowSize={10}
+            maxToRenderPerBatch={10}
+            removeClippedSubviews={Platform.OS === 'android'}
+            initialNumToRender={15}
           />
 
           {/* Input row - positioned at bottom */}
@@ -812,7 +922,14 @@ const ChatScreen = () => {
               placeholder="Type your message"
               placeholderTextColor={colors.subText}
               value={input}
-              onChangeText={setInput}
+              //onChangeText={setInput}
+              onChangeText={(text) => {
+                setInput(text);
+                // Scroll to bottom (index 0 in inverted list) when user starts typing
+                if (text.length === 1) {
+                  flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+                }
+              }}
               multiline
               blurOnSubmit={false}
               autoFocus={false}

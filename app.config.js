@@ -68,6 +68,16 @@ module.exports = {
         }
       ],
       "expo-apple-authentication",
+      [
+        "@sentry/react-native/expo",
+        {
+          url: "https://sentry.io/",
+          // SENTRY_AUTH_TOKEN is read from EAS secrets automatically
+          // Set it via: eas secret:create --name SENTRY_AUTH_TOKEN --value your-token
+          organization: process.env.SENTRY_ORG || "bodhira",
+          project: process.env.SENTRY_PROJECT || "react-native",
+        }
+      ],
     ],
     extra: {
       eas: {

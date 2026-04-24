@@ -5,6 +5,7 @@ import { storage, STORAGE_KEYS } from "../utils/storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { AppState, AppStateStatus } from "react-native";        
 import * as AppleAuthentication from "expo-apple-authentication";
+import * as Sentry from "@sentry/react-native";
 
 
 import { jwtDecode } from 'jwt-decode';
@@ -48,6 +49,20 @@ const checkAppleCredentialState = useCallback(async (): Promise<boolean> => {
 
     const appleUserId = await storage.getItem(APPLE_USER_ID_KEY);
     if (!appleUserId) return true; // No stored Apple ID, skip
+
+    // Grace period: don't check credentials within 30 seconds of sign-in.
+    // iOS 18+ has a credential propagation delay after fresh Apple Sign-In.
+    // The in-memory recentlySignedIn flag handles foreground checks, but
+    // this persisted timestamp handles the case where the user kills and
+    // reopens the app immediately after signing in.
+    const appleSignInTime = await storage.getItem('bodhira_apple_signin_time');
+    if (appleSignInTime) {
+      const elapsed = Date.now() - parseInt(appleSignInTime, 10);
+      if (elapsed < 30000) {
+        console.log('[AuthContext] Within Apple sign-in grace period, skipping credential check');
+        return true;
+      }
+    }
 
     const state = await AppleAuthentication.getCredentialStateAsync(appleUserId);
 
@@ -351,6 +366,7 @@ const isTokenValid = (token: string): boolean => {
       
       // Clear all cached queries
       queryClient.clear();
+      Sentry.setUser(null);
       
       console.log(' Signed out successfully');
     } catch (e) {

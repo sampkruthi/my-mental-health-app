@@ -172,8 +172,9 @@ console.log('🔍 API Base URL:', getApiBaseUrl());
 //console.log('🔍 API Base URL:', getApiBaseUrl());
 //Change to PROD BASE URL for Prod Deployment!!
 
-//const API_BASE_URL = 'https://mental-health-assistant-app-production.up.railway.app';
 const API_BASE_URL = 'https://mental-health-assistant-app-production.up.railway.app';
+//const API_BASE_URL = 'https://mental-health-assistant-app-staging.up.railway.app';
+
 
 
 console.log('Using API URL:', API_BASE_URL);
@@ -541,9 +542,11 @@ export const realApiService: ApiService = {
       message: text
     });
     
+    
+   
     // Convert to your expected format
     return {
-      id: Date.now().toString(),
+      id: `ai-${Date.now().toString()}`,
       text: data.response,
       sender: "ai" as const,
       timestamp: new Date().toISOString(),

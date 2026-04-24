@@ -1,6 +1,8 @@
 // src/stores/chatStore.ts
 import { create } from "zustand";
 import { Citation } from "../api/types";
+import { storage } from "../utils/storage";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 export type Message = {
   id: string;
@@ -12,7 +14,7 @@ export type Message = {
 
 interface ChatState {
   messages: Message[];
-  addMessage: (msg: Message) => void;
+  addMessage: (msg: Message, localId?: string) => void;
   setMessages: (messages: Message[]) => void;
   prependMessages: (messages: Message[]) => void; 
   clear: () => void;
@@ -20,11 +22,50 @@ interface ChatState {
 
 export const useChatStore = create<ChatState>((set) => ({
   messages: [],
-  addMessage: (msg) =>
-    set((state: ChatState) => {
-      // Deduplicate: if a message with the same sender, text, and similar timestamp
-      // already exists (e.g., local user message vs DB-returned version), replace it
-      // with the newer version (which has the real DB id).
+  // Updated addMessage to handle "Updating" a temporary message
+  addMessage: (msg, localId?: string) =>
+    set((state) => {
+      // If we provided a localId, find that message and replace it with the server version
+      if (localId) {
+        const found = state.messages.some((m) => m.id === localId);
+        if (found) {
+          return {
+            messages: state.messages.map((m) => (m.id === localId ? msg : m)),
+          };
+        }
+      }
+
+      // Standard deduplication by ID
+      const exists = state.messages.some((m) => m.id === msg.id);
+      if (exists) {
+        return {
+          messages: state.messages.map((m) => (m.id === msg.id ? msg : m)),
+        };
+      }
+      
+      // Append new message to the end of the array (preserving chronological order)
+      return { messages: [...state.messages, msg] };
+    }),
+
+  setMessages: (messages) => set({ messages }),
+  clear: () => set({ messages: [] }),
+
+/*
+export const useChatStore = create()(
+  persist(
+    (set, get) => ({
+      messages: [],
+      lastDisclaimerDate: null,
+      
+      // Fix for User A: Persist disclaimer status
+      setDisclaimerAccepted: () => set({ lastDisclaimerDate: new Date().toISOString() }),
+    addMessage: (msg) => set((state: ChatState) => {
+*/
+      //Replacing the duplication logic to delete duplicates on exact ID match
+      /*
+      // Content-based deduplication was causing messages to disappear when
+      // users sent similar short messages ("ok", "yes", "thanks") or when
+      // the bot gave similar greetings.
       const isDuplicate = state.messages.some((m) => {
         if (m.id === msg.id) return true;
         // Same sender + same text + timestamps within 30 seconds = duplicate
@@ -54,17 +95,19 @@ export const useChatStore = create<ChatState>((set) => ({
 
       return { messages: [...state.messages, msg] };
     }),
-  clear: () => set({ messages: [] }),
-  setMessages: (messages) => 
-    set({ messages }),
+
+    */
+
   prependMessages: (messages) =>
     set((state) => {
       const existingIds = new Set(state.messages.map((m) => m.id));
       // Also deduplicate by content — local messages have Date.now() ids
       // while DB messages have numeric ids, but the content is the same
-      const existingContent = new Set(
-        state.messages.map((m) => `${m.sender}:${m.text.slice(0, 50)}`)
-      );
+      
+      
+      /*const existingContent = new Set(
+      //  state.messages.map((m) => `${m.sender}:${m.text.slice(0, 50)}`)
+      //);
       const unique = messages.filter((m) => {
         if (existingIds.has(m.id)) return false;
         const contentKey = `${m.sender}:${m.text.slice(0, 50)}`;
@@ -72,5 +115,8 @@ export const useChatStore = create<ChatState>((set) => ({
         return true;
       });
       return { messages: [...unique, ...state.messages] };
+    }), */
+    const unique = messages.filter((m) => !existingIds.has(m.id));
+      return { messages: [...unique, ...state.messages] };
     }),
-}));
+    }));

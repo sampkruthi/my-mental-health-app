@@ -35,6 +35,7 @@ import {
 import { getUserTimezone } from "../../utils/timezoneUtils";
 import { jwtDecode } from "jwt-decode";
 import { analytics } from '../../../analytics';
+import * as Sentry from "@sentry/react-native";
 
 const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB || "";
 const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS || "";
@@ -297,6 +298,10 @@ export default function LoginScreen() {
         console.log("[LoginScreen] User signed in successfully");
         analytics.identify(email);
       analytics.loginCompleted('email');
+      Sentry.setUser({
+        id: email,
+        email: email,
+      });
 
       }
     } catch (e) {

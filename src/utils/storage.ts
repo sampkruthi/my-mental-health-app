@@ -65,6 +65,7 @@ export const storage = {
           SecureStore.deleteItemAsync('hasSeenChatIntro').catch(() => {}),
           SecureStore.deleteItemAsync('hasSeenResourcesIntro').catch(() => {}),
           SecureStore.deleteItemAsync('lastCompletedActivityId').catch(() => {}),
+          SecureStore.deleteItemAsync('disclaimerAcceptedDate').catch(() => {}),
         ]);
       }
     } catch (error) {

@@ -4,7 +4,7 @@ import { getApiService } from "../../services/api"; // adjust path if needed
 import type { Reminder,  ChatMessage, MoodLog, GuidedActivity, JournalEntry,
 JournalInsights, ResourceRec, Reminder1, NewReminder, MemorySummary, Token, RegisterRequest, ProgressDashboard, ResourceRecRAG, UserProfile, UserProfileUpdateRequest } from "./types";
 
-
+import { useChatStore } from "../stores/chatStore";
 
 
 import {  UseMutationResult } from "@tanstack/react-query";
@@ -202,7 +202,9 @@ export function useFetchChatHistory(
 // Send chat message hook
 // =====================
 export function useSendChatMessage(token?: string | null) {
-  return useMutation<ChatMessage, Error, { text: string }>({
+  //const addMessage = useChatStore((state) => state.addMessage);
+  
+  return useMutation<ChatMessage, Error, { text: string, localId: string }>({
     mutationFn: async ({ text }) => {
       console.log("[useSendChatMessage] Sending message:", text);
       if (!token) throw new Error("No token available");

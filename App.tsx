@@ -31,6 +31,30 @@ import { useRegisterDeviceToken } from "./src/api/hooks";
 // Import auth error handler
 import { registerAuthErrorHandlers } from "./src/utils/authErrorHandler";
 
+import * as Sentry from "@sentry/react-native";
+
+Sentry.init({
+  dsn: "https://4f7731d957a67d11077b5900233a764b@o4511265328070656.ingest.us.sentry.io/4511265329840128",
+  
+  // Capture 100% of errors (adjust in production if volume is high)
+  tracesSampleRate: 1.0,
+  
+  // Capture user context for debugging
+  sendDefaultPii: true,
+  
+  // Only enable in production builds
+  enabled: !__DEV__,
+  
+  // Add app context
+  initialScope: {
+    tags: {
+      app: "bodhira",
+    },
+  },
+});
+
+
+
 const queryClient = new QueryClient();
 
 const linking: LinkingOptions<RootStackParamList> = {
@@ -193,7 +217,7 @@ function AppContent({ navigationRef }: { navigationRef: React.RefObject<Navigati
   );
 }
 
-export default function App() {
+export default Sentry.wrap(function App() {
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
   /*
@@ -224,4 +248,4 @@ export default function App() {
       </ThemeProvider>
     </QueryClientProvider>
   );
-}
+});

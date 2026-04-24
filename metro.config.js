@@ -1,6 +1,11 @@
-const { getDefaultConfig } = require('expo/metro-config');
+//const { getDefaultConfig } = require('expo/metro-config');
 
-const config = getDefaultConfig(__dirname);
+//const config = getDefaultConfig(__dirname);
+
+const { getSentryExpoConfig } = require("@sentry/react-native/metro");
+ 
+const config = getSentryExpoConfig(__dirname);
+
 
 // Enable HTTPS for development server
 config.server = {
