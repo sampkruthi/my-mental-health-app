@@ -3,7 +3,7 @@ module.exports = {
   expo: {
     name: "Bodhira",
     slug: "my-mental-health-app",
-    version: "1.2.2",
+    version: "1.2.3",
     orientation: "portrait",
     icon: "./assets/bodhira_app_icon_1024.png",
     userInterfaceStyle: "light",
