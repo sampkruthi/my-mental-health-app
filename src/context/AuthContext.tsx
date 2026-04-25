@@ -1,9 +1,8 @@
 // src/context/AuthContext.tsx
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { storage, STORAGE_KEYS } from "../utils/storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import { AppState, AppStateStatus } from "react-native";        
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as Sentry from "@sentry/react-native";
 
@@ -38,9 +37,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 
   // ─── Apple Credential State ──────────────────────────────────────────────
-const appState = useRef(AppState.currentState);
-const recentlySignedIn = useRef(false);
-const recentlySignedInTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 const checkAppleCredentialState = useCallback(async (): Promise<boolean> => {
   try {
@@ -50,28 +46,13 @@ const checkAppleCredentialState = useCallback(async (): Promise<boolean> => {
     const appleUserId = await storage.getItem(APPLE_USER_ID_KEY);
     if (!appleUserId) return true; // No stored Apple ID, skip
 
-    // Grace period: don't check credentials within 30 seconds of sign-in.
-    // iOS 18+ has a credential propagation delay after fresh Apple Sign-In.
-    // The in-memory recentlySignedIn flag handles foreground checks, but
-    // this persisted timestamp handles the case where the user kills and
-    // reopens the app immediately after signing in.
-    const appleSignInTime = await storage.getItem('bodhira_apple_signin_time');
-    if (appleSignInTime) {
-      const elapsed = Date.now() - parseInt(appleSignInTime, 10);
-      if (elapsed < 30000) {
-        console.log('[AuthContext] Within Apple sign-in grace period, skipping credential check');
-        return true;
-      }
-    }
-
     const state = await AppleAuthentication.getCredentialStateAsync(appleUserId);
 
-    if (
-      state === AppleAuthentication.AppleAuthenticationCredentialState.REVOKED ||
-      state === AppleAuthentication.AppleAuthenticationCredentialState.NOT_FOUND
-    ) {
-      console.log('[AuthContext] Apple credential invalid, signing out. State:', state);
-      // We call the raw cleanup here, not signOut(), to avoid circular dependency
+    // Only sign out if the user explicitly REVOKED access via Apple Settings.
+    // NOT_FOUND can occur temporarily after sign-in (iOS credential propagation)
+    // and after backgrounding on iOS 18+. Treating it as revoked causes false sign-outs.
+    if (state === AppleAuthentication.AppleAuthenticationCredentialState.REVOKED) {
+      console.log('[AuthContext] Apple credential REVOKED by user, signing out');
       await Promise.all([
         storage.removeItem(STORAGE_KEYS.TOKEN),
         storage.removeItem(STORAGE_KEYS.USER_ID),
@@ -84,7 +65,11 @@ const checkAppleCredentialState = useCallback(async (): Promise<boolean> => {
       return false;
     }
 
-    // AUTHORIZED — all good
+    // AUTHORIZED or NOT_FOUND — keep the session alive
+    if (state === AppleAuthentication.AppleAuthenticationCredentialState.NOT_FOUND) {
+      console.log('[AuthContext] Apple credential NOT_FOUND — likely propagation delay, keeping session');
+    }
+
     return true;
   } catch (error) {
     // If check fails (e.g. device offline), be conservative — don't sign out
@@ -93,28 +78,11 @@ const checkAppleCredentialState = useCallback(async (): Promise<boolean> => {
   }
 }, [queryClient]);
 
-// Re-check Apple credential whenever app comes back to foreground
-useEffect(() => {
-  const subscription = AppState.addEventListener('change', async (nextState: AppStateStatus) => {
-    const wasBackground = appState.current.match(/inactive|background/);
-    const isNowActive   = nextState === 'active';
-
-    if (wasBackground && isNowActive && token) {
-      //Adding for newer IOS where credential propagation takes a bit longer, 
-      // Skip check if we just signed in — iOS 18 credential propagation delay
-      if (recentlySignedIn.current) {
-        console.log('[AuthContext] Skipping credential check — just signed in');
-        appState.current = nextState;
-        return;
-      }
-      console.log('[AuthContext] App foregrounded, checking Apple credential state');
-      await checkAppleCredentialState();
-    }
-    appState.current = nextState;
-  });
-
-  return () => subscription.remove();
-}, [checkAppleCredentialState, token]);
+// Apple credential check only runs at startup (in restoreAuth below).
+// No need to re-check on every foreground — REVOKED status is rare and
+// only happens when the user explicitly revokes access in Apple Settings.
+// The foreground check was causing false sign-outs due to iOS 18+ 
+// credential propagation delays returning NOT_FOUND temporarily.
 
   // Add helper function
 const isTokenValid = (token: string): boolean => {
@@ -274,13 +242,6 @@ const isTokenValid = (token: string): boolean => {
           throw new Error('No token provided from server');
         }
 
-      //Suppress AppState credential check for 5 seconds after sign-in
-      recentlySignedIn.current = true;
-      if (recentlySignedInTimer.current) clearTimeout(recentlySignedInTimer.current);
-      recentlySignedInTimer.current = setTimeout(() => {
-        recentlySignedIn.current = false;
-      }, 5000);  
-
         console.log(' Signing in with token (OAuth):', { userId: userIdFromServer });
 
         await Promise.all([
@@ -377,15 +338,6 @@ const isTokenValid = (token: string): boolean => {
       setLoading(false);
     }
   }, [queryClient]);
-
-  useEffect(() => {
-    return () => {
-      if (recentlySignedInTimer.current) {
-        clearTimeout(recentlySignedInTimer.current);
-      }
-    };
-  }, []);
-
 
   return (
     <AuthContext.Provider
